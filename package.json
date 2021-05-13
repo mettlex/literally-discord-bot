@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": " A Discord bot for various word games",
   "main": "app.js",
-  "scripts": {},
+  "scripts": {
+    "start": "ts-node src/app.ts",
+    "dev": "ts-node-dev src/app.ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mettlex/literally-discord-bot.git"
@@ -17,5 +20,25 @@
   "bugs": {
     "url": "https://github.com/mettlex/literally-discord-bot/issues"
   },
-  "homepage": "https://github.com/mettlex/literally-discord-bot#readme"
+  "homepage": "https://github.com/mettlex/literally-discord-bot#readme",
+  "devDependencies": {
+    "@types/node": "^15.0.3",
+    "@types/pino": "^6.3.8",
+    "@types/spellchecker": "^3.5.0",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "eslint": "^7.26.0",
+    "eslint-config-google": "^0.14.0",
+    "ts-node": "^9.1.1",
+    "ts-node-dev": "^1.1.6",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "date-fns": "^2.21.3",
+    "discord.js": "^12.5.3",
+    "dotenv": "^9.0.2",
+    "pino": "^6.11.3",
+    "pino-pretty": "^4.8.0",
+    "spellchecker": "^3.7.1"
+  }
 }
