@@ -1,0 +1,21 @@
+{
+  "name": "literally-discord-bot",
+  "version": "0.0.1",
+  "description": " A Discord bot for various word games",
+  "main": "app.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mettlex/literally-discord-bot.git"
+  },
+  "keywords": [
+    "discord-bot",
+    "word"
+  ],
+  "author": "Mettle X",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mettlex/literally-discord-bot/issues"
+  },
+  "homepage": "https://github.com/mettlex/literally-discord-bot#readme"
+}
