@@ -2,6 +2,9 @@
 A Discord bot for various word games
 
 ## Environment variables
+
+Create & Edit a `.env` file like below:
+
 ```
 TOKEN=paste discord bot token here
 ```
