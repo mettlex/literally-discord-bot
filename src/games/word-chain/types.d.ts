@@ -6,10 +6,9 @@ export interface ActiveWordChainGames {
         userIds: string[];
         longestWord: string;
         currentUser: string;
-        currentUserPassed: boolean;
-        currentTurnWillEndAt: Date;
         currentStartingLetter: string;
         currentWordMinLength: number;
+        roundIndex: number;
       }
     | undefined;
 }
