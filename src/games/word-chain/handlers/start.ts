@@ -231,7 +231,7 @@ const changeTurn = async (message: Message, timeLeft?: number) => {
   let longestWordUserId = activeGames[channelId]!.longestWordUserId;
 
   if (longestWord === word) {
-    longestWordUserId = message.author.id;
+    longestWordUserId = currentPlayerMessage.author.id;
   }
 
   const currentStartingLetter = word.slice(-1);
