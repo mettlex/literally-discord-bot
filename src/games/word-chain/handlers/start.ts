@@ -268,8 +268,8 @@ const startHandler = (message: Message) => {
     .setDescription(`${message.author} has requested you to join the game.`)
     .addField(
       "How to join",
-      `Send \`${prefixes[0]}${actions[1].commands[0]}\` or \`${prefixes[0]}${
-        actions[1].commands[actions[1].commands.length - 1]
+      `Send \`${prefixes[0]}${actions[2].commands[0]}\` or \`${prefixes[0]}${
+        actions[2].commands[actions[2].commands.length - 1]
       }\` here in this channel to join`,
     )
     .addField("Time Left", `${secondsToJoin} seconds`)
