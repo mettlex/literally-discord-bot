@@ -15,3 +15,5 @@ export interface ActiveWordChainGames {
       }
     | undefined;
 }
+
+export type WiktionaryAPIResponse = [string, [string, string] | []];

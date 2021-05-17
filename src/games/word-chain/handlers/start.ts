@@ -137,7 +137,7 @@ const changeTurn = async (message: Message, timeLeft?: number) => {
   const condition2 =
     currentPlayerMessage.content.length < currentGame.currentWordMinLength;
 
-  const condition3 = !checkSpell(word);
+  const condition3 = !(await checkSpell(word));
 
   const condition4 = currentGame.usedWords.includes(word.toLowerCase());
 
