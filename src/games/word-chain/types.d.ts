@@ -5,10 +5,13 @@ export interface ActiveWordChainGames {
         joinable: boolean;
         userIds: string[];
         longestWord: string;
+        longestWordUserId: string;
         currentUser: string;
         currentStartingLetter: string;
         currentWordMinLength: number;
         roundIndex: number;
+        usedWords: string[];
+        reduce: boolean;
       }
     | undefined;
 }
