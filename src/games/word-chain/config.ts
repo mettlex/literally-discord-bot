@@ -1,5 +1,6 @@
 export const prefixes = [
   "wc.",
+  "wc/",
   "wordchain.",
   "word-chain.",
   "wc .",
@@ -8,7 +9,9 @@ export const prefixes = [
 ];
 
 export const secondsToJoin = 60;
-export const turnSeconds = [30, 25, 20, 15, 10];
+export const mediumTurnSeconds = [30, 25, 20];
+export const easyTurnSeconds = [30, 30, 25, 25, 20, 20];
+export const hardTurnSeconds = [25, 20, 15];
 
 export const flatColors = {
   red: "#f62459",
