@@ -20,7 +20,7 @@ export const setupGame = (
 
     if (
       !prefixes.find((prefix) =>
-        message.content.toLowerCase().startsWith(prefix),
+        message.content.toLowerCase().startsWith(prefix.toLowerCase()),
       )
     ) {
       return;
@@ -30,11 +30,13 @@ export const setupGame = (
     let messageContentWithoutPrefix = "";
 
     for (const prefix of prefixes) {
-      if (message.content.toLowerCase().startsWith(prefix)) {
+      if (message.content.toLowerCase().startsWith(prefix.toLowerCase())) {
         startsWithPrefix = true;
 
+        const regexp = new RegExp(`^${prefix}`, "gi");
+
         messageContentWithoutPrefix = message.content
-          .replace(prefix, "")
+          .replace(regexp, "")
           .trim();
 
         break;
@@ -50,7 +52,7 @@ export const setupGame = (
     );
 
     for (const action of actions) {
-      const match = new RegExp(`^(${action.commands.join("|")})`).test(
+      const match = new RegExp(`^(${action.commands.join("|")})`, "gi").test(
         messageContentWithoutPrefix,
       );
 
