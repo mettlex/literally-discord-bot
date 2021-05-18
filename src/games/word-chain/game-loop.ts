@@ -167,7 +167,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   const currentPlayerMessage = messageCollection.first();
 
   const eliminatePlayer = async () => {
-    if (!currentGame) {
+    if (!currentGame || !activeGames[channelId]) {
       return;
     }
 
@@ -214,7 +214,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   };
 
   const moveToNextPlayer = async () => {
-    if (!currentGame) {
+    if (!currentGame || !activeGames[channelId]) {
       return;
     }
 
