@@ -34,6 +34,8 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
+    "@types/common-tags": "^1.8.0",
+    "common-tags": "^1.8.0",
     "date-fns": "^2.21.3",
     "discord.js": "^12.5.3",
     "dotenv": "^9.0.2",
