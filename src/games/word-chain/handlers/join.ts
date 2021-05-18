@@ -31,6 +31,10 @@ const joinHandler = (message: Message) => {
     activeGames[channelId] = {
       ...activeGames[channelId]!,
       userIds: [...activeGames[channelId]!.userIds, message.author.id],
+      playerLives: {
+        ...activeGames[channelId]!.playerLives,
+        [message.author.id]: activeGames[channelId]!.maxLives,
+      },
     };
 
     const embed = new MessageEmbed()

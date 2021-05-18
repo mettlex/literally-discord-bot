@@ -1,3 +1,4 @@
+export type WordChainGameLevel = "Noob" | "Casual" | "Challenge";
 export interface ActiveWordChainGames {
   [channelId: string]:
     | {
@@ -12,6 +13,11 @@ export interface ActiveWordChainGames {
         roundIndex: number;
         usedWords: string[];
         reduce: boolean;
+        level: WordChainGameLevel;
+        maxLives: number;
+        playerLives: {
+          [userId: string]: number;
+        };
       }
     | undefined;
 }
