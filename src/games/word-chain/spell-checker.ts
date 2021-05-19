@@ -30,10 +30,14 @@ export const checkSpell = async (word: string): Promise<boolean> => {
 
     logger.info(results);
 
+    const foundWords = results[1];
+
     if (
-      results[1] instanceof Array &&
-      typeof results[1][0] === "string" &&
-      results[1][0].toLowerCase() === word.toLowerCase()
+      foundWords instanceof Array &&
+      foundWords
+        .filter((w) => typeof w === "string")
+        .map((w) => w.toLowerCase())
+        .includes(word.toLowerCase())
     ) {
       return true;
     }
