@@ -1,3 +1,5 @@
+import { User } from "discord.js";
+
 export type WordChainGameLevel = "Noob" | "Casual" | "Challenge";
 export interface ActiveWordChainGames {
   [channelId: string]:
@@ -23,3 +25,14 @@ export interface ActiveWordChainGames {
 }
 
 export type WiktionaryAPIResponse = [string, [string, string] | []];
+
+export interface ActiveUnlimitedWordChains {
+  [channelId: string]: UnlimitedWordChainGame | undefined;
+}
+export interface UnlimitedWordChainGame {
+  totalCorrectWords: number;
+  connectedChainWords: number;
+  lastCorrectMessageId: string;
+  longestWord: string;
+  longestWordAuthor: User | null;
+}
