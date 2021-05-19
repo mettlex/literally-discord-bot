@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import { Client, Message } from "discord.js";
 import pino from "pino";
 import { Action } from "./types";
 
@@ -8,6 +8,7 @@ export const setupGame = (
   client: Client,
   prefixes: string[],
   actions: Action[],
+  messageHandlers?: ((message: Message) => void)[],
 ) => {
   client.on("message", (message) => {
     if (message.author.bot) {
@@ -62,4 +63,10 @@ export const setupGame = (
       }
     }
   });
+
+  if (messageHandlers instanceof Array) {
+    for (const handler of messageHandlers) {
+      client.on("message", handler);
+    }
+  }
 };
