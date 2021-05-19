@@ -7,6 +7,8 @@ import { actions, getAllActiveGames } from "..";
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 const joinHandler = (message: Message) => {
+  const joinAction = actions.find((a) => a.commands.includes("join"))!;
+
   const channelId = message.channel.id;
 
   const activeGames = getAllActiveGames();
@@ -41,8 +43,8 @@ const joinHandler = (message: Message) => {
       .setDescription(`${message.author} joined the game.`)
       .addField(
         "How to join",
-        `Send \`${prefixes[0]}${actions[2].commands[0]}\` or \`${prefixes[0]}${
-          actions[2].commands[actions[2].commands.length - 1]
+        `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${prefixes[0]}${
+          joinAction.commands[joinAction.commands.length - 1]
         }\` here in this channel to join`,
       )
       .addField(
