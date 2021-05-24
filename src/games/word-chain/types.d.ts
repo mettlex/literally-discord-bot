@@ -33,6 +33,8 @@ export interface UnlimitedWordChainGame {
   totalCorrectWords: number;
   connectedChainWords: number;
   lastCorrectMessageId: string;
+  lastCorrectMessageAuthorId?: string;
+  usedWords?: string[];
   longestWord: string;
   longestWordAuthor: User | null;
 }

@@ -1,7 +1,7 @@
+import { stripIndents } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
 import { actions } from ".";
-import { Action } from "../types";
 import { flatColors, prefixes } from "./config";
 import { checkSpell } from "./spell-checker";
 import { ActiveUnlimitedWordChains, UnlimitedWordChainGame } from "./types";
@@ -240,10 +240,7 @@ const setDataInThePinnedMessage = async (
   }
 };
 
-export const startUnlimitedMode = async (
-  message: Message,
-  commands: Action["commands"],
-) => {
+export const startUnlimitedMode = async (message: Message) => {
   const canStart = message.member?.hasPermission("MANAGE_GUILD");
 
   if (!canStart) {
@@ -335,7 +332,10 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
   if (
     message.author.bot ||
     message.channel.type !== "text" ||
-    /[^a-z\- ]/gi.test(message.content)
+    /[^a-z\-]/gi.test(message.content) ||
+    message.reference ||
+    message.mentions.everyone ||
+    message.mentions.users.size > 0
   ) {
     return;
   }
@@ -362,7 +362,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
   const word = message.content.toLowerCase().split(" ").slice(-1)[0];
 
-  const { lastCorrectMessageId } = activeWordChains[channelId]!;
+  const { lastCorrectMessageId, lastCorrectMessageAuthorId } =
+    activeWordChains[channelId]!;
 
   let isFirstWord = false;
 
@@ -370,9 +371,62 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     isFirstWord = true;
   }
 
-  const spellingOk = await checkSpell(word);
+  if (!isFirstWord) {
+    if (lastCorrectMessageAuthorId === message.author.id) {
+      message
+        .reply({
+          embed: new MessageEmbed()
+            .setColor(flatColors.red)
+            .setTitle("One by One Rule")
+            .setDescription(
+              stripIndents`Wait for another player to send a correct word. 
+          After that, you can send another word.`,
+            )
+            .setFooter("Wait for your turn please."),
+          content: `please check:`,
+        })
+        .then((repliedMessage) => {
+          repliedMessage.delete({ timeout: 15000 }).catch((e) => {
+            logger.error;
+          });
+        })
+        .catch((e) => {
+          logger.error(e);
+        });
 
-  let correct = spellingOk;
+      return;
+    }
+
+    if (activeWordChains[channelId]!.usedWords?.includes(word.toLowerCase())) {
+      message
+        .reply({
+          embed: new MessageEmbed()
+            .setColor(flatColors.red)
+            .setTitle("Not that word again!")
+            .setDescription(`This **"${word}"** word has been used before.`)
+            .setFooter("Kindly send a new word."),
+          content: `please...`,
+        })
+        .then((repliedMessage) => {
+          repliedMessage.delete({ timeout: 15000 }).catch((e) => {
+            logger.error;
+          });
+        })
+        .catch((e) => {
+          logger.error(e);
+        });
+
+      return;
+    }
+  }
+
+  const reasonsOfRejection = <const>["spell", "first_letter"];
+
+  let reason: typeof reasonsOfRejection[number] = "spell";
+
+  let lastLetter = "";
+
+  let correct = await checkSpell(word);
 
   if (!isFirstWord && correct) {
     const lastCorrectMessage = await message.channel.messages
@@ -383,7 +437,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       });
 
     if (lastCorrectMessage) {
-      const lastLetter = lastCorrectMessage.content
+      lastLetter = lastCorrectMessage.content
         .toLowerCase()
         .split(" ")
         .slice(-1)[0]
@@ -392,6 +446,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
       if (!word.startsWith(lastLetter)) {
         correct = false;
+        reason = "first_letter";
       }
     }
   }
@@ -402,6 +457,11 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       totalCorrectWords: activeWordChains[channelId]!.totalCorrectWords + 1,
       connectedChainWords: activeWordChains[channelId]!.connectedChainWords + 1,
       lastCorrectMessageId: message.id,
+      lastCorrectMessageAuthorId: message.author.id,
+      usedWords: [
+        ...(activeWordChains[channelId]!.usedWords || []),
+        word.toLowerCase(),
+      ],
     };
 
     const previousLongestWord = activeWordChains[channelId]!.longestWord;
@@ -428,6 +488,32 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     message.react("❌").catch((e) => {
       logger.error(e);
     });
+
+    let reasonText =
+      // eslint-disable-next-line max-len
+      `**"${word}"** is either a wrong spelling or unrecognized by Hunspell & Wikitionary`;
+
+    if (reason === "first_letter") {
+      // eslint-disable-next-line max-len
+      reasonText = `**"${word}"** doesn't start with **'${lastLetter.toUpperCase()}'** which is the last letter of the previous correct word.`;
+    }
+
+    message
+      .reply({
+        embed: new MessageEmbed()
+          .setColor(flatColors.red)
+          .setTitle("Incorrect Word!")
+          .setDescription(reasonText),
+        content: `please check:`,
+      })
+      .then((repliedMessage) => {
+        repliedMessage.delete({ timeout: 30000 }).catch((e) => {
+          logger.error;
+        });
+      })
+      .catch((e) => {
+        logger.error(e);
+      });
 
     setDataInThePinnedMessage(message, activeWordChains[channelId]!);
   }
