@@ -390,6 +390,14 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     currentGame.userIds.indexOf(currentGame.currentUser) ===
     currentGame.userIds.length - 1
   ) {
+    // prettier-ignore
+    const maxWordLength =
+      currentGame.level === "Casual"
+        ? 10
+        : currentGame.level === "Challenge"
+          ? 11
+          : 9;
+
     const shouldReduce = !activeGames[channelId]!.reduce;
 
     activeGames[channelId] = {
@@ -400,7 +408,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       usedWords,
       currentStartingLetter,
       currentWordMinLength: Math.min(
-        9,
+        maxWordLength,
         shouldReduce
           ? activeGames[channelId]!.currentWordMinLength + 1
           : activeGames[channelId]!.currentWordMinLength,

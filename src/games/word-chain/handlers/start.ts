@@ -42,7 +42,8 @@ const startHandler = (message: Message) => {
     longestWord: "",
     longestWordUserId: "",
     currentUser: message.author.id,
-    currentWordMinLength: 3,
+    currentWordMinLength:
+      level === "Casual" ? 4 : level === "Challenge" ? 5 : 3,
     currentStartingLetter: String.fromCodePoint(
       Math.floor(Math.random() * ("z".charCodeAt(0) - "a".charCodeAt(0) + 1)) +
         "a".charCodeAt(0),
