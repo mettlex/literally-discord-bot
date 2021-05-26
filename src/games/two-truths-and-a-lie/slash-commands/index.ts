@@ -98,6 +98,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
   const lieEmoji = emojis[lieIndex];
 
+  const truthEmojis = emojis.filter((emoji) => emoji !== lieEmoji);
+
   const embed = new MessageEmbed()
     .setColor(flatColors.blue)
     .setTitle("Two Truths & A Lie")
@@ -141,7 +143,24 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
   const lieReactions = collection.find((_, key) => key === lieEmoji);
 
-  const winners = lieReactions?.users.cache.filter((u) => !u.bot).array();
+  const truthReactionsArray = collection
+    .filter((_, key) => truthEmojis.includes(key))
+    .array();
+
+  const winners = lieReactions?.users.cache
+    .filter((u) => !u.bot)
+    .array()
+    .map((u) => u.id);
+
+  if (winners && winners.length > 0) {
+    for (const winner of winners) {
+      for (const truthReactions of truthReactionsArray) {
+        if (truthReactions.users.cache.get(winner)) {
+          winners.splice(winners.indexOf(winner), 1);
+        }
+      }
+    }
+  }
 
   if (!lieReactions || !winners || winners?.length === 0) {
     const embed = new MessageEmbed()
@@ -167,7 +186,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       .setColor(flatColors.green)
       .setTitle("Results | Two Truths & A Lie")
       .setDescription(`__Lie__: ${lie}`)
-      .addField("Winners", `${winners.map((u) => `<@${u.id}>`).join(", ")}`)
+      .addField("Winners", `${winners.map((id) => `<@${id}>`).join(", ")}`)
       .setFooter(`Speaker: ${ctx.user.username}#${ctx.user.discriminator}`);
 
     channel.send(embed).catch((e) => {
