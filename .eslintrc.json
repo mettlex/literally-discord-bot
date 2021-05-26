@@ -17,6 +17,7 @@
     "object-curly-spacing": "off",
     "no-unused-vars": "warn",
     "operator-linebreak": "off",
-    "quotes": ["error", "double", { "allowTemplateLiterals": true }]
+    "quotes": ["error", "double", { "allowTemplateLiterals": true }],
+    "require-jsdoc": "off"
   }
 }
