@@ -6,7 +6,9 @@ A Discord bot for various text-based games
 Create & Edit a `.env` file like below:
 
 ```
-TOKEN=paste discord bot token here
+TOKEN=paste the discord bot token here
+APP_ID=paste the application id here
+PUBLIC_KEY=paste the public key here
 ```
 
 ## Install Packages
