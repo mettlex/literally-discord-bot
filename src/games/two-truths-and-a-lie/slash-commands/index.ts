@@ -6,6 +6,7 @@ import {
   CommandContext,
   SlashCommand,
   CommandOptionType,
+  ApplicationCommandOption,
 } from "slash-create";
 import { getDiscordJSClient, getGuildIds } from "../../../app";
 import { shuffleArray } from "../../../utils/array";
@@ -15,21 +16,27 @@ const notInProduction = process.env.NODE_ENV !== "production";
 
 const logger = pino({ prettyPrint: notInProduction });
 
-const options = [
+const options: ApplicationCommandOption[] = [
   {
     type: CommandOptionType.STRING,
     name: "1st_truth",
     description: "Write the first truth",
+    required: true,
+    default: false,
   },
   {
     type: CommandOptionType.STRING,
     name: "2nd_truth",
     description: "Write the second truth",
+    required: true,
+    default: false,
   },
   {
     type: CommandOptionType.STRING,
     name: "a_lie",
     description: "Write a lie",
+    required: true,
+    default: false,
   },
 ];
 
@@ -41,7 +48,7 @@ export class TwoTruthsAndALieCommand extends SlashCommand {
         "Say two truths and a lie and your friends will guess the lie",
       options,
       guildIDs: getGuildIds(),
-      // throttling: { duration: 60, usages: 1 },
+      throttling: { duration: 60, usages: 1 },
     });
 
     this.filePath = __filename;
@@ -73,9 +80,13 @@ export class TwoTruthsAndALieCommand extends SlashCommand {
 }
 
 const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
-  const firstTruth = ctx.options[`${options[0].name}`] as string;
-  const secondTruth = ctx.options[`${options[1].name}`] as string;
-  const lie = ctx.options[`${options[2].name}`] as string;
+  const firstTruth = ctx.options[`${options[0]?.name}`] as string | undefined;
+  const secondTruth = ctx.options[`${options[1]?.name}`] as string | undefined;
+  const lie = ctx.options[`${options[2]?.name}`] as string | undefined;
+
+  if (!firstTruth || !secondTruth || !lie) {
+    return;
+  }
 
   const choices = [firstTruth, secondTruth, lie];
 
