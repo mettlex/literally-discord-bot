@@ -1,5 +1,5 @@
 # literally-discord-bot
-A Discord bot for various word games
+A Discord bot for various text-based games
 
 ## Environment variables
 

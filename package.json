@@ -1,7 +1,7 @@
 {
   "name": "literally-discord-bot",
   "version": "0.0.1",
-  "description": " A Discord bot for various word games",
+  "description": " A Discord bot for various text-based games",
   "main": "app.js",
   "scripts": {
     "start": "ts-node src/app.ts",
