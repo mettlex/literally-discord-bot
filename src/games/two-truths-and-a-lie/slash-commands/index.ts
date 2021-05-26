@@ -121,7 +121,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     (_reaction, user: User) => {
       return !user.bot && user.id !== ctx.user.id;
     },
-    { time: 5 * 1000 },
+    { time: 60 * 1000 },
   );
 
   message.delete().catch((e) => {
