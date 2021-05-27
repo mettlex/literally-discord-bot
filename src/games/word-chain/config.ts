@@ -1,4 +1,4 @@
-export const prefixes = ["wc.", "wc/", "wordchain.", "word-chain."];
+export const prefixes = ["wc.", "wc/", "wc!", "wordchain.", "word-chain."];
 
 export const secondsToJoin = 60;
 export const mediumTurnSeconds = [30, 25, 20];
