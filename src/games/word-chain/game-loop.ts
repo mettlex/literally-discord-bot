@@ -149,7 +149,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   const filter = (m: Message) =>
     m.author.id === currentGame!.currentUser && /^\w/gi.test(m.content);
 
-  const time = timeLeft || currentGameTurnSeconds * 1000;
+  const time = (timeLeft || currentGameTurnSeconds * 1000) + 1000;
 
   const waitingStartTime = new Date();
 
@@ -194,7 +194,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       currentUser: currentGame.userIds[nextPlayerIndex],
     };
 
-    embed2.addField("Next Player", `<@${currentGame.currentUser}>`);
+    embed2.addField("Next Player", `<@${activeGames[channelId]!.currentUser}>`);
 
     // elimination
     activeGames[channelId]!.userIds.splice(
@@ -264,14 +264,13 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     return;
   }
 
-  const word = currentPlayerMessage.content.split(" ")[0];
+  const word = currentPlayerMessage.content.split(" ")[0].replace(/[^\w]/g, "");
 
   const condition1 = !currentPlayerMessage.content
     .toLowerCase()
     .startsWith(currentGame.currentStartingLetter.toLowerCase());
 
-  const condition2 =
-    currentPlayerMessage.content.length < currentGame.currentWordMinLength;
+  const condition2 = word.length < currentGame.currentWordMinLength;
 
   const condition3 = !(await checkSpell(word));
 
