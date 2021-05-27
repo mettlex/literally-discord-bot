@@ -1,26 +1,29 @@
 import { Client } from "discord.js";
 import { SlashCreator } from "slash-create";
-import { TwoTruthsAndALieCommand } from "./slash-commands";
+import { getGuildIds } from "../../app";
+import { makeTwoTruthsAndALieCommand } from "./slash-commands";
+
+const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
+  creator.registerCommand(makeTwoTruthsAndALieCommand(guildIDs));
+};
 
 export const setupTwoTruthsAndALieGame = (
-  client: Client,
+  _client: Client,
   creator: SlashCreator,
 ) => {
-  const registerCommnads = () => {
-    creator.registerCommands([TwoTruthsAndALieCommand]);
-  };
+  let guildIDs = getGuildIds();
 
-  let guildIds = client.guilds.cache.map((g) => g.id);
-
-  registerCommnads();
+  registerCommnads(creator, guildIDs);
 
   setInterval(() => {
-    const newGuildIds = client.guilds.cache.map((g) => g.id);
+    const newGuildIds = getGuildIds();
 
-    const foundNewGuildIds = newGuildIds.filter((id) => !guildIds.includes(id));
+    const foundNewGuildIds = newGuildIds.filter((id) => !guildIDs.includes(id));
 
     if (foundNewGuildIds.length > 0) {
-      guildIds = newGuildIds;
+      guildIDs = newGuildIds;
+
+      registerCommnads(creator, foundNewGuildIds);
 
       creator.syncCommands({ syncGuilds: true });
     }

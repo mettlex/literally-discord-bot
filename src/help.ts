@@ -23,6 +23,10 @@ import {
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
+const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
+  creator.registerCommand(makeHelpSlashCommand(guildIDs));
+};
+
 export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
   client.on("message", (message) => {
     if (
@@ -34,13 +38,9 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     }
   });
 
-  const registerCommnads = () => {
-    creator.registerCommand(HelpSlashCommand);
-  };
+  let guildIds = getGuildIds();
 
-  let guildIds = client.guilds.cache.map((g) => g.id);
-
-  registerCommnads();
+  registerCommnads(creator, guildIds);
 
   setInterval(() => {
     const newGuildIds = client.guilds.cache.map((g) => g.id);
@@ -49,6 +49,8 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
 
     if (foundNewGuildIds.length > 0) {
       guildIds = newGuildIds;
+
+      registerCommnads(creator, foundNewGuildIds);
 
       creator.syncCommands({ syncGuilds: true });
     }
@@ -77,70 +79,71 @@ const options: ApplicationCommandOption[] = [
   },
 ];
 
-class HelpSlashCommand extends SlashCommand {
-  constructor(creator: SlashCreator) {
-    super(creator, {
-      name: "help",
-      description: `Display help menu for ${packageInfo.displayName} bot`,
-      options,
-      guildIDs: getGuildIds(),
-      throttling: { duration: 60, usages: 1 },
-    });
-
-    this.filePath = __filename;
-  }
-
-  async run(ctx: CommandContext) {
-    ctx.defer();
-
-    const interactionData = ctx.data as GuildInteractionRequestData;
-
-    if (!interactionData.guild_id) {
-      return;
-    }
-
-    const game = interactionData.data.options?.find(
-      (option) => option.name === options[0].name,
-    ) as CommandStringOption | undefined;
-
-    if (!game) {
-      return;
-    }
-
-    const gameValue = game.value as typeof gameValues[number];
-
-    const client = getDiscordJSClient();
-
-    const channel = client.guilds.cache
-      .get(interactionData.guild_id)
-      ?.channels.cache.find((c) => c.id === ctx.channelID);
-
-    if (!channel || channel.type !== "text") {
-      return;
-    }
-
-    await sendHelpMessage(
-      ctx.user.id,
-      channel as TextChannel,
-      gameValue,
-      client,
-    );
-
-    const tmpMessage = await ctx
-      .send("Check the help menu below 👇")
-      .catch((_e) => {
-        return false;
+const makeHelpSlashCommand = (guildIDs: string[]) =>
+  class HelpSlashCommand extends SlashCommand {
+    constructor(creator: SlashCreator) {
+      super(creator, {
+        name: "help",
+        description: `Display help menu for ${packageInfo.displayName} bot`,
+        options,
+        guildIDs,
+        throttling: { duration: 60, usages: 1 },
       });
 
-    if (typeof tmpMessage === "boolean") {
-      return "Some errors showed up!";
+      this.filePath = __filename;
     }
 
-    await sleep(3000);
+    async run(ctx: CommandContext) {
+      ctx.defer();
 
-    await tmpMessage.delete();
-  }
-}
+      const interactionData = ctx.data as GuildInteractionRequestData;
+
+      if (!interactionData.guild_id) {
+        return;
+      }
+
+      const game = interactionData.data.options?.find(
+        (option) => option.name === options[0].name,
+      ) as CommandStringOption | undefined;
+
+      if (!game) {
+        return;
+      }
+
+      const gameValue = game.value as typeof gameValues[number];
+
+      const client = getDiscordJSClient();
+
+      const channel = client.guilds.cache
+        .get(interactionData.guild_id)
+        ?.channels.cache.find((c) => c.id === ctx.channelID);
+
+      if (!channel || channel.type !== "text") {
+        return;
+      }
+
+      await sendHelpMessage(
+        ctx.user.id,
+        channel as TextChannel,
+        gameValue,
+        client,
+      );
+
+      const tmpMessage = await ctx
+        .send("Check the help menu below 👇")
+        .catch((_e) => {
+          return false;
+        });
+
+      if (typeof tmpMessage === "boolean") {
+        return "Some errors showed up!";
+      }
+
+      await sleep(3000);
+
+      await tmpMessage.delete();
+    }
+  };
 
 const sendHelpMessage = (
   userId: string,

@@ -16,8 +16,6 @@ if (!checkEnv()) {
 
 const client = new Client();
 
-let guildIds: string[] = [];
-
 client.once("ready", () => {
   const creator = new SlashCreator({
     applicationID: process.env.APP_ID || "",
@@ -40,8 +38,6 @@ client.once("ready", () => {
     logger.error(message);
   });
 
-  guildIds = client.guilds.cache.map((g) => g.id);
-
   setupWordChainGame(client);
   setupTwoTruthsAndALieGame(client, creator);
   setupHelpMenu(client, creator);
@@ -53,5 +49,5 @@ client.once("ready", () => {
 
 client.login(process.env.TOKEN);
 
-export const getGuildIds = () => guildIds;
+export const getGuildIds = () => client.guilds.cache.map((g) => g.id);
 export const getDiscordJSClient = () => client;

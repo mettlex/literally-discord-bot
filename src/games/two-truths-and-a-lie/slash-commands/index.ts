@@ -9,7 +9,7 @@ import {
   ApplicationCommandOption,
   SlashCommandOptions,
 } from "slash-create";
-import { getDiscordJSClient, getGuildIds } from "../../../app";
+import { getDiscordJSClient } from "../../../app";
 import { shuffleArray } from "../../../utils/array";
 import { flatColors } from "../../word-chain/config";
 
@@ -48,37 +48,39 @@ export const slashCommandOptions: SlashCommandOptions = {
   throttling: { duration: 60, usages: 1 },
 };
 
-export class TwoTruthsAndALieCommand extends SlashCommand {
-  constructor(creator: SlashCreator) {
-    super(creator, { ...slashCommandOptions, guildIDs: getGuildIds() });
+export const makeTwoTruthsAndALieCommand = (guildIDs: string[]) => {
+  return class TwoTruthsAndALieCommand extends SlashCommand {
+    constructor(creator: SlashCreator) {
+      super(creator, { ...slashCommandOptions, guildIDs });
 
-    this.filePath = __filename;
-  }
-
-  async run(ctx: CommandContext) {
-    ctx.defer(true);
-
-    const client = getDiscordJSClient();
-
-    const channel = client.channels.cache.get(ctx.channelID) as
-      | TextChannel
-      | undefined;
-
-    if (!channel) {
-      // eslint-disable-next-line max-len
-      return "There is an error getting the channel. Please report it to the developer.";
+      this.filePath = __filename;
     }
 
-    handleReactions(channel, ctx);
+    async run(ctx: CommandContext) {
+      ctx.defer(true);
 
-    return "Okay. Now wait for your friends to react.";
-  }
+      const client = getDiscordJSClient();
 
-  onError(err: Error, ctx: CommandContext) {
-    logger.info(ctx);
-    logger.error(err);
-  }
-}
+      const channel = client.channels.cache.get(ctx.channelID) as
+        | TextChannel
+        | undefined;
+
+      if (!channel) {
+        // eslint-disable-next-line max-len
+        return "There is an error getting the channel. Please report it to the developer.";
+      }
+
+      handleReactions(channel, ctx);
+
+      return "Okay. Now wait for your friends to react.";
+    }
+
+    onError(err: Error, ctx: CommandContext) {
+      logger.info(ctx);
+      logger.error(err);
+    }
+  };
+};
 
 const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   const firstTruth = ctx.options[`${options[0]?.name}`] as string | undefined;
