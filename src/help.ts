@@ -50,8 +50,6 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     if (foundNewGuildIds.length > 0) {
       guildIds = newGuildIds;
 
-      registerCommnads();
-
       creator.syncCommands({ syncGuilds: true });
     }
   }, 3000);

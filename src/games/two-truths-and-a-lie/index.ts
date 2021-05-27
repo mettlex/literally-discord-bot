@@ -22,8 +22,6 @@ export const setupTwoTruthsAndALieGame = (
     if (foundNewGuildIds.length > 0) {
       guildIds = newGuildIds;
 
-      registerCommnads();
-
       creator.syncCommands({ syncGuilds: true });
     }
   }, 3000);
