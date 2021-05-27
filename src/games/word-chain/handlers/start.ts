@@ -10,7 +10,7 @@ import { WordChainGameLevel } from "../types";
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 export const args: {
-  [key: string]: WordChainGameLevel;
+  [key: string]: WordChainGameLevel | undefined;
 } = {
   noob: "Noob",
   casual: "Casual",
@@ -31,7 +31,7 @@ const startHandler = (message: Message) => {
 
   const lastWord = message.content.split(" ").slice(-1)[0];
 
-  const level: WordChainGameLevel = args[lastWord.toLowerCase()];
+  const level = args[lastWord.toLowerCase()] || "Casual";
 
   const maxLives = level === "Noob" ? 3 : level === "Casual" ? 2 : 1;
 
