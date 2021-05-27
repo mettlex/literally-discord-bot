@@ -44,6 +44,11 @@ client.once("ready", () => {
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
+  client.user?.setActivity({
+    name: "/help",
+    type: "PLAYING",
+  });
+
   logger.info(`> discord bot is ready!`);
 });
 
