@@ -34,7 +34,27 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     }
   });
 
-  creator.registerCommand(HelpSlashCommand);
+  const registerCommnads = () => {
+    creator.registerCommand(HelpSlashCommand);
+  };
+
+  let guildIds = client.guilds.cache.map((g) => g.id);
+
+  registerCommnads();
+
+  setInterval(() => {
+    const newGuildIds = client.guilds.cache.map((g) => g.id);
+
+    const foundNewGuildIds = newGuildIds.filter((id) => !guildIds.includes(id));
+
+    if (foundNewGuildIds.length > 0) {
+      guildIds = newGuildIds;
+
+      registerCommnads();
+
+      creator.syncCommands({ syncGuilds: true });
+    }
+  }, 3000);
 };
 
 const gameValues = ["word_chain", "two_truths_and_a_lie"] as const;
