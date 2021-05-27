@@ -1,5 +1,6 @@
 {
   "name": "literally-discord-bot",
+  "displayName": "Literally",
   "version": "0.0.1",
   "description": " A Discord bot for various text-based games",
   "main": "app.js",
