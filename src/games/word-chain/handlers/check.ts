@@ -4,6 +4,12 @@ import { checkSpell } from "../spell-checker";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
+export const args: {
+  [word: string]: string;
+} = {
+  word: "Hello",
+};
+
 const testSpell = (
   message: Message,
   commands: string[],

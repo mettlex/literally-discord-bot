@@ -4,6 +4,7 @@ import { setupWordChainGame } from "./games/word-chain";
 import checkEnv from "./utils/check-env";
 import { setupTwoTruthsAndALieGame } from "./games/two-truths-and-a-lie";
 import { GatewayServer, SlashCreator } from "slash-create";
+import { setupHelpMenu } from "./help";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 
@@ -43,6 +44,7 @@ client.once("ready", () => {
 
   setupWordChainGame(client);
   setupTwoTruthsAndALieGame(client, creator);
+  setupHelpMenu(client, creator);
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 

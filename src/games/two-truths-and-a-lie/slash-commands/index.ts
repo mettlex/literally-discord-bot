@@ -7,6 +7,7 @@ import {
   SlashCommand,
   CommandOptionType,
   ApplicationCommandOption,
+  SlashCommandOptions,
 } from "slash-create";
 import { getDiscordJSClient, getGuildIds } from "../../../app";
 import { shuffleArray } from "../../../utils/array";
@@ -40,16 +41,16 @@ const options: ApplicationCommandOption[] = [
   },
 ];
 
+export const slashCommandOptions: SlashCommandOptions = {
+  name: "two_truths_and_a_lie",
+  description: "Say two truths and a lie and your friends will guess the lie",
+  options,
+  throttling: { duration: 60, usages: 1 },
+};
+
 export class TwoTruthsAndALieCommand extends SlashCommand {
   constructor(creator: SlashCreator) {
-    super(creator, {
-      name: "two_truths_and_a_lie",
-      description:
-        "Say two truths and a lie and your friends will guess the lie",
-      options,
-      guildIDs: getGuildIds(),
-      throttling: { duration: 60, usages: 1 },
-    });
+    super(creator, { ...slashCommandOptions, guildIDs: getGuildIds() });
 
     this.filePath = __filename;
   }
