@@ -1,5 +1,7 @@
+/* eslint-disable indent */
 import { stripIndents } from "common-tags";
-import { MessageEmbed, TextChannel, User } from "discord.js";
+import { differenceInSeconds } from "date-fns";
+import { MessageEmbed, MessageReaction, TextChannel, User } from "discord.js";
 import pino from "pino";
 import {
   SlashCreator,
@@ -103,12 +105,16 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
   const truthEmojis = emojis.filter((emoji) => emoji !== lieEmoji);
 
+  const timefieldLabel = "Time To React";
+  const maxTimeInSeconds = 60;
+
   const embed = new MessageEmbed()
     .setColor(flatColors.blue)
     .setTitle("Two Truths & A Lie")
-    .setAuthor(`${ctx.user.username} said:`)
     .setDescription(
       stripIndents`
+    **${ctx.user.mention} said:**
+
     ${emojis[0]} ${choices[0]}
 
     ${emojis[1]} ${choices[1]}
@@ -116,7 +122,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     ${emojis[2]} ${choices[2]}
     `,
     )
-    .addField("Time To React", "60 seconds")
+    .addField(timefieldLabel, `${maxTimeInSeconds} seconds`)
     .setFooter("Which one is a lie?");
 
   const message = await channel.send(embed).catch((e) => {
@@ -127,35 +133,102 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     return;
   }
 
-  const promises = emojis.map((emoji) => message.react(emoji));
+  const stopEmoji = "⏹️";
+
+  const promises = [...emojis, stopEmoji].map((emoji) => message.react(emoji));
 
   await Promise.all(promises).catch((e) => {
     logger.error(e);
   });
 
-  const collection = await message.awaitReactions(
-    (_reaction, user: User) => {
-      return !user.bot && user.id !== ctx.user.id;
-    },
-    { time: 60 * 1000 },
+  const oldDateTime = new Date();
+  let timeLeft = maxTimeInSeconds;
+  let interval2Cleared = false;
+
+  const interval1 = setInterval(() => {
+    timeLeft = maxTimeInSeconds - differenceInSeconds(new Date(), oldDateTime);
+
+    if (timeLeft <= 0) {
+      clearInterval(interval1);
+    }
+  }, 900);
+
+  const interval2 = setInterval(() => {
+    if (timeLeft >= 0) {
+      const field = embed.fields.find((f) => f.name === timefieldLabel);
+
+      field && (field.value = `${timeLeft} seconds`);
+
+      message.edit(embed);
+    } else {
+      try {
+        interval2Cleared = true;
+        clearInterval(interval2);
+      } catch (error) {
+        logger.error(error);
+      }
+    }
+  }, 3000);
+
+  const getSingleReaction = () =>
+    message
+      .awaitReactions(
+        (reaction: MessageReaction, user: User) => {
+          return (
+            !user.bot &&
+            ((user.id !== ctx.user.id && reaction.emoji.name !== stopEmoji) ||
+              (user.id === ctx.user.id && reaction.emoji.name === stopEmoji))
+          );
+        },
+        { time: timeLeft * 1000, max: 1 },
+      )
+      .then((c) => c.first())
+      .catch((e) => {
+        logger.error(e);
+        return undefined;
+      });
+
+  const reacttionsArray = [];
+
+  while (timeLeft > 0) {
+    const reaction = await getSingleReaction();
+
+    if (!reaction) {
+      continue;
+    }
+
+    if (
+      reaction.emoji.name === stopEmoji &&
+      reaction.users.cache.find((u) => u.id === ctx.user.id)
+    ) {
+      break;
+    }
+
+    reacttionsArray.push(reaction);
+  }
+
+  try {
+    await message.delete({ timeout: 15000 });
+    !interval2Cleared && clearInterval(interval2);
+  } catch (error) {
+    logger.error(error);
+  }
+
+  const reactions = reacttionsArray.filter((r) => r) as MessageReaction[];
+
+  const lieReactions = reactions.filter((r) => r && r.emoji.name === lieEmoji);
+
+  const truthReactionsArray = reactions.filter((r) =>
+    truthEmojis.includes(r.emoji.name || ""),
   );
 
-  message.delete().catch((e) => {
-    logger.error(e);
-  });
-
-  const lieReactions = collection.find((_, key) => key === lieEmoji);
-
-  const truthReactionsArray = collection
-    .filter((_, key) => truthEmojis.includes(key))
-    .array();
-
-  const winners = lieReactions?.users.cache
-    .filter((u) => !u.bot)
-    .array()
+  const winners = lieReactions
+    .map((r) => r.users.cache.array())
+    .flat()
+    .filter((u) => !u.bot && u.id !== ctx.user.id)
     .map((u) => u.id);
 
-  if (winners && winners.length > 0) {
+  if (winners && winners.length > 0 && truthReactionsArray) {
     for (const winner of winners) {
       for (const truthReactions of truthReactionsArray) {
         if (truthReactions.users.cache.get(winner)) {
@@ -172,10 +245,12 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       .setDescription(
         stripIndents`
         No one was able to detect which one is the lie.
-        __Lie__: ${lie}
+        
+        ${ctx.user.mention} told this lie:
+
+        **"${lie}"**
         `,
-      )
-      .setFooter(`Speaker: ${ctx.user.username}#${ctx.user.discriminator}`);
+      );
 
     channel.send(embed).catch((e) => {
       logger.error(e);
@@ -188,9 +263,20 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     const embed = new MessageEmbed()
       .setColor(flatColors.green)
       .setTitle("Results | Two Truths & A Lie")
-      .setDescription(`__Lie__: ${lie}`)
-      .addField("Winners", `${winners.map((id) => `<@${id}>`).join(", ")}`)
-      .setFooter(`Speaker: ${ctx.user.username}#${ctx.user.discriminator}`);
+      .setDescription(
+        stripIndents`
+          ${ctx.user.mention} told this lie:
+
+          **"${lie}"**
+
+          __**Winners:**__
+
+          ${winners
+            .slice(0, 30)
+            .map((id) => `<@${id}>`)
+            .join(", ")}
+        `,
+      );
 
     channel.send(embed).catch((e) => {
       logger.error(e);
