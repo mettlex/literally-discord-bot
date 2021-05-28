@@ -208,7 +208,14 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   }
 
   try {
-    await message.delete({ timeout: 15000 });
+    message.reactions.removeAll().catch((e) => {
+      logger.error(e);
+    });
+
+    message.delete({ timeout: 15000 }).catch((e) => {
+      logger.error(e);
+    });
+
     !interval2Cleared && clearInterval(interval2);
   } catch (error) {
     logger.error(error);
