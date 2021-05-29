@@ -267,6 +267,9 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   }
 
   {
+    // limiting to 30 winners at most
+    const winnerIds = Array.from(new Set(winners)).slice(0, 30);
+
     const embed = new MessageEmbed()
       .setColor(flatColors.green)
       .setTitle("Results | Two Truths & A Lie")
@@ -278,10 +281,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
           __**Winners:**__
 
-          ${winners
-            .slice(0, 30)
-            .map((id) => `<@${id}>`)
-            .join(", ")}
+          ${winnerIds.map((id) => `<@${id}>`).join(", ")}
         `,
       );
 
