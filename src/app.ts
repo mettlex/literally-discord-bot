@@ -1,3 +1,4 @@
+require("source-map-support").install();
 import pino from "pino";
 import { Client } from "discord.js";
 import { setupWordChainGame } from "./games/word-chain";
@@ -9,6 +10,10 @@ import { setupHelpMenu } from "./help";
 const notInProduction = process.env.NODE_ENV !== "production";
 
 const logger = pino({ prettyPrint: notInProduction });
+
+process.on("unhandledRejection", (reason) => reason && logger.error(reason));
+
+export const getAppRootDir = () => __dirname;
 
 if (!checkEnv()) {
   process.exit(1);
