@@ -3,7 +3,7 @@ import { setupGame } from "../setup";
 import { ActiveWordChainGames } from "./types";
 import { prefixes } from "./config";
 import start, { args as startArgs } from "./handlers/start";
-import join from "./handlers/join";
+import { join, joinUsingButton } from "./handlers/join";
 import check, { args as checkArgs } from "./handlers/check";
 import halt from "./handlers/halt";
 import {
@@ -12,6 +12,7 @@ import {
   stopUnlimitedMode,
 } from "./unlimited";
 import { stripIndents } from "common-tags";
+import { SlashCreator } from "slash-create";
 
 const activeGames: ActiveWordChainGames = {};
 
@@ -64,6 +65,13 @@ export const actions = [
   },
 ];
 
-export const setupWordChainGame = (client: Client) => {
+export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
+  creator.on("componentInteraction", async (ctx) => {
+    if (ctx.customID === "join_word_chain") {
+      await ctx.acknowledge();
+      joinUsingButton(ctx, client);
+    }
+  });
+
   setupGame(client, prefixes, actions, [handleMessageForUnlimitedMode]);
 };

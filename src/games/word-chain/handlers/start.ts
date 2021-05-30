@@ -1,7 +1,9 @@
 import { stripIndents } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
+import { ButtonStyle } from "slash-create";
 import { actions, getAllActiveGames } from "..";
+import { ExtendedTextChannel } from "../../../extension";
 import { shuffleArray } from "../../../utils/array";
 import { prefixes, secondsToJoin, flatColors } from "../config";
 import { changeTurn } from "../game-loop";
@@ -122,14 +124,33 @@ const startHandler = (message: Message) => {
       "How to join",
       `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${prefixes[0]}${
         joinAction.commands[joinAction.commands.length - 1]
-      }\` here in this channel to join`,
+      }\` here in this channel or tap on the button below to join.`,
     )
     .addField("Time Left", `${secondsToJoin} seconds`)
     .setColor(flatColors.yellow);
 
-  message.channel.send(embed).catch((e) => {
-    logger.error(e);
-  });
+  const channel = message.channel as ExtendedTextChannel;
+
+  channel
+    .sendWithComponents({
+      content: "",
+      options: { embed },
+      components: [
+        {
+          components: [
+            {
+              type: 2,
+              label: "Yes! Join Game!",
+              custom_id: "join_word_chain",
+              style: ButtonStyle.PRIMARY,
+            },
+          ],
+        },
+      ],
+    })
+    .catch((e) => {
+      logger.error(e);
+    });
 };
 
 export default startHandler;

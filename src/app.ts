@@ -43,7 +43,7 @@ client.once("ready", () => {
     logger.error(message);
   });
 
-  setupWordChainGame(client);
+  setupWordChainGame(client, creator);
   setupTwoTruthsAndALieGame(client, creator);
   setupHelpMenu(client, creator);
 
