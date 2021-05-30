@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import { Client, MessageEmbed, TextChannel } from "discord.js";
+import { Client, DMChannel, MessageEmbed, TextChannel } from "discord.js";
 import {
   ApplicationCommandOption,
   ButtonStyle,
@@ -27,7 +27,7 @@ import {
 } from "./games/two-truths-and-a-lie/slash-commands";
 import { prefixes } from "./config";
 import "./extension";
-import { ExtendedTextChannel } from "./extension";
+import { ExtendedDMChannel, ExtendedTextChannel } from "./extension";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
@@ -52,9 +52,11 @@ const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
 
 export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", async (ctx) => {
-    const channel = client.guilds.cache
-      .get(ctx.guildID || "")
-      ?.channels.cache.get(ctx.channelID) as TextChannel;
+    const channel =
+      (client.guilds.cache
+        .get(ctx.guildID || "")
+        ?.channels.cache.get(ctx.channelID) as TextChannel) ||
+      (client.channels.cache.get(ctx.channelID) as DMChannel);
 
     if (ctx.customID === helpButtons[0].custom_id) {
       await ctx.acknowledge();
@@ -74,16 +76,20 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
       return;
     }
 
-    const channel = message.channel as ExtendedTextChannel;
+    const channel = message.channel as ExtendedTextChannel | ExtendedDMChannel;
 
-    channel.sendWithComponents({
-      content: "**Please press a button below for instructions.**",
-      components: [
-        {
-          components: helpButtons,
-        },
-      ],
-    });
+    channel
+      .sendWithComponents({
+        content: "**Please press a button below for instructions.**",
+        components: [
+          {
+            components: helpButtons,
+          },
+        ],
+      })
+      .catch((e) => {
+        logger.error(e);
+      });
   });
 
   let guildIds = getGuildIds();
@@ -195,7 +201,7 @@ const makeHelpSlashCommand = (guildIDs: string[]) =>
 
 const sendHelpMessage = (
   userId: string,
-  channel: TextChannel,
+  channel: TextChannel | DMChannel,
   gameValue: typeof gameValues[number],
   client: Client,
 ) => {
