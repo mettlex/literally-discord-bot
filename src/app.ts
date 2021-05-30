@@ -50,7 +50,7 @@ client.once("ready", () => {
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
   client.user?.setActivity({
-    name: "/help",
+    name: "ly.help or /help",
     type: "PLAYING",
   });
 
