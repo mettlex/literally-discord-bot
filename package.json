@@ -45,7 +45,7 @@
     "got": "^11.8.2",
     "pino": "^6.11.3",
     "pino-pretty": "^4.8.0",
-    "slash-create": "^3.1.0",
+    "slash-create": "^3.2.3",
     "source-map-support": "^0.5.19",
     "spellchecker": "^3.7.1"
   }
