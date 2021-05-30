@@ -2,9 +2,11 @@
 import { Client, MessageEmbed, TextChannel } from "discord.js";
 import {
   ApplicationCommandOption,
+  ButtonStyle,
   CommandContext,
   CommandOptionType,
   CommandStringOption,
+  ComponentButton,
   GuildInteractionRequestData,
   SlashCommand,
   SlashCreator,
@@ -12,7 +14,10 @@ import {
 import { getDiscordJSClient, getGuildIds } from "./app";
 import packageInfo from "../package.json";
 import sleep from "./utils/sleep";
-import { flatColors, prefixes } from "./games/word-chain/config";
+import {
+  flatColors,
+  prefixes as wordchainPrefixes,
+} from "./games/word-chain/config";
 import { actions } from "./games/word-chain";
 import { stripIndents } from "common-tags";
 import pino from "pino";
@@ -20,22 +25,65 @@ import pino from "pino";
 import {
   slashCommandOptions as slashCommandOptionsForTwoTruthsAndALie,
 } from "./games/two-truths-and-a-lie/slash-commands";
+import { prefixes } from "./config";
+import "./extension";
+import { ExtendedTextChannel } from "./extension";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+
+const helpButtons: ComponentButton[] = [
+  {
+    type: 2,
+    label: "Word-Chain",
+    style: ButtonStyle.SUCCESS,
+    custom_id: "help_word_chain",
+  },
+  {
+    type: 2,
+    label: "Two Truths & A Lie",
+    style: ButtonStyle.SUCCESS,
+    custom_id: "help_two_truths_and_a_lie",
+  },
+];
 
 const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
   creator.registerCommand(makeHelpSlashCommand(guildIDs));
 };
 
 export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
+  creator.on("componentInteraction", async (ctx) => {
+    const channel = client.guilds.cache
+      .get(ctx.guildID || "")
+      ?.channels.cache.get(ctx.channelID) as TextChannel;
+
+    if (ctx.customID === helpButtons[0].custom_id) {
+      await ctx.acknowledge();
+      sendHelpMessage(ctx.user.id, channel, "word_chain", client);
+    } else if (ctx.customID === helpButtons[1].custom_id) {
+      await ctx.acknowledge();
+      sendHelpMessage(ctx.user.id, channel, "two_truths_and_a_lie", client);
+    }
+  });
+
   client.on("message", (message) => {
     if (
       message.author.bot ||
-      !message.mentions.users.find((u) => u.id === client.user?.id) ||
+      !prefixes.find((p) => message.content.toLowerCase().startsWith(p)) ||
       !message.content.toLowerCase().trim().endsWith("help")
     ) {
       return;
     }
+
+    const channel = message.channel as ExtendedTextChannel;
+
+    channel.sendWithComponents({
+      content: "**Please press a button below for instructions.**",
+      components: [
+        {
+          components: helpButtons,
+        },
+      ],
+    });
   });
 
   let guildIds = getGuildIds();
@@ -185,7 +233,7 @@ const sendHelpMessage = (
                   ? `> ${action.description.replace("\n", "\n> ")}`
                   : ""
               }
-              > e.g. \`${prefixes[0]}${action.commands[0]}${
+              > e.g. \`${wordchainPrefixes[0]}${action.commands[0]}${
               action.args ? ` ${action.args[Object.keys(action.args)[0]]}` : ""
             }\`
             `,
@@ -198,7 +246,7 @@ const sendHelpMessage = (
       .addFields([
         {
           name: "Prefixes",
-          value: prefixes.map((p) => `\`${p}\``).join(", "),
+          value: wordchainPrefixes.map((p) => `\`${p}\``).join(", "),
           inline: false,
         },
       ]);
