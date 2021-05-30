@@ -59,10 +59,10 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
       (client.channels.cache.get(ctx.channelID) as DMChannel);
 
     if (ctx.customID === helpButtons[0].custom_id) {
-      await ctx.acknowledge();
+      await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "word_chain", client);
     } else if (ctx.customID === helpButtons[1].custom_id) {
-      await ctx.acknowledge();
+      await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "two_truths_and_a_lie", client);
     }
   });

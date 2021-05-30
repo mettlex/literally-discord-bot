@@ -67,9 +67,11 @@ export const actions = [
 
 export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", async (ctx) => {
-    if (ctx.customID === "join_word_chain") {
-      await ctx.acknowledge();
+    if (ctx.customID === "join_word_chain" && ctx.member) {
+      await ctx.send(`${ctx.member.nick || ctx.user.username} is joining.`);
       joinUsingButton(ctx, client);
+    } else {
+      ctx.acknowledge();
     }
   });
 
