@@ -1,4 +1,4 @@
-import { stripIndents } from "common-tags";
+import { oneLine, stripIndents } from "common-tags";
 import { differenceInMilliseconds, differenceInSeconds } from "date-fns";
 import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
@@ -25,14 +25,14 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   }
 
   // prettier-ignore
-  const turnSeconds =
-    currentGame.level === "Casual"
+  const turnSeconds: number[] =
+    currentGame.mode === "Casual"
       ? mediumTurnSeconds
-      : currentGame.level === "Noob"
+      : currentGame.mode === "Noob"
         ? easyTurnSeconds
-        : currentGame.level === "Challenge"
+        : currentGame.mode === "Challenge"
           ? hardTurnSeconds
-          : mediumTurnSeconds;
+          : [45];
 
   const currentGameTurnSeconds =
     turnSeconds[currentGame.roundIndex] || turnSeconds[turnSeconds.length - 1];
@@ -88,7 +88,19 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         "Minimum Word Length",
         `**${currentGame.currentWordMinLength}** characters`,
         true,
-      )
+      );
+
+    if (currentGame.mode === "Banned Letters") {
+      embed1.addField(
+        currentGame.mode,
+        activeGames[channelId]!.bannedLetters.map((l) => l.toUpperCase()).join(
+          ", ",
+        ),
+        true,
+      );
+    }
+
+    embed1
       .addField("Time Left", `**${currentGameTurnSeconds}** seconds`)
       .setColor(flatColors.blue);
 
@@ -276,7 +288,13 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
   const condition4 = currentGame.usedWords.includes(word.toLowerCase());
 
-  if (condition1 || condition2 || condition3 || condition4) {
+  const condition5 =
+    currentGame.mode === "Banned Letters" &&
+    currentGame.bannedLetters.find((l) =>
+      word.toLowerCase().includes(l.toLowerCase()),
+    );
+
+  if (condition1 || condition2 || condition3 || condition4 || condition5) {
     let reason = `__Reason__: `;
 
     if (condition1) {
@@ -289,6 +307,9 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       reason += `The word isn't recognized by Hunspell & Wikitionary.`;
     } else if (condition4) {
       reason += `The word was already used before.`;
+    } else if (condition5) {
+      reason += oneLine`It includes '**${condition5.toUpperCase()}**' 
+      which is a banned letter.`;
     }
 
     const elapsedTime = differenceInMilliseconds(new Date(), waitingStartTime);
@@ -310,7 +331,19 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       .addField(
         "Minimum Word Length",
         `**${currentGame.currentWordMinLength}** characters`,
-      )
+      );
+
+    if (currentGame.mode === "Banned Letters") {
+      embed3.addField(
+        currentGame.mode,
+        activeGames[channelId]!.bannedLetters.map((l) => l.toUpperCase()).join(
+          ", ",
+        ),
+        true,
+      );
+    }
+
+    embed3
       .addField("Time Left", `**${turnSecondsLeft}** seconds`)
       .setColor(flatColors.red);
 
@@ -389,13 +422,70 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     currentGame.userIds.indexOf(currentGame.currentUser) ===
     currentGame.userIds.length - 1
   ) {
+    if (
+      currentGame.mode === "Banned Letters" &&
+      activeGames[channelId]!.bannedLetters.length < 10
+    ) {
+      if (activeGames[channelId]!.shouldAddBannedLetter) {
+        const lettersToBan = usedWords
+          .join("")
+          .toLowerCase()
+          .split("")
+          .filter(
+            (l) =>
+              l !== currentStartingLetter &&
+              !activeGames[channelId]!.bannedLetters.find((bl) => bl === l),
+          );
+
+        const letterFrequencies: { [letter: string]: number } = {};
+
+        for (let i = 0; i < lettersToBan.length; i++) {
+          if (letterFrequencies[lettersToBan[i]]) {
+            continue;
+          }
+
+          letterFrequencies[lettersToBan[i]] = lettersToBan.filter(
+            (l) => l === lettersToBan[i],
+          ).length;
+        }
+
+        const leastUsedLetter = Object.entries(letterFrequencies).find(
+          (entry) => entry[1] === Math.min(...Object.values(letterFrequencies)),
+        )![0];
+
+        activeGames[channelId] = {
+          ...activeGames[channelId]!,
+          bannedLetters: [
+            leastUsedLetter,
+            ...activeGames[channelId]!.bannedLetters,
+          ],
+        };
+
+        message.channel.send(
+          new MessageEmbed()
+            .setColor(flatColors.yellow)
+            .setTitle(`New Banned Letter: ${leastUsedLetter.toUpperCase()}`)
+            .setDescription(
+              oneLine`So far one of the least used letters is
+              **${leastUsedLetter.toUpperCase()}**
+              so you can't use it anymore.`,
+            ),
+        );
+      }
+
+      activeGames[channelId]!.shouldAddBannedLetter =
+        !activeGames[channelId]!.shouldAddBannedLetter;
+    }
+
     // prettier-ignore
     const maxWordLength =
-      currentGame.level === "Casual"
+      currentGame.mode === "Casual"
         ? 10
-        : currentGame.level === "Challenge"
+        : currentGame.mode === "Challenge"
           ? 11
-          : 9;
+          : currentGame.mode === "Banned Letters"
+            ? 7
+            : 9;
 
     const shouldReduce = !activeGames[channelId]!.reduce;
 

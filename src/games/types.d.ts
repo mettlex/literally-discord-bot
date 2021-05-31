@@ -7,4 +7,5 @@ export interface Action {
     commands: Action["commands"],
     messageContentWithoutPrefix: string,
   ) => void;
+  [key: string]: any;
 }

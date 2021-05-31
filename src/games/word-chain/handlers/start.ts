@@ -7,16 +7,18 @@ import { ExtendedTextChannel } from "../../../extension";
 import { shuffleArray } from "../../../utils/array";
 import { prefixes, secondsToJoin, flatColors } from "../config";
 import { changeTurn } from "../game-loop";
-import { WordChainGameLevel } from "../types";
+import { WordChainGameMode } from "../types";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 export const args: {
-  [key: string]: WordChainGameLevel | undefined;
+  [key: string]: WordChainGameMode | undefined;
 } = {
   noob: "Noob",
   casual: "Casual",
   challenge: "Challenge",
+  ["banned letters"]: "Banned Letters",
+  bl: "Banned Letters",
 };
 
 const startHandler = (message: Message) => {
@@ -33,9 +35,19 @@ const startHandler = (message: Message) => {
 
   const lastWord = message.content.split(" ").slice(-1)[0];
 
-  const level = args[lastWord.toLowerCase()] || "Casual";
+  const mode =
+    args[lastWord.toLowerCase()] ||
+    (message.content.toLowerCase().endsWith("banned letters") &&
+      "Banned Letters") ||
+    "Casual";
 
-  const maxLives = level === "Noob" ? 3 : level === "Casual" ? 2 : 1;
+  // prettier-ignore
+  const maxLives =
+    mode === "Casual"
+      ? 2:
+      mode === "Noob" || mode === "Banned Letters"
+        ? 3
+        : 1;
 
   activeGames[channelId] = {
     gameStartedAt: new Date(),
@@ -44,8 +56,7 @@ const startHandler = (message: Message) => {
     longestWord: "",
     longestWordUserId: "",
     currentUser: message.author.id,
-    currentWordMinLength:
-      level === "Casual" ? 4 : level === "Challenge" ? 5 : 3,
+    currentWordMinLength: mode === "Casual" ? 4 : mode === "Challenge" ? 5 : 3,
     currentStartingLetter: String.fromCodePoint(
       Math.floor(Math.random() * ("z".charCodeAt(0) - "a".charCodeAt(0) + 1)) +
         "a".charCodeAt(0),
@@ -53,12 +64,33 @@ const startHandler = (message: Message) => {
     roundIndex: 0,
     usedWords: [],
     reduce: false,
-    level,
+    mode,
     maxLives,
     playerLives: {
       [message.author.id]: maxLives,
     },
+    bannedLetters: [],
+    shouldAddBannedLetter: false,
   };
+
+  if (mode === "Banned Letters") {
+    const codeForA = "a".charCodeAt(0);
+
+    const letters = new Array(26)
+      .fill(null)
+      .map((_, i) => String.fromCharCode(codeForA + i));
+
+    const lettersToBan = letters.filter(
+      (l) => l !== activeGames[channelId]!.currentStartingLetter,
+    );
+
+    const bannedLetterIndex = Math.floor(Math.random() * lettersToBan.length);
+
+    activeGames[channelId] = {
+      ...activeGames[channelId]!,
+      bannedLetters: [lettersToBan[bannedLetterIndex]],
+    };
+  }
 
   const tid = setTimeout(async () => {
     if (activeGames[channelId]) {
@@ -118,7 +150,19 @@ const startHandler = (message: Message) => {
       stripIndents`${message.author} is starting a word-chain game.
       You may join to start playing together.`,
     )
-    .addField("Mode", activeGames[channelId]!.level, true)
+    .addField("Mode", activeGames[channelId]!.mode, true);
+
+  if (mode === "Banned Letters") {
+    embed.addField(
+      mode,
+      activeGames[channelId]!.bannedLetters.map(
+        (l) => `${l.toUpperCase()} / ${l.toLowerCase()}`,
+      ).join(", "),
+      true,
+    );
+  }
+
+  embed
     .addField("Max Lives", `${activeGames[channelId]!.maxLives}`, true)
     .addField(
       "How to join",
