@@ -84,6 +84,11 @@ export const join = (message: Message) => {
 };
 
 export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
+  if (!ctx.member) {
+    ctx.acknowledge();
+    return;
+  }
+
   const joinAction = actions.find((a) => a.commands.includes("join"))!;
 
   const channelId = ctx.channelID;
@@ -95,6 +100,8 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
   const activeGames = getAllActiveGames();
 
   if (!activeGames[channelId]?.joinable) {
+    ctx.acknowledge();
+
     const embed = new MessageEmbed()
       .setDescription(`The game is not joinable. ${player.mention}`)
       .setColor(flatColors.red);
@@ -108,8 +115,11 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
 
   if (activeGames[channelId]) {
     if (activeGames[channelId]!.userIds.includes(player.id)) {
+      ctx.acknowledge();
       return;
     }
+
+    ctx.send(`${ctx.member.nick || ctx.user.username} is joining.`);
 
     activeGames[channelId] = {
       ...activeGames[channelId]!,
@@ -126,7 +136,7 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
         "How to join",
         `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${prefixes[0]}${
           joinAction.commands[joinAction.commands.length - 1]
-        }\` here in this channel to join`,
+        }\` here in this channel to join or tap on the button below.`,
       )
       .addField(
         "Time left to join",
