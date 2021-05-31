@@ -13,6 +13,7 @@ import {
 } from "./unlimited";
 import { stripIndents } from "common-tags";
 import { SlashCreator } from "slash-create";
+import help from "./handlers/help";
 
 const activeGames: ActiveWordChainGames = {};
 
@@ -65,6 +66,8 @@ export const actions = [
   },
 ];
 
+const helpAction = { commands: ["help", "help me"], handler: help };
+
 export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", async (ctx) => {
     if (ctx.customID === "join_word_chain" && ctx.member) {
@@ -74,5 +77,10 @@ export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
     }
   });
 
-  setupGame(client, prefixes, actions, [handleMessageForUnlimitedMode]);
+  setupGame(
+    client,
+    prefixes,
+    [...actions, helpAction],
+    [handleMessageForUnlimitedMode],
+  );
 };
