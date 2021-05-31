@@ -199,7 +199,7 @@ const makeHelpSlashCommand = (guildIDs: string[]) =>
     }
   };
 
-const sendHelpMessage = (
+export const sendHelpMessage = (
   userId: string,
   channel: TextChannel | DMChannel,
   gameValue: typeof gameValues[number],
@@ -280,7 +280,7 @@ const sendHelpMessage = (
     return;
   }
 
-  channel.send(embed).catch((e) => {
+  channel.send({ embed, content: `<@${userId}>, here.` }).catch((e) => {
     logger.error(e);
   });
 };
