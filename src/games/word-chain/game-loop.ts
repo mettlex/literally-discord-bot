@@ -1,8 +1,11 @@
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInMilliseconds, differenceInSeconds } from "date-fns";
-import { Message, MessageEmbed } from "discord.js";
+import { Message, MessageEmbed, User } from "discord.js";
 import pino from "pino";
+import { Client as UNBClient } from "unb-api";
 import { getAllActiveGames, getCurrentGame } from ".";
+import { addToCashBalance, checkPermission, getGuild } from "../../economy/unb";
+import { UNBServerConfig } from "../../economy/unb/types";
 import {
   mediumTurnSeconds,
   flatColors,
@@ -12,6 +15,57 @@ import {
 import { checkSpell } from "./spell-checker";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+
+const rewardCoins = async (user: User, message: Message) => {
+  if (!message.guild) {
+    return;
+  }
+
+  // eslint-disable-next-line max-len
+  const config: UNBServerConfig = require("../../economy/unb/server-config.json");
+
+  const amount = config[message.guild.id]?.wcWinReward?.cash;
+
+  if (!amount) {
+    return;
+  }
+
+  const unbclient = new UNBClient(process.env.UNBELIEVABOAT_API_TOKEN || "");
+
+  const permission = checkPermission(unbclient, message.guild.id);
+
+  if (!permission) {
+    return;
+  }
+
+  const unbUser = await addToCashBalance(
+    unbclient,
+    message.guild.id,
+    user.id,
+    amount,
+  );
+
+  if (!unbUser) {
+    return;
+  }
+
+  const unbGuild = await getGuild(unbclient, message.guild.id);
+
+  if (!unbGuild) {
+    return;
+  }
+
+  message.reply(
+    new MessageEmbed()
+      .setColor(flatColors.green)
+      .setTitle("Reward!")
+      .setDescription(
+        `${user} has received ${
+          unbGuild.currencySymbol
+        }${amount.toLocaleString()} as a reward!`,
+      ),
+  );
+};
 
 export const changeTurn = async (message: Message, timeLeft?: number) => {
   const channelId = message.channel.id;
@@ -57,6 +111,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       embed.setThumbnail(
         winner.avatarURL({ dynamic: true }) || winner.defaultAvatarURL,
       );
+
+      rewardCoins(winner, message);
     }
 
     if (currentGame.longestWord) {
