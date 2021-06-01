@@ -1,6 +1,8 @@
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInMilliseconds, differenceInSeconds } from "date-fns";
 import { Message, MessageEmbed, User } from "discord.js";
+import { readFileSync } from "fs";
+import path from "path";
 import pino from "pino";
 import { Client as UNBClient } from "unb-api";
 import { getAllActiveGames, getCurrentGame } from ".";
@@ -22,7 +24,18 @@ const rewardCoins = async (user: User, message: Message) => {
   }
 
   // eslint-disable-next-line max-len
-  const config: UNBServerConfig = require("../../economy/unb/server-config.json");
+  const config: UNBServerConfig = JSON.parse(
+    readFileSync(
+      path.resolve(__dirname, "..", "..", "economy/unb/server-config.json"),
+      {
+        encoding: "utf-8",
+      },
+    ),
+  );
+
+  if (!config) {
+    return;
+  }
 
   const amount = config[message.guild.id]?.wcWinReward?.cash;
 

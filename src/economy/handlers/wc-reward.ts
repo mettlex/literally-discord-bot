@@ -1,5 +1,5 @@
 import { Message } from "discord.js";
-import { writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { Client } from "unb-api";
 import { UNBServerConfig } from "../unb/types";
@@ -7,12 +7,14 @@ import { UNBServerConfig } from "../unb/types";
 const filePath = path.resolve(__dirname, "..", "unb", "server-config.json");
 
 export const setCashReward = async (_client: Client, message: Message) => {
-  if (!message.guild) {
+  if (!message.guild || !message.member?.hasPermission("ADMINISTRATOR")) {
     return;
   }
 
   // eslint-disable-next-line max-len
-  let config: UNBServerConfig = require(filePath);
+  let config: UNBServerConfig = JSON.parse(
+    readFileSync(filePath, { encoding: "utf-8" }),
+  );
 
   const amount = parseInt(message.content.split(" ").splice(-1)[0]);
 
@@ -41,7 +43,7 @@ export const setCashReward = async (_client: Client, message: Message) => {
       encoding: "utf-8",
     });
 
-    await message.react("✅️");
+    await message.react("✅");
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
