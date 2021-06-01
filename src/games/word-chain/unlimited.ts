@@ -16,6 +16,59 @@ const fieldNameForLastCorrectMessageId = "Last Correct Message ID";
 const fieldNameForLongestWord = "Longest Word";
 const fieldNameForLongestWordAuthor = "Longest Word Author";
 
+const numberEmojis = [
+  {
+    number: 0,
+    string: "0",
+    emojis: ["0️⃣", "⭕️", "🅾️", "👌"],
+  },
+  {
+    number: 1,
+    string: "1",
+    emojis: ["1️⃣", "🥇", "👆", "☝️"],
+  },
+  {
+    number: 2,
+    string: "2",
+    emojis: ["2️⃣", "✌️", "🥈", "🤘"],
+  },
+  {
+    number: 3,
+    string: "3",
+    emojis: ["3️⃣", "🥉", "🤟", "🚦"],
+  },
+  {
+    number: 4,
+    string: "4",
+    emojis: ["4️⃣", "🍀", "🕓", "👨‍👩‍👧‍👦"],
+  },
+  {
+    number: 5,
+    string: "5",
+    emojis: ["5️⃣", "🖐", "✋️", "🤚"],
+  },
+  {
+    number: 6,
+    string: "6",
+    emojis: ["6️⃣", "🕕", "🔯", "✡️"],
+  },
+  {
+    number: 7,
+    string: "7",
+    emojis: ["7️⃣", "🕖", "🕢", "🌈"],
+  },
+  {
+    number: 8,
+    string: "8",
+    emojis: ["8️⃣", "🎱", "🕗", "✴️"],
+  },
+  {
+    number: 9,
+    string: "9",
+    emojis: ["9️⃣", "🕘", "🕤"],
+  },
+];
+
 const findThePinnedMessage = async (message: Message) => {
   const pinnedMessageCollection = await message.channel.messages
     .fetchPinned(false)
@@ -474,9 +527,34 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       };
     }
 
-    message.react("✅").catch((e) => {
+    const connectedWordCountEmojis: typeof numberEmojis = activeWordChains[
+      channelId
+    ]!.connectedChainWords.toString()
+      .split("")
+      .map(
+        (numberAsString) =>
+          numberEmojis.find((ne) => ne.string === numberAsString)!,
+      );
+
+    await message.react("✅").catch((e) => {
       logger.error(e);
     });
+
+    const usedEmojis: string[] = [];
+
+    for (const ne of connectedWordCountEmojis) {
+      for (const emoji of ne.emojis) {
+        if (!usedEmojis.includes(emoji)) {
+          await message.react(emoji).catch((e) => {
+            logger.error(e);
+          });
+
+          usedEmojis.push(emoji);
+
+          break;
+        }
+      }
+    }
 
     setDataInThePinnedMessage(message, activeWordChains[channelId]!);
   } else {
