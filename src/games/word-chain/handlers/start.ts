@@ -1,7 +1,7 @@
 import { stripIndents } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
-import { ButtonStyle } from "slash-create";
+import { ButtonStyle, ComponentButton, ComponentType } from "slash-create";
 import { actions, getAllActiveGames } from "..";
 import { ExtendedTextChannel } from "../../../extension";
 import { shuffleArray } from "../../../utils/array";
@@ -38,8 +38,37 @@ const startHandler = (message: Message) => {
   const mode =
     args[lastWord.toLowerCase()] ||
     (message.content.toLowerCase().endsWith("banned letters") &&
-      "Banned Letters") ||
-    "Casual";
+      "Banned Letters");
+
+  if (!mode) {
+    const channel = message.channel as ExtendedTextChannel;
+
+    const buttons: ComponentButton[] = Array.from(new Set(Object.values(args)))
+      .filter((b) => typeof b !== "undefined")
+      .map((b) => ({
+        type: ComponentType.BUTTON,
+        style: ButtonStyle.PRIMARY,
+        custom_id: `wc_start_${
+          Object.entries(args).find(([_key, value]) => value === b)![0]
+        }_${message.id}`,
+        label: b!,
+      }));
+
+    channel
+      .sendWithComponents({
+        content: "**Select a game mode**",
+        components: [
+          {
+            components: buttons,
+          },
+        ],
+      })
+      .catch((e) => {
+        logger.error(e);
+      });
+
+    return;
+  }
 
   // prettier-ignore
   const maxLives =

@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import { Client, TextChannel } from "discord.js";
 import { setupGame } from "../setup";
 import { ActiveWordChainGames } from "./types";
 import { prefixes } from "./config";
@@ -70,6 +70,43 @@ const helpAction = { commands: ["help", "help me"], handler: help };
 
 export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", async (ctx) => {
+    if (ctx.customID.startsWith(`wc_start`)) {
+      ctx.acknowledge();
+
+      const messageId = ctx.customID.split("_").slice(-1)[0];
+
+      const channel = client.channels.cache.get(ctx.channelID) as TextChannel;
+
+      if (channel.type !== "text") {
+        return;
+      }
+
+      const message = channel.messages.cache.get(messageId);
+
+      if (!message || message.author.id !== ctx.user.id) {
+        return;
+      }
+
+      let mode = "";
+
+      for (const key in startArgs) {
+        if (ctx.customID.includes(key)) {
+          mode = key;
+          break;
+        }
+      }
+
+      if (!mode) {
+        return;
+      }
+
+      message.content += `${message.content} ${mode}`;
+
+      start(message);
+
+      return;
+    }
+
     if (ctx.customID === "join_word_chain" && ctx.member) {
       joinUsingButton(ctx, client);
     } else {
