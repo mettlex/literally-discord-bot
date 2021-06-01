@@ -423,7 +423,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   ) {
     if (
       currentGame.mode === "Banned Letters" &&
-      activeGames[channelId]!.bannedLetters.length < 10
+      activeGames[channelId]!.bannedLetters.length < 13
     ) {
       if (activeGames[channelId]!.shouldAddBannedLetter) {
         const lettersToBan = usedWords
