@@ -2,9 +2,15 @@ import { Message } from "discord.js";
 import { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { Client } from "unb-api";
+import { getAppRootDir } from "../../app";
 import { UNBServerConfig } from "../unb/types";
 
-const filePath = path.resolve(__dirname, "..", "unb", "server-config.json");
+const filePath = path.resolve(
+  getAppRootDir(),
+  "economy",
+  "unb",
+  "server-config.json",
+);
 
 export const setCashReward = async (_client: Client, message: Message) => {
   if (!message.guild || !message.member?.hasPermission("ADMINISTRATOR")) {

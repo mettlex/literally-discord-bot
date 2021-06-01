@@ -6,6 +6,7 @@ import path from "path";
 import pino from "pino";
 import { Client as UNBClient } from "unb-api";
 import { getAllActiveGames, getCurrentGame } from ".";
+import { getAppRootDir } from "../../app";
 import { addToCashBalance, checkPermission, getGuild } from "../../economy/unb";
 import { UNBServerConfig } from "../../economy/unb/types";
 import {
@@ -15,6 +16,7 @@ import {
   hardTurnSeconds,
 } from "./config";
 import { checkSpell } from "./spell-checker";
+import "../../economy/unb/server-config.json";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
@@ -26,7 +28,7 @@ const rewardCoins = async (user: User, message: Message) => {
   // eslint-disable-next-line max-len
   const config: UNBServerConfig = JSON.parse(
     readFileSync(
-      path.resolve(__dirname, "..", "..", "economy/unb/server-config.json"),
+      path.resolve(getAppRootDir(), "economy/unb/server-config.json"),
       {
         encoding: "utf-8",
       },
