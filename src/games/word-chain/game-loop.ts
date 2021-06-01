@@ -2,7 +2,6 @@ import { oneLine, stripIndents } from "common-tags";
 import { differenceInMilliseconds, differenceInSeconds } from "date-fns";
 import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
-import { clearInterval } from "timers";
 import { getAllActiveGames, getCurrentGame } from ".";
 import {
   mediumTurnSeconds,
