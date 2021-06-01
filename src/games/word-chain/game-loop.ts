@@ -37,7 +37,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     turnSeconds[currentGame.roundIndex] || turnSeconds[turnSeconds.length - 1];
 
   if (currentGame.userIds.length === 1) {
-    activeGames[channelId] = undefined;
+    logger.info(currentGame);
 
     const winnerUserId = currentGame.userIds[0];
 
@@ -52,6 +52,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       .setColor(flatColors.green);
 
     if (winner) {
+      logger.info(winner);
+
       embed.setThumbnail(
         winner.avatarURL({ dynamic: true }) || winner.defaultAvatarURL,
       );
@@ -67,6 +69,9 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     message.channel.send({ embed }).catch((e) => {
       logger.error(e);
     });
+
+    activeGames[channelId] = undefined;
+    currentGame = undefined;
 
     return;
   }
