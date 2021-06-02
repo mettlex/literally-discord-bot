@@ -1,6 +1,5 @@
 import { stripIndents } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
-import pino from "pino";
 import { ButtonStyle, ComponentButton, ComponentType } from "slash-create";
 import { actions, getAllActiveGames } from "..";
 import { ExtendedTextChannel } from "../../../extension";
@@ -8,8 +7,6 @@ import { shuffleArray } from "../../../utils/array";
 import { prefixes, secondsToJoin, flatColors } from "../config";
 import { changeTurn } from "../game-loop";
 import { WordChainGameMode } from "../types";
-
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 export const args: {
   [key: string]: WordChainGameMode | undefined;
@@ -64,7 +61,8 @@ const startHandler = (message: Message) => {
         ],
       })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
 
     return;
@@ -142,7 +140,8 @@ const startHandler = (message: Message) => {
           .setColor(flatColors.red);
 
         message.channel.send({ embed: embed1 }).catch((e) => {
-          logger.error(e);
+          // eslint-disable-next-line no-console
+          console.error(e);
         });
 
         activeGames[channelId] = undefined;
@@ -164,7 +163,8 @@ const startHandler = (message: Message) => {
         .setColor(flatColors.green);
 
       message.channel.send({ embed: embed1 }).catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
 
       await changeTurn(message);
@@ -222,7 +222,8 @@ const startHandler = (message: Message) => {
       ],
     })
     .catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 };
 

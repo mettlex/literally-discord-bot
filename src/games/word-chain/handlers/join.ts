@@ -1,12 +1,9 @@
 import { addSeconds, differenceInSeconds } from "date-fns";
 import { Client, Message, MessageEmbed } from "discord.js";
-import pino from "pino";
 import { prefixes, secondsToJoin, flatColors } from "../config";
 import { actions, getAllActiveGames } from "..";
 import { ButtonStyle, ComponentContext } from "slash-create";
 import { ExtendedTextChannel } from "../../../extension";
-
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 export const join = (message: Message) => {
   const joinAction = actions.find((a) => a.commands.includes("join"))!;
@@ -21,7 +18,8 @@ export const join = (message: Message) => {
       .setColor(flatColors.red);
 
     message.reply(embed).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     return;
@@ -78,7 +76,8 @@ export const join = (message: Message) => {
         ],
       })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
   }
 };
@@ -107,7 +106,8 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
       .setColor(flatColors.red);
 
     channel.send({ embed, content: `${player.mention}` }).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     return;
@@ -165,7 +165,8 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
         ],
       })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
   }
 };

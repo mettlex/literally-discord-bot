@@ -17,7 +17,8 @@ export const checkSpell = async (word: string): Promise<boolean> => {
   )
     .then((r) => r.body)
     .catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
       return null;
     });
 

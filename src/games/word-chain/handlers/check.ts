@@ -31,11 +31,13 @@ const testSpell = (
 
         if (correct) {
           message.react("✅").catch((e) => {
-            logger.error(e);
+            // eslint-disable-next-line no-console
+            console.error(e);
           });
         } else {
           message.react("❌").catch((e) => {
-            logger.error(e);
+            // eslint-disable-next-line no-console
+            console.error(e);
           });
         }
       }

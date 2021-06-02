@@ -139,7 +139,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     }
 
     message.channel.send({ embed }).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     activeGames[channelId] = undefined;
@@ -193,7 +194,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         content: `<@${currentGame.currentUser}>, you have ${livesText} left.`,
       })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
 
     if (!criteriaMessage) {
@@ -236,7 +238,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           .fetch({ limit: 1 })
           .then((messages) => messages.first())
           .catch((e) => {
-            logger.error(e);
+            // eslint-disable-next-line no-console
+            console.error(e);
             return undefined;
           });
 
@@ -249,7 +252,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           criteriaMessage = await message.channel
             .send({ embed, content: criteriaMessage.content })
             .catch((e) => {
-              logger.error(e);
+              // eslint-disable-next-line no-console
+              console.error(e);
             });
 
           oldMessage.delete();
@@ -261,7 +265,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       criteriaMessage
         .edit({ embed, content: criteriaMessage.content })
         .catch((e) => {
-          logger.error(e);
+          // eslint-disable-next-line no-console
+          console.error(e);
         });
     }, 3000);
 
@@ -329,7 +334,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     logger.info(currentGame);
 
     message.channel.send(embed2).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     await changeTurn(message);
@@ -369,7 +375,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     embed2.addField("Next Player", `<@${currentGame.currentUser}>`);
 
     message.channel.send(embed2).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     await changeTurn(message);
@@ -460,7 +467,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     let criteriaMessageWithError = await message.channel
       .send({ embed: embed3, content: `<@${currentGame.currentUser}>` })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
 
     if (!criteriaMessageWithError) {
@@ -503,7 +511,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           .fetch({ limit: 1 })
           .then((messages) => messages.first())
           .catch((e) => {
-            logger.error(e);
+            // eslint-disable-next-line no-console
+            console.error(e);
             return undefined;
           });
 
@@ -516,7 +525,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           criteriaMessageWithError = await message.channel
             .send({ embed, content: criteriaMessageWithError.content })
             .catch((e) => {
-              logger.error(e);
+              // eslint-disable-next-line no-console
+              console.error(e);
             });
 
           oldMessage.delete();
@@ -528,7 +538,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       criteriaMessageWithError
         .edit({ embed, content: criteriaMessageWithError.content })
         .catch((e) => {
-          logger.error(e);
+          // eslint-disable-next-line no-console
+          console.error(e);
         });
     }, 3000);
 

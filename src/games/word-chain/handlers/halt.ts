@@ -1,9 +1,6 @@
-import pino from "pino";
 import { Message, MessageEmbed } from "discord.js";
 import { getAllActiveGames, getCurrentGame } from "..";
 import { flatColors } from "../config";
-
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 const haltHanlder = (message: Message) => {
   if (!message.member?.hasPermission("MANAGE_GUILD")) {
@@ -44,7 +41,8 @@ const haltHanlder = (message: Message) => {
     .setColor(flatColors.green);
 
   message.channel.send({ embed }).catch((e) => {
-    logger.error(e);
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
 };
 

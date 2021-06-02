@@ -73,7 +73,8 @@ const findThePinnedMessage = async (message: Message) => {
   const pinnedMessageCollection = await message.channel.messages
     .fetchPinned(false)
     .catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
   if (!pinnedMessageCollection) {
@@ -288,7 +289,8 @@ const setDataInThePinnedMessage = async (
     };
 
     pinnedMessage.edit({ embed }).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
   }
 };
@@ -341,7 +343,8 @@ export const startUnlimitedMode = async (message: Message) => {
     .addField(fieldNameForLongestWordAuthor, "N/A", true);
 
   const sentMessage = await message.channel.send(embed).catch((e) => {
-    logger.error(e);
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
 
   if (!sentMessage) {
@@ -349,7 +352,8 @@ export const startUnlimitedMode = async (message: Message) => {
   }
 
   sentMessage.pin().catch((e) => {
-    logger.error(e);
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
 };
 
@@ -371,12 +375,14 @@ export const stopUnlimitedMode = async (message: Message) => {
 
     if (pinnedMessage) {
       pinnedMessage.unpin().catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
     }
 
     message.reply("**Stopped the unlimited word chain.**").catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
   }
 };
@@ -444,7 +450,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
           });
         })
         .catch((e) => {
-          logger.error(e);
+          // eslint-disable-next-line no-console
+          console.error(e);
         });
 
       return;
@@ -466,7 +473,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
           });
         })
         .catch((e) => {
-          logger.error(e);
+          // eslint-disable-next-line no-console
+          console.error(e);
         });
 
       return;
@@ -485,7 +493,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     const lastCorrectMessage = await message.channel.messages
       .fetch(lastCorrectMessageId)
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
         return undefined;
       });
 
@@ -537,7 +546,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       );
 
     await message.react("✅").catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     const usedEmojis: string[] = [];
@@ -546,7 +556,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       for (const emoji of ne.emojis) {
         if (!usedEmojis.includes(emoji)) {
           await message.react(emoji).catch((e) => {
-            logger.error(e);
+            // eslint-disable-next-line no-console
+            console.error(e);
           });
 
           usedEmojis.push(emoji);
@@ -564,7 +575,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     };
 
     message.react("❌").catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     let reasonText =
@@ -590,7 +602,8 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
         });
       })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
 
     setDataInThePinnedMessage(message, activeWordChains[channelId]!);

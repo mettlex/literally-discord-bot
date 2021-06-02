@@ -20,7 +20,6 @@ import {
 } from "./games/word-chain/config";
 import { actions } from "./games/word-chain";
 import { stripIndents } from "common-tags";
-import pino from "pino";
 // prettier-ignore
 import {
   slashCommandOptions as slashCommandOptionsForTwoTruthsAndALie,
@@ -28,8 +27,6 @@ import {
 import { prefixes } from "./config";
 import "./extension";
 import { ExtendedDMChannel, ExtendedTextChannel } from "./extension";
-
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
 const helpButtons: ComponentButton[] = [
   {
@@ -88,7 +85,8 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
         ],
       })
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
   });
 
@@ -281,6 +279,7 @@ export const sendHelpMessage = (
   }
 
   channel.send({ embed, content: `<@${userId}>, here.` }).catch((e) => {
-    logger.error(e);
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
 };

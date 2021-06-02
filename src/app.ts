@@ -13,7 +13,13 @@ const notInProduction = process.env.NODE_ENV !== "production";
 
 const logger = pino({ prettyPrint: notInProduction });
 
-process.on("unhandledRejection", (reason) => reason && logger.error(reason));
+process.on(
+  "unhandledRejection",
+  (reason) =>
+    reason &&
+    // eslint-disable-next-line no-console
+    console.error(reason),
+);
 
 if (!checkEnv()) {
   process.exit(1);
@@ -40,7 +46,8 @@ client.once("ready", () => {
   }
 
   creator.on("error", (message) => {
-    logger.error(message);
+    // eslint-disable-next-line no-console
+    console.error(message);
   });
 
   setupWordChainGame(client, creator);

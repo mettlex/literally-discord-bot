@@ -22,7 +22,8 @@ export const getUser = async (
 
       return user;
     } catch (error) {
-      logger.error(error);
+      // eslint-disable-next-line no-console
+      console.error(error);
       logger.info("> Retrying getUserBalance API");
       await sleep(1000);
       return getUser(client, guildID, userID);
@@ -51,7 +52,8 @@ export const addToCashBalance = async (
 
       return user;
     } catch (error) {
-      logger.error(error);
+      // eslint-disable-next-line no-console
+      console.error(error);
       logger.info("> Retrying editUserBalance API");
       await sleep(1000);
       return getUser(client, guildID, userID);
@@ -79,7 +81,8 @@ export const checkPermission = async (
 
       return permission?.has("economy") || false;
     } catch (error) {
-      logger.error(error);
+      // eslint-disable-next-line no-console
+      console.error(error);
       logger.info("> Retrying getApplicationPermission API");
       await sleep(1000);
       return checkPermission(unbclient, guildId);
@@ -107,7 +110,8 @@ export const getGuild = async (
 
       return guild;
     } catch (error) {
-      logger.error(error);
+      // eslint-disable-next-line no-console
+      console.error(error);
       logger.info("> Retrying getGuild API");
       await sleep(1000);
       return getGuild(unbclient, guildId);

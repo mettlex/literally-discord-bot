@@ -79,7 +79,8 @@ export const makeTwoTruthsAndALieCommand = (guildIDs: string[]) => {
 
     onError(err: Error, ctx: CommandContext) {
       logger.info(ctx);
-      logger.error(err);
+      // eslint-disable-next-line no-console
+      console.error(err);
     }
   };
 };
@@ -126,7 +127,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     .setFooter("Which one is a lie?");
 
   const message = await channel.send(embed).catch((e) => {
-    logger.error(e);
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
 
   if (!message) {
@@ -138,7 +140,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   const promises = [...emojis, stopEmoji].map((emoji) => message.react(emoji));
 
   await Promise.all(promises).catch((e) => {
-    logger.error(e);
+    // eslint-disable-next-line no-console
+    console.error(e);
   });
 
   const oldDateTime = new Date();
@@ -165,7 +168,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
         interval2Cleared = true;
         clearInterval(interval2);
       } catch (error) {
-        logger.error(error);
+        // eslint-disable-next-line no-console
+        console.error(error);
       }
     }
   }, 3000);
@@ -184,7 +188,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       )
       .then((c) => c.first())
       .catch((e) => {
-        logger.error(e);
+        // eslint-disable-next-line no-console
+        console.error(e);
         return undefined;
       });
 
@@ -209,16 +214,19 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
   try {
     message.reactions.removeAll().catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     message.delete({ timeout: 15000 }).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     !interval2Cleared && clearInterval(interval2);
   } catch (error) {
-    logger.error(error);
+    // eslint-disable-next-line no-console
+    console.error(error);
   }
 
   const reactions = reacttionsArray.filter((r) => r) as MessageReaction[];
@@ -260,7 +268,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       );
 
     channel.send(embed).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
 
     return;
@@ -286,7 +295,8 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       );
 
     channel.send(embed).catch((e) => {
-      logger.error(e);
+      // eslint-disable-next-line no-console
+      console.error(e);
     });
   }
 };
