@@ -44,3 +44,12 @@ export interface UnlimitedWordChainGame {
   longestWord: string;
   longestWordAuthor: User | null;
 }
+
+export interface GuildConfigCollection {
+  [guildId: string]:
+    | {
+        wcAutoDeleteMessage?: boolean;
+        wcAutoAppendMessage?: boolean;
+      }
+    | undefined;
+}

@@ -14,6 +14,7 @@ import {
   flatColors,
   easyTurnSeconds,
   hardTurnSeconds,
+  getGuildConfig,
 } from "./config";
 import { checkSpell } from "./spell-checker";
 import "../../economy/unb/server-config.json";
@@ -186,7 +187,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         ? `${currentPlayerLives} lives`
         : `${currentPlayerLives} life`;
 
-    const criteriaMessage = await message.channel
+    let criteriaMessage = await message.channel
       .send({
         embed: embed1,
         content: `<@${currentGame.currentUser}>, you have ${livesText} left.`,
@@ -201,7 +202,12 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     const oldTime = new Date();
 
-    const interval1 = setInterval(() => {
+    const interval1 = setInterval(async () => {
+      if (!message.guild || !criteriaMessage) {
+        clearInterval(interval1);
+        return;
+      }
+
       const newTime = new Date();
 
       const turnSecondsLeft =
@@ -222,6 +228,35 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         value: `**${turnSecondsLeft}** seconds`,
         inline: false,
       };
+
+      const guildConfig = getGuildConfig(message.guild.id);
+
+      if (guildConfig?.wcAutoAppendMessage === true) {
+        const latestMessage = await message.channel.messages
+          .fetch({ limit: 1 })
+          .then((messages) => messages.first())
+          .catch((e) => {
+            logger.error(e);
+            return undefined;
+          });
+
+        if (
+          latestMessage?.author.id !== criteriaMessage.author.id ||
+          latestMessage?.author.id !== activeGames[channelId]!.currentUser
+        ) {
+          const oldMessage = criteriaMessage;
+
+          criteriaMessage = await message.channel
+            .send({ embed, content: criteriaMessage.content })
+            .catch((e) => {
+              logger.error(e);
+            });
+
+          oldMessage.delete();
+
+          return;
+        }
+      }
 
       criteriaMessage
         .edit({ embed, content: criteriaMessage.content })
@@ -422,7 +457,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       .addField("Time Left", `**${turnSecondsLeft}** seconds`)
       .setColor(flatColors.red);
 
-    const criteriaMessageWithError = await message.channel
+    let criteriaMessageWithError = await message.channel
       .send({ embed: embed3, content: `<@${currentGame.currentUser}>` })
       .catch((e) => {
         logger.error(e);
@@ -434,7 +469,12 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     const oldTime = new Date();
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
+      if (!message.guild || !criteriaMessageWithError) {
+        clearInterval(interval);
+        return;
+      }
+
       const newTime = new Date();
 
       const turnSecondsLeft2 =
@@ -455,6 +495,35 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         value: `**${turnSecondsLeft2}** seconds`,
         inline: false,
       };
+
+      const guildConfig = getGuildConfig(message.guild.id);
+
+      if (guildConfig?.wcAutoAppendMessage === true) {
+        const latestMessage = await message.channel.messages
+          .fetch({ limit: 1 })
+          .then((messages) => messages.first())
+          .catch((e) => {
+            logger.error(e);
+            return undefined;
+          });
+
+        if (
+          latestMessage?.author.id !== criteriaMessageWithError.author.id ||
+          latestMessage?.author.id !== activeGames[channelId]!.currentUser
+        ) {
+          const oldMessage = criteriaMessageWithError;
+
+          criteriaMessageWithError = await message.channel
+            .send({ embed, content: criteriaMessageWithError.content })
+            .catch((e) => {
+              logger.error(e);
+            });
+
+          oldMessage.delete();
+
+          return;
+        }
+      }
 
       criteriaMessageWithError
         .edit({ embed, content: criteriaMessageWithError.content })

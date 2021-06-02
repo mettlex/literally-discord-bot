@@ -1,0 +1,6 @@
+{
+  "guild_id_sample": {
+    "wcAutoDeleteMessage": true,
+    "wcAutoAppendMessage": true
+  }
+}

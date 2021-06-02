@@ -11,9 +11,10 @@ import {
   startUnlimitedMode,
   stopUnlimitedMode,
 } from "./unlimited";
-import { stripIndents } from "common-tags";
+import { oneLine, stripIndents } from "common-tags";
 import { SlashCreator } from "slash-create";
 import help from "./handlers/help";
+import { autoAppendMessage } from "./handlers/auto-append";
 
 const activeGames: ActiveWordChainGames = {};
 
@@ -63,6 +64,15 @@ export const actions = [
     description: stripIndents`
     Check your spelling using Hunspell checker
     `,
+  },
+  {
+    commands: ["auto-append", "auto append"],
+    handler: autoAppendMessage,
+    args: { on: "on", off: "off" },
+    description:
+      oneLine`Whether in-game turn instructions become
+    the latest message if someone else messages in the channel` +
+      `\n(requires __Manage Server__ Permission)`,
   },
 ];
 
