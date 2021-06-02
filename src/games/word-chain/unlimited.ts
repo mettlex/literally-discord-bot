@@ -20,7 +20,7 @@ const numberEmojis = [
   {
     number: 0,
     string: "0",
-    emojis: ["0️⃣", "⭕️", "🅾️", "👌"],
+    emojis: ["0️⃣", "🅾️", "👌", "🌀"],
   },
   {
     number: 1,
@@ -45,7 +45,7 @@ const numberEmojis = [
   {
     number: 5,
     string: "5",
-    emojis: ["5️⃣", "🖐", "✋️", "🤚"],
+    emojis: ["5️⃣", "🖐", "🤚", "👋"],
   },
   {
     number: 6,
@@ -60,7 +60,7 @@ const numberEmojis = [
   {
     number: 8,
     string: "8",
-    emojis: ["8️⃣", "🎱", "🕗", "✴️"],
+    emojis: ["8️⃣", "🎱", "🕗", "✳️"],
   },
   {
     number: 9,
