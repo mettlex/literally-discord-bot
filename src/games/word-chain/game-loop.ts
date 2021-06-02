@@ -241,7 +241,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           });
 
         if (
-          latestMessage?.author.id !== criteriaMessage.author.id ||
+          latestMessage?.author.id !== criteriaMessage.author.id &&
           latestMessage?.author.id !== activeGames[channelId]!.currentUser
         ) {
           const oldMessage = criteriaMessage;
@@ -508,7 +508,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           });
 
         if (
-          latestMessage?.author.id !== criteriaMessageWithError.author.id ||
+          latestMessage?.author.id !== criteriaMessageWithError.author.id &&
           latestMessage?.author.id !== activeGames[channelId]!.currentUser
         ) {
           const oldMessage = criteriaMessageWithError;
