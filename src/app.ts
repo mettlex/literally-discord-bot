@@ -8,6 +8,7 @@ import { setupTwoTruthsAndALieGame } from "./games/two-truths-and-a-lie";
 import { GatewayServer, SlashCreator } from "slash-create";
 import { setupHelpMenu } from "./help";
 import { setupEconomy } from "./economy/setup";
+import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 
@@ -54,6 +55,7 @@ client.once("ready", () => {
   setupTwoTruthsAndALieGame(client, creator);
   setupHelpMenu(client, creator);
   setupEconomy(client, creator);
+  setupTheWinkingAssassinGame(client, creator);
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
