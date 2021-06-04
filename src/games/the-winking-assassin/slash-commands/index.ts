@@ -211,8 +211,8 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
         You're now staring at ${member.nickname || member.user.username}.`;
       } else if (lastAction.includes("witnessed")) {
         const lookedAt = client.guilds.cache
-          .get(lastAction.replace(/[^0-9]/g, ""))!
-          .members.cache.get(userId)!;
+          .get(ctx.guildID || "")!
+          .members.cache.get(lastAction.replace(/[^0-9]/g, ""))!;
 
         actionText = `looking at ${
           lookedAt.nickname || lookedAt.user.username
@@ -230,8 +230,8 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
             assassinWitnessedActions[assassinWitnessedActions.length - 1];
 
           const lookedAt = client.guilds.cache
-            .get(lastWitnessAction.replace(/[^0-9]/g, ""))!
-            .members.cache.get(userId)!;
+            .get(ctx.guildID || "")!
+            .members.cache.get(lastWitnessAction.replace(/[^0-9]/g, ""))!;
 
           actionText = `looking at ${
             lookedAt.nickname || lookedAt.user.username
