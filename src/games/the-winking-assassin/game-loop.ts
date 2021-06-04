@@ -1,6 +1,7 @@
 /* eslint-disable indent */
 import { oneLine, stripIndents } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
+import pino from "pino";
 import {
   ButtonStyle,
   CommandContext,
@@ -13,8 +14,14 @@ import { getDiscordJSClient } from "../../app";
 import { ExtendedTextChannel } from "../../extension";
 import { flatColors } from "../word-chain/config";
 
+const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+
 const padTimeToString = (time: number) =>
   time > 9 ? time.toString() : `0${time}`;
+
+export const endTWAGame = (channelId: string) => {
+  setCurrentTWAGame(channelId, null);
+};
 
 export const askToJoinTheWinkingAssassinGame = async (
   channel: ExtendedTextChannel,
@@ -33,9 +40,9 @@ export const askToJoinTheWinkingAssassinGame = async (
   const game = setCurrentTWAGame(ctx.channelID, {
     gameStartedAt: new Date(),
     gameDurationInSeconds: timeLimitInMinutes * 60,
-    alivePlayerIds: [ctx.user.id, "1", "2", "3"],
+    alivePlayerIds: [ctx.user.id],
     deadPlayerIds: [],
-    assassinIds: [ctx.user.id],
+    assassinIds: [],
     playerActions: {},
   });
 
@@ -47,7 +54,7 @@ export const askToJoinTheWinkingAssassinGame = async (
 
   setCurrentTWAGame(ctx.channelID, { ...game!, playerActions });
 
-  const maxTimeInSecondsToJoin = 5;
+  const maxTimeInSecondsToJoin = 45;
 
   const embed = new MessageEmbed()
     .setColor(flatColors.blue)
@@ -62,10 +69,11 @@ export const askToJoinTheWinkingAssassinGame = async (
 
         The Godfather secretly will choose the “Assassin”. 
 
-        (S)he kills off other players one at a time by winking at them
-        although he must do it secretly, without others seeing him.
+        The assassin kills off other players
+        one at a time by winking at them
+        although the assassin must do it secretly, without others witnessing it.
 
-        If anyone witnesses the assassin winking and exposes him,
+        If anyone witnesses the assassin winking and exposes the assassin,
         the jig is up.
  
         But don’t be too quick to tattle;
@@ -121,7 +129,7 @@ export const askToJoinTheWinkingAssassinGame = async (
       const currentGame = getCurrentTWAGame(ctx.channelID);
 
       if (currentGame && currentGame.alivePlayerIds.length < 4) {
-        setCurrentTWAGame(ctx.channelID, undefined);
+        endTWAGame(ctx.channelID);
 
         message.channel
           .send(`> At least 4 players are needed to start the game.`)
@@ -134,6 +142,8 @@ export const askToJoinTheWinkingAssassinGame = async (
           // eslint-disable-next-line no-console
           console.error(e);
         });
+
+        clearInterval(interval);
 
         return;
       }
@@ -172,6 +182,17 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
     return;
   }
 
+  const indexForAssassin = Math.floor(
+    Math.random() * game.alivePlayerIds.length,
+  );
+
+  game.assassinIds = [
+    ...game.assassinIds,
+    game.alivePlayerIds[indexForAssassin],
+  ];
+
+  setCurrentTWAGame(channel.id, game);
+
   const maxTime = game.gameDurationInSeconds * 1000;
   const tickTime = 1000;
 
@@ -192,6 +213,26 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
       gameDurationInSeconds: game.gameDurationInSeconds - tickTime / 1000,
     });
 
+    if (game.alivePlayerIds.length < 1) {
+      channel
+        .send(
+          oneLine`**The assassin ${game.assassinIds
+            .map((id) => `<@${id}>`)
+            .join(", ")} killed everyone.
+            Well played! The game ends now.**`,
+        )
+        .catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error(e);
+        });
+
+      endTWAGame(ctx.channelID);
+    }
+
+    if ((time / 1000) % 5 === 0) {
+      logger.info(game);
+    }
+
     const remainingTime = maxTime - time; // ms
     const remainingTimeInSeconds = (remainingTime / 1000) % 60;
     const remainingTimeInMinutes = Math.floor(remainingTime / (60 * 1000));
@@ -202,21 +243,36 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
       if (time >= 30 * 1000) {
         const notWitnessedPlayers = Object.entries(game.playerActions)
           .filter((entry) => entry[1].length === 0)
-          .map((entry) => `<@${entry[0]}>`)
-          .join(",");
+          .map((entry) => `<@${entry[0]}>`);
 
-        channel.send(
-          `${notWitnessedPlayers}\n\n` +
-            oneLine`If you don't
-          witness other players doing something,
-          you'll lose.
-          Use \`/witness\` slash command to find the assassin.`,
-        );
+        if (notWitnessedPlayers.length > 0) {
+          channel.send(
+            `${notWitnessedPlayers.join(", ")}\n\n` +
+              oneLine`If you don't
+            witness other players doing something,
+            you'll lose.
+            Use \`/witness\` slash command to find the assassin.`,
+          );
+        }
+
+        if (game.deadPlayerIds.length > 0) {
+          const memberNames = game.deadPlayerIds
+            .reverse()
+            .map((id) => channel.guild.members.cache.get(id))
+            .filter((m) => m)
+            .map((m) => m?.nickname || m?.user.username)
+            .join(", ");
+
+          channel.send(`> The assassin killed ${memberNames}.`);
+        }
       }
 
       channel
         .send(
-          `> ${remainingTimeInMinutes}:${padTimeToString(
+          stripIndents`
+          > \`/witness\` to witness (any player can do it)
+          > \`/wink\` for winking (assassin can do it)
+          > ${remainingTimeInMinutes}:${padTimeToString(
             remainingTimeInSeconds,
           )} left to find the assassin.`,
         )
@@ -224,12 +280,23 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
           // eslint-disable-next-line no-console
           console.error(e);
         });
-
-      // eslint-disable-next-line no-console
-      console.log(game);
     }
 
     if (time >= maxTime + 1000) {
+      channel
+        .send(
+          oneLine`**The assassin ${game.assassinIds
+            .map((id) => `<@${id}>`)
+            .join(", ")} killed everyone.
+            Well played! The game ends now.**`,
+        )
+        .catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error(e);
+        });
+
+      endTWAGame(ctx.channelID);
+
       clearInterval(interval);
     }
   }, tickTime);

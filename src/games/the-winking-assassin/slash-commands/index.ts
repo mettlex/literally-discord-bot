@@ -1,4 +1,4 @@
-import { oneLine } from "common-tags";
+import { oneLine, stripIndents } from "common-tags";
 import {
   ApplicationCommandOption,
   CommandContext,
@@ -10,7 +10,7 @@ import {
 import { getCurrentTWAGame, setCurrentTWAGame } from "..";
 import { getDiscordJSClient } from "../../../app";
 import { ExtendedTextChannel } from "../../../extension";
-import { askToJoinTheWinkingAssassinGame } from "../game-loop";
+import { askToJoinTheWinkingAssassinGame, endTWAGame } from "../game-loop";
 
 const options: ApplicationCommandOption[] = [
   {
@@ -53,6 +53,34 @@ const slashCommandOptionsForWitness: SlashCommandOptions = {
   description:
     "Witness a player whether he/she is winking in 'The Winking Assassin' Game",
 
+  throttling: { duration: 2, usages: 1 },
+  options: [
+    {
+      type: CommandOptionType.STRING,
+      name: "mention_player",
+      description: "Mention a player using @",
+      required: true,
+    },
+  ],
+};
+
+const slashCommandOptionsForWink: SlashCommandOptions = {
+  name: "wink",
+  description: "Wink at a player as an assassin in 'The Winking Assassin' Game",
+  throttling: { duration: 2, usages: 1 },
+  options: [
+    {
+      type: CommandOptionType.STRING,
+      name: "mention_player",
+      description: "Mention a player using @",
+      required: true,
+    },
+  ],
+};
+
+const slashCommandOptionsForExpose: SlashCommandOptions = {
+  name: "expose_assassin",
+  description: "Expose the assassin in 'The Winking Assassin' Game",
   throttling: { duration: 2, usages: 1 },
   options: [
     {
@@ -141,9 +169,9 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
       const userId = mentionText.replace(/[^0-9]/g, "");
 
-      // if (userId === ctx.user.id) {
-      //   return "You looked at yourself. You okay?";
-      // }
+      if (userId === ctx.user.id) {
+        return "You looked at yourself. You okay?";
+      }
 
       if (
         !game.alivePlayerIds.includes(ctx.user.id) &&
@@ -164,22 +192,28 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
       //   return "The Assassin winked at you so you must play dead now.";
       // }
 
-      // if (!game.alivePlayerIds.includes(userId)) {
-      //   return "The user which you mentioned isn't alive in the game.";
-      // }
+      if (!game.alivePlayerIds.includes(userId)) {
+        return "The player which you mentioned isn't alive in the game.";
+      }
 
       let actionText = "";
 
       const lastAction = game.playerActions[userId].slice(-1)[0];
 
+      const client = getDiscordJSClient();
+
+      const member = client.guilds.cache
+        .get(ctx.guildID || "")!
+        .members.cache.get(userId)!;
+
       if (!lastAction) {
         actionText = oneLine`looking at no one.
-        You're now staring at ${mentionText}.`;
+        You're now staring at ${member.nickname || member.user.username}.`;
       } else if (lastAction.includes("witnessed")) {
         actionText = `looking at <@${lastAction.replace(
           /[^0-9]/g,
           "",
-        )}>. You're now staring at ${mentionText}.`;
+        )}>. You're now staring at ${member.nickname || member.user.username}.`;
       } else if (
         lastAction.includes("winked") &&
         game.assassinIds.includes(userId)
@@ -189,19 +223,25 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
         );
 
         if (assassinWitnessedActions.length > 0) {
-          const lastAction =
+          const lastWitnessAction =
             assassinWitnessedActions[assassinWitnessedActions.length - 1];
 
-          actionText = `looking at <@${lastAction.replace(
+          actionText = `looking at <@${lastWitnessAction.replace(
             /[^0-9]/g,
             "",
-          )}>. You're now staring at ${mentionText}.`;
+          )}>. You're now staring at ${
+            member.nickname || member.user.username
+          }.`;
         } else {
           actionText = oneLine`looking at no one.
-          You're now staring at ${mentionText}.`;
+          You're now staring at ${member.nickname || member.user.username}.`;
         }
 
-        if (lastAction.includes(ctx.user.id)) {
+        if (
+          game.assassinIds.includes(userId) &&
+          lastAction.includes("wink") &&
+          lastAction.includes(ctx.user.id)
+        ) {
           game.alivePlayerIds.splice(
             game.alivePlayerIds.indexOf(ctx.user.id),
             1,
@@ -226,36 +266,187 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
         : "";
 
       return oneLine`${ctx.user.mention},
-      you witnessed ${mentionText}
-      ${actionText}${sayIfAssassin}`;
+      you witnessed ${member.nickname || member.user.username}
+      ${actionText}
+      You can witness the same player
+      again to see if they made any new move.
+      ${sayIfAssassin}`;
     }
   }
 
-  // class WinkCommand extends SlashCommand {
-  //   constructor(creator: SlashCreator) {
-  //     super(creator, { ...slashCommandOptionsForStart2, guildIDs });
+  class WinkCommand extends SlashCommand {
+    constructor(creator: SlashCreator) {
+      super(creator, { ...slashCommandOptionsForWink, guildIDs });
 
-  //     this.filePath = __filename;
-  //   }
+      this.filePath = __filename;
+    }
 
-  //   async run(ctx: CommandContext) {}
-  // }
+    async run(ctx: CommandContext): Promise<string> {
+      await ctx.defer(true);
 
-  // class ExposeAssassinCommand extends SlashCommand {
-  //   constructor(creator: SlashCreator) {
-  //     super(creator, { ...slashCommandOptionsForStart2, guildIDs });
+      const game = getCurrentTWAGame(ctx.channelID);
 
-  //     this.filePath = __filename;
-  //   }
+      if (!game) {
+        return "No game of 'The Winking Assassin' is running now.";
+      }
 
-  //   async run(ctx: CommandContext) {}
-  // }
+      if (
+        !game.alivePlayerIds.includes(ctx.user.id) &&
+        !game.deadPlayerIds.includes(ctx.user.id) &&
+        !game.assassinIds.includes(ctx.user.id)
+      ) {
+        return (
+          "You're not in the current game. " +
+          "Please wait until the next game starts."
+        );
+      }
+
+      const mentionText: string | undefined = ctx.options.mention_player;
+
+      if (!mentionText) {
+        return "Oops error! Ping the developer.";
+      }
+
+      if (!game.assassinIds.includes(ctx.user.id)) {
+        return "**You can't wink at anyone because you're not an assassin.**";
+      }
+
+      const userId = mentionText.replace(/[^0-9]/g, "");
+
+      if (!game.alivePlayerIds.includes(userId)) {
+        return "**This player isn't alive in the game.**";
+      }
+
+      if (game.assassinIds.includes(userId)) {
+        return "**You can't wink at yourself or any other assassin.**";
+      }
+
+      const client = getDiscordJSClient();
+
+      const member = client.guilds.cache
+        .get(ctx.guildID || "")!
+        .members.cache.get(userId)!;
+
+      const victimsLastAction = game.playerActions[userId].splice(-1)[0];
+
+      if (
+        victimsLastAction.includes("witness") &&
+        victimsLastAction.includes(ctx.user.id)
+      ) {
+        // victim is dead
+        game.alivePlayerIds.splice(game.alivePlayerIds.indexOf(userId), 1);
+
+        game.deadPlayerIds = [...game.deadPlayerIds, userId];
+
+        setCurrentTWAGame(ctx.channelID, game);
+      } else {
+        // victim is not dead
+        game.playerActions[ctx.user.id] = [
+          ...game.playerActions[ctx.user.id],
+          `winked_${userId}`,
+        ];
+      }
+
+      return oneLine`**Now you're winking at ${
+        member.nickname || member.user.username
+      }.**
+      You may change whom you're winking at using the same command.`;
+    }
+  }
+
+  class ExposeAssassinCommand extends SlashCommand {
+    constructor(creator: SlashCreator) {
+      super(creator, { ...slashCommandOptionsForExpose, guildIDs });
+
+      this.filePath = __filename;
+    }
+
+    async run(ctx: CommandContext): Promise<string> {
+      await ctx.defer();
+
+      const game = getCurrentTWAGame(ctx.channelID);
+
+      if (!game) {
+        return "No game of 'The Winking Assassin' is running now.";
+      }
+
+      if (
+        !game.alivePlayerIds.includes(ctx.user.id) &&
+        !game.deadPlayerIds.includes(ctx.user.id) &&
+        !game.assassinIds.includes(ctx.user.id)
+      ) {
+        return (
+          "You're not in the current game. " +
+          "Please wait until the next game starts."
+        );
+      }
+
+      const mentionText: string | undefined = ctx.options.mention_player;
+
+      if (!mentionText) {
+        return "Oops error! Ping the developer.";
+      }
+
+      const userId = mentionText.replace(/[^0-9]/g, "");
+
+      if (
+        !game.alivePlayerIds.includes(userId) ||
+        !game.alivePlayerIds.includes(ctx.user.id)
+      ) {
+        return "**This player isn't alive in the game.**";
+      }
+
+      const client = getDiscordJSClient();
+
+      const member = client.guilds.cache
+        .get(ctx.guildID || "")!
+        .members.cache.get(userId)!;
+
+      if (!game.assassinIds.includes(userId)) {
+        game.alivePlayerIds.splice(game.alivePlayerIds.indexOf(ctx.user.id), 1);
+
+        return `${mentionText} isn't an assassin so go swim with the fishes.`;
+      }
+
+      endTWAGame(ctx.channelID);
+
+      return stripIndents`> **${
+        member.nickname || member.user.username
+      } was an assassin.**
+      **Well played, ${ctx.user.mention}.**
+      **Everyone is safe now. GG!**`;
+    }
+  }
+
+  const slashCommandOptionsForStopping: SlashCommandOptions = {
+    name: "stop_twa",
+    description: "Stop the current 'The Winking Assassin' Game",
+    throttling: { duration: 10, usages: 1 },
+  };
+  class StopTWACommand extends SlashCommand {
+    constructor(creator: SlashCreator) {
+      super(creator, { ...slashCommandOptionsForStopping, guildIDs });
+
+      this.filePath = __filename;
+    }
+
+    async run(ctx: CommandContext): Promise<string> {
+      if (!ctx.member?.permissions.has(32)) {
+        return "Manage Server permission is needed for this command.";
+      }
+
+      endTWAGame(ctx.channelID);
+
+      return "Stopped the running game.";
+    }
+  }
 
   return [
     TheWinkingAssassinCommand,
     TWACommand,
     WitnessCommand,
-    // WinkCommand,
-    // ExposeAssassinCommand,
+    WinkCommand,
+    ExposeAssassinCommand,
+    StopTWACommand,
   ];
 };

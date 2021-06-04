@@ -10,5 +10,5 @@ export interface TheWinkingAssassinGame {
 }
 
 export interface ActiveTWAGames {
-  [channelId: string]: TheWinkingAssassinGame | undefined;
+  [channelId: string]: TheWinkingAssassinGame | undefined | null;
 }

@@ -12,7 +12,7 @@ export const getCurrentTWAGame = (channelId: string) =>
 
 export const setCurrentTWAGame = (
   channelId: string,
-  gameData: TheWinkingAssassinGame | undefined,
+  gameData: TheWinkingAssassinGame | null,
 ) => {
   activeTWAGames[channelId] = gameData;
   return activeTWAGames[channelId];
