@@ -210,10 +210,13 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
         actionText = oneLine`looking at no one.
         You're now staring at ${member.nickname || member.user.username}.`;
       } else if (lastAction.includes("witnessed")) {
-        actionText = `looking at <@${lastAction.replace(
-          /[^0-9]/g,
-          "",
-        )}>. You're now staring at ${member.nickname || member.user.username}.`;
+        const lookedAt = client.guilds.cache
+          .get(lastAction.replace(/[^0-9]/g, ""))!
+          .members.cache.get(userId)!;
+
+        actionText = `looking at ${
+          lookedAt.nickname || lookedAt.user.username
+        }. You're now staring at ${member.nickname || member.user.username}.`;
       } else if (
         lastAction.includes("winked") &&
         game.assassinIds.includes(userId)
@@ -226,12 +229,13 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
           const lastWitnessAction =
             assassinWitnessedActions[assassinWitnessedActions.length - 1];
 
-          actionText = `looking at <@${lastWitnessAction.replace(
-            /[^0-9]/g,
-            "",
-          )}>. You're now staring at ${
-            member.nickname || member.user.username
-          }.`;
+          const lookedAt = client.guilds.cache
+            .get(lastWitnessAction.replace(/[^0-9]/g, ""))!
+            .members.cache.get(userId)!;
+
+          actionText = `looking at ${
+            lookedAt.nickname || lookedAt.user.username
+          }. You're now staring at ${member.nickname || member.user.username}.`;
         } else {
           actionText = oneLine`looking at no one.
           You're now staring at ${member.nickname || member.user.username}.`;
