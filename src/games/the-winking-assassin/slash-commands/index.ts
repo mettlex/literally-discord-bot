@@ -161,6 +161,10 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
         return "No game of 'The Winking Assassin' is running now.";
       }
 
+      if (!game.gameStarted) {
+        return "'The Winking Assassin' game hasn't started yet.";
+      }
+
       const mentionText: string | undefined = ctx.options.mention_player;
 
       if (!mentionText) {
@@ -294,6 +298,10 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
         return "No game of 'The Winking Assassin' is running now.";
       }
 
+      if (!game.gameStarted) {
+        return "'The Winking Assassin' game hasn't started yet.";
+      }
+
       if (
         !game.alivePlayerIds.includes(ctx.user.id) &&
         !game.deadPlayerIds.includes(ctx.user.id) &&
@@ -372,6 +380,10 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
       if (!game) {
         return "No game of 'The Winking Assassin' is running now.";
+      }
+
+      if (!game.gameStarted) {
+        return "'The Winking Assassin' game hasn't started yet.";
       }
 
       if (

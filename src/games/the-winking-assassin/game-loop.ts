@@ -38,6 +38,7 @@ export const askToJoinTheWinkingAssassinGame = async (
   }
 
   const game = setCurrentTWAGame(ctx.channelID, {
+    gameStarted: false,
     gameStartedAt: new Date(),
     gameDurationInSeconds: timeLimitInMinutes * 60,
     alivePlayerIds: [ctx.user.id],
@@ -191,6 +192,8 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
     game.alivePlayerIds[indexForAssassin],
   ];
 
+  game.gameStarted = true;
+
   setCurrentTWAGame(channel.id, game);
 
   const maxTime = game.gameDurationInSeconds * 1000;
@@ -270,6 +273,7 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
       channel
         .send(
           stripIndents`
+          ${time < 2000 ? "**The Winking Assassin game has started.**" : ""}
           > \`/witness\` to witness (any player can do it)
           > \`/wink\` for winking (assassin can do it)
           > ${remainingTimeInMinutes}:${padTimeToString(

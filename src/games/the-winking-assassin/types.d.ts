@@ -1,4 +1,5 @@
 export interface TheWinkingAssassinGame {
+  gameStarted: boolean;
   gameStartedAt: Date;
   gameDurationInSeconds: number;
   alivePlayerIds: string[];
