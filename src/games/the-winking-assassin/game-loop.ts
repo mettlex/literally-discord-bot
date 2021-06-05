@@ -16,8 +16,8 @@ import { flatColors } from "../word-chain/config";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 
-const padTimeToString = (time: number) =>
-  time > 9 ? time.toString() : `0${time}`;
+// const padTimeToString = (time: number) =>
+//   time > 9 ? time.toString() : `0${time}`;
 
 export const endTWAGame = (channelId: string) => {
   setCurrentTWAGame(channelId, null);
@@ -216,7 +216,7 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
       gameDurationInSeconds: game.gameDurationInSeconds - tickTime / 1000,
     });
 
-    if (game.alivePlayerIds.length < 1) {
+    if (game.alivePlayerIds.length < 3) {
       channel
         .send(
           oneLine`**The assassin ${game.assassinIds
@@ -230,6 +230,10 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
         });
 
       endTWAGame(ctx.channelID);
+
+      clearInterval(interval);
+
+      return;
     }
 
     if ((time / 1000) % 5 === 0) {
@@ -242,23 +246,28 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
 
     const chance = Math.round(Math.random());
 
-    if ((time % (30 * 1000) === 0 && chance === 1) || time < 2000) {
+    if (time % (30 * 1000) === 0 || time < 2000) {
       if (time >= 30 * 1000) {
         const notWitnessedPlayers = Object.entries(game.playerActions)
           .filter((entry) => entry[1].length === 0)
           .map((entry) => `<@${entry[0]}>`);
 
         if (notWitnessedPlayers.length > 0) {
-          channel.send(
-            `${notWitnessedPlayers.join(", ")}\n\n` +
-              oneLine`If you don't
+          channel
+            .send(
+              `${notWitnessedPlayers.join(", ")}\n` +
+                oneLine`If you don't
             witness other players doing something,
             you'll lose.
             Use \`/witness\` slash command to find the assassin.`,
-          );
+            )
+            .catch((e) => {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            });
         }
 
-        if (game.deadPlayerIds.length > 0) {
+        if (game.deadPlayerIds.length > 0 && chance === 1) {
           const memberNames = game.deadPlayerIds
             .reverse()
             .map((id) => channel.guild.members.cache.get(id))
@@ -266,7 +275,12 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
             .map((m) => m?.nickname || m?.user.username)
             .join(", ");
 
-          channel.send(`> The assassin killed ${memberNames}.`);
+          channel
+            .send(`> The Assassin killed **${memberNames}**.`)
+            .catch((e) => {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            });
         }
       }
 
@@ -274,11 +288,14 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
         .send(
           stripIndents`
           ${time < 2000 ? "**The Winking Assassin game has started.**" : ""}
+          
           > \`/witness\` to witness (any player can do it)
-          > \`/wink\` for winking (assassin can do it)
-          > ${remainingTimeInMinutes}:${padTimeToString(
-            remainingTimeInSeconds,
-          )} left to find the assassin.`,
+
+          > \`/wink\` for winking (only an assassin can do it)
+          
+          > **${remainingTimeInMinutes} minutes**
+          **and ${remainingTimeInSeconds} seconds**
+          left to find the assassin.`,
         )
         .catch((e) => {
           // eslint-disable-next-line no-console

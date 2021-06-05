@@ -212,17 +212,18 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
       if (!lastAction) {
         actionText = oneLine`looking at no one.
-        You're now staring at ${member.nickname || member.user.username}.`;
+        You're now staring at **${member.nickname || member.user.username}**.`;
       } else if (lastAction.includes("witnessed")) {
         const lookedAt = client.guilds.cache
           .get(ctx.guildID || "")!
           .members.cache.get(lastAction.replace(/[^0-9]/g, ""))!;
 
-        actionText = `looking at ${
+        actionText = `looking at **${
           lookedAt.nickname || lookedAt.user.username
-        }. You're now staring at ${member.nickname || member.user.username}.`;
+        }**. You're now staring at
+        **${member.nickname || member.user.username}**.`;
       } else if (
-        lastAction.includes("winked") &&
+        lastAction.includes("wink") &&
         game.assassinIds.includes(userId)
       ) {
         const assassinWitnessedActions = game.playerActions[userId].filter(
@@ -237,19 +238,17 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
             .get(ctx.guildID || "")!
             .members.cache.get(lastWitnessAction.replace(/[^0-9]/g, ""))!;
 
-          actionText = `looking at ${
+          actionText = `looking at **${
             lookedAt.nickname || lookedAt.user.username
-          }. You're now staring at ${member.nickname || member.user.username}.`;
+          }**. You're now staring at
+          **${member.nickname || member.user.username}**.`;
         } else {
           actionText = oneLine`looking at no one.
-          You're now staring at ${member.nickname || member.user.username}.`;
+          You're now staring at
+          **${member.nickname || member.user.username}**.`;
         }
 
-        if (
-          game.assassinIds.includes(userId) &&
-          lastAction.includes("wink") &&
-          lastAction.includes(ctx.user.id)
-        ) {
+        if (lastAction.includes(ctx.user.id)) {
           game.alivePlayerIds.splice(
             game.alivePlayerIds.indexOf(ctx.user.id),
             1,
@@ -259,8 +258,9 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
           setCurrentTWAGame(ctx.channelID, game);
         } else if (!game.deadPlayerIds.includes(ctx.user.id)) {
-          actionText = oneLine`**winking** at someone. Hurry up!
-          Expose the assassin using \`/expose_assassin\` slash command.`;
+          actionText = oneLine`**winking** at someone.
+          Expose the assassin using \`/expose_assassin\` slash command.
+          Hurry up!`;
         }
       }
 
@@ -270,11 +270,13 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
       ];
 
       const sayIfAssassin = game.assassinIds.includes(ctx.user.id)
-        ? " __P.S.__ You're the assassin."
+        ? `**You're the Assassin, ${ctx.member?.nick || ctx.user.username}.**
+          You may use \`/wink\` to kill other players. 
+          `
         : "";
 
-      return oneLine`${ctx.user.mention},
-      you witnessed ${member.nickname || member.user.username}
+      return oneLine`${ctx.member?.nick || ctx.user.username},
+      you witnessed **${member.nickname || member.user.username}**
       ${actionText}
       You can witness the same player
       again to see if they made any new move.
@@ -421,7 +423,9 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
       if (!game.assassinIds.includes(userId)) {
         game.alivePlayerIds.splice(game.alivePlayerIds.indexOf(ctx.user.id), 1);
 
-        return `${mentionText} isn't an assassin so go swim with the fishes.`;
+        return `${
+          member.nickname || member.user.username
+        } isn't an assassin so go swim with the fishes.`;
       }
 
       endTWAGame(ctx.channelID);
@@ -429,7 +433,7 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
       return stripIndents`> **${
         member.nickname || member.user.username
       } was an assassin.**
-      **Well played, ${ctx.user.mention}.**
+      **Well played, ${ctx.member?.nick || ctx.user.username}.**
       **Everyone is safe now. GG!**`;
     }
   }
