@@ -9,6 +9,7 @@ import { GatewayServer, SlashCreator } from "slash-create";
 import { setupHelpMenu } from "./help";
 import { setupEconomy } from "./economy/setup";
 import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
+import { setupJottoGame } from "./games/jotto";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 
@@ -56,6 +57,7 @@ client.once("ready", () => {
   setupHelpMenu(client, creator);
   setupEconomy(client, creator);
   setupTheWinkingAssassinGame(client, creator);
+  setupJottoGame(client, creator);
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
