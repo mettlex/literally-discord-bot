@@ -9,6 +9,7 @@ export interface JottoData {
     revealedLetters: string[];
     removedLetters: string[];
     secretFoundBy?: User;
+    score: number;
     winner: boolean;
   }[];
   gameStarted: boolean;

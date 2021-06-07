@@ -127,6 +127,7 @@ export const makeJottoCommands = (guildIDs: string[]) => {
               availableLetters: alphabet,
               revealedLetters: [],
               removedLetters: [],
+              score: 0,
               winner: false,
             },
           ],

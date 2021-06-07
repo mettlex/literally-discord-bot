@@ -18,7 +18,7 @@ export const getTurnInverval = (channelId: string) =>
 
 export const setTurnInverval = (
   channelId: string,
-  interval: NodeJS.Timeout,
+  interval: NodeJS.Timeout | undefined,
 ) => {
   const game = getCurrentJottoGame(channelId);
 
@@ -33,7 +33,7 @@ export const setTurnInverval = (
 
 export const changeJottoTurn = async (
   message: Message,
-  currentPlayerIndex?: number,
+  currentIndex?: number,
   timeLeft?: number,
 ) => {
   if (!message.guild) {
@@ -48,7 +48,15 @@ export const changeJottoTurn = async (
     return;
   }
 
-  currentPlayerIndex = currentPlayerIndex || game.currentPlayerIndex;
+  const currentPlayerIndex = currentIndex || game.currentPlayerIndex;
+  const currentPlayer = game.playersData[currentPlayerIndex];
+
+  const nextPlayer =
+    game.playersData[currentPlayerIndex + 1] || game.playersData[0];
+
+  const nextPlayerIndex = game.playersData.findIndex(
+    (p) => p.user.id === nextPlayer.user.id,
+  );
 
   const turnSecondsUsed = timeLeft || turnSeconds;
 
@@ -59,17 +67,33 @@ export const changeJottoTurn = async (
   }
 
   if (game.playersData[currentPlayerIndex].attemptsLeft < 1) {
-    await changeJottoTurn(message, targetPlayerIndex);
+    await changeJottoTurn(message, nextPlayerIndex);
     return;
   }
 
-  const currentPlayer = game.playersData[currentPlayerIndex];
+  logger.info("=== Current Player Log Start ===");
+  logger.info(currentPlayer.user);
+  logger.info("=== Current Player Log End ===");
 
-  if (currentPlayer.winner) {
-    const winners = game.playersData.filter((player) => player.winner);
+  const maxScore = Math.max(...game.playersData.map((p) => p.score));
+
+  const declareWinnersAndEndGame = () => {
+    const winners = game.playersData.filter(
+      (player) => player.score === maxScore && player.winner,
+    );
+
+    const maxScoredPlayers = game.playersData.filter(
+      (player) => player.score === maxScore,
+    );
+
+    if (maxScoredPlayers.length !== winners.length) {
+      return;
+    }
+
+    const embed = new MessageEmbed();
 
     if (winners.length === 1) {
-      const embed = new MessageEmbed()
+      embed
         .setTitle("Congratulations!")
         .setDescription(
           `Here is your winner, the mastermind of this Jotto game.`,
@@ -91,15 +115,13 @@ export const changeJottoTurn = async (
 
       embed.setThumbnail(url);
 
-      message.channel.send(embed);
-
       logger.info("Winner:");
       logger.info(`${currentPlayer.user.tag} ${currentPlayer.user.id}`);
 
       // eslint-disable-next-line no-console
       console.log({ ...currentPlayer, user: undefined });
-    } else {
-      const embed = new MessageEmbed()
+    } else if (winners.length > 1) {
+      embed
         .setTitle("Congratulations!")
         .setDescription(
           stripIndents`Here are your winners,
@@ -110,25 +132,44 @@ export const changeJottoTurn = async (
         )
         .setColor(flatColors.green);
 
-      message.channel.send(embed);
-
       logger.info("Winners:");
       logger.info(winners.map((w) => `${w.user.tag} ${w.user.id}`).join(", "));
 
       // eslint-disable-next-line no-console
       console.log(winners.map((w) => ({ ...w, user: undefined })));
+    } else {
+      return;
     }
+
+    const scoresText =
+      `\n**Scores:**\n` +
+      game.playersData
+        .map((player) => `<@${player.user.id}>: **${player.score}**`)
+        .join("\n");
+
+    embed.setDescription(embed.description + scoresText);
+
+    message.channel.send(embed);
 
     logger.info(`Game ended: ${new Date()}`);
 
     setCurrentJottoGame(channelId, null);
 
     return;
+  };
+
+  if (currentPlayer.score === maxScore && maxScore > 0) {
+    if (currentPlayer.winner) {
+      declareWinnersAndEndGame();
+      return;
+    } else {
+      currentPlayer.winner = true;
+    }
   }
 
   let targetPlayer = game.playersData[targetPlayerIndex];
 
-  if (targetPlayer.secretFoundBy) {
+  if (targetPlayer.secretFoundBy?.id) {
     for (let i = 0; game.playersData.length; i++) {
       if (!game.playersData[i]) {
         break;
@@ -145,9 +186,8 @@ export const changeJottoTurn = async (
     }
   }
 
-  if (targetPlayer.secretFoundBy) {
-    currentPlayer.winner = true;
-    await changeJottoTurn(message, targetPlayerIndex);
+  if (targetPlayer.secretFoundBy?.id) {
+    await changeJottoTurn(message, nextPlayerIndex);
     return;
   }
 
@@ -234,6 +274,14 @@ export const changeJottoTurn = async (
   const tick = 3;
 
   const interval = setInterval(async () => {
+    const game = getCurrentJottoGame(channelId);
+
+    if (!game) {
+      setTurnInverval(channelId, undefined);
+      clearInterval(interval);
+      return;
+    }
+
     if (timeRemainingInSeconds < 0) {
       embed.setFooter(getCriteriaMessageFooter(0));
 
@@ -274,15 +322,37 @@ export const changeJottoTurn = async (
   setTurnInverval(channelId, interval);
 
   const collection = await message.channel
-    .awaitMessages((m: Message) => m.author.id === currentPlayer.user.id, {
-      time: (turnSecondsUsed + 1) * 1000,
-      max: 1,
-    })
+    .awaitMessages(
+      (m: Message) =>
+        m.author.id === currentPlayer.user.id &&
+        !m.content.includes(" ") &&
+        !m.reference &&
+        !/[^A-Z]/gi.test(m.content),
+      {
+        time: (turnSecondsUsed + 1) * 1000,
+        max: 1,
+      },
+    )
     .catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
       return undefined;
     });
+
+  {
+    const game = getCurrentJottoGame(channelId);
+
+    if (!game) {
+      try {
+        setTurnInverval(channelId, undefined);
+        clearInterval(interval);
+      } catch (error) {
+        logger.error(error);
+      }
+
+      return;
+    }
+  }
 
   try {
     embed.setFooter(getCriteriaMessageFooter(0));
@@ -297,8 +367,6 @@ export const changeJottoTurn = async (
   } catch (error) {
     logger.error(error);
   }
-
-  game.currentPlayerIndex = targetPlayerIndex;
 
   const attemptsLeft = game.playersData[currentPlayerIndex].attemptsLeft - 1;
 
@@ -365,6 +433,8 @@ export const changeJottoTurn = async (
     if (word.toUpperCase() === targetPlayer.secret.toUpperCase()) {
       targetPlayer.secretFoundBy = currentPlayer.user;
 
+      currentPlayer.score = currentPlayer.score + 1;
+
       wordMessage
         .reply(
           `\nCongrats! You found ${
@@ -376,7 +446,7 @@ export const changeJottoTurn = async (
           console.error(e);
         });
 
-      await changeJottoTurn(wordMessage, targetPlayerIndex);
+      await changeJottoTurn(wordMessage, currentPlayerIndex);
       return;
     } else if (commonLetters.length === 0) {
       targetPlayer.removedLetters = Array.from(
@@ -438,7 +508,9 @@ export const changeJottoTurn = async (
     `);
   }
 
-  await changeJottoTurn(message, targetPlayerIndex);
+  game.currentPlayerIndex = nextPlayerIndex;
+
+  await changeJottoTurn(message, game.currentPlayerIndex);
 };
 
 export const startJottoGame = async (message: Message) => {
