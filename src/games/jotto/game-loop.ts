@@ -58,12 +58,73 @@ export const changeJottoTurn = async (
     targetPlayerIndex = 0;
   }
 
-  if (game.playersData[currentPlayerIndex].attempts < 1) {
+  if (game.playersData[currentPlayerIndex].attemptsLeft < 1) {
     await changeJottoTurn(message, targetPlayerIndex);
     return;
   }
 
   const currentPlayer = game.playersData[currentPlayerIndex];
+
+  if (currentPlayer.winner) {
+    const winners = game.playersData.filter((player) => player.winner);
+
+    if (winners.length === 1) {
+      const embed = new MessageEmbed()
+        .setTitle("Congratulations!")
+        .setDescription(
+          `Here is your winner, the mastermind of this Jotto game.`,
+        )
+        .addField("Winner", `<@${currentPlayer.user.id}>`)
+        .setColor(flatColors.green);
+
+      let url = currentPlayer.user.defaultAvatarURL;
+
+      if (typeof currentPlayer.user.avatarURL === "function") {
+        url =
+          currentPlayer.user.avatarURL({ dynamic: true }) ||
+          currentPlayer.user.avatar ||
+          currentPlayer.user.defaultAvatarURL;
+      } else if (typeof currentPlayer.user.avatarURL === "string") {
+        // @ts-ignore
+        url = currentPlayer.user.avatarURL;
+      }
+
+      embed.setThumbnail(url);
+
+      message.channel.send(embed);
+
+      logger.info("Winner:");
+      logger.info(`${currentPlayer.user.tag} ${currentPlayer.user.id}`);
+
+      // eslint-disable-next-line no-console
+      console.log({ ...currentPlayer, user: undefined });
+    } else {
+      const embed = new MessageEmbed()
+        .setTitle("Congratulations!")
+        .setDescription(
+          stripIndents`Here are your winners,
+          the masterminds of this Jotto game:
+          
+          ${winners.map((w) => `<@${w.user.id}>`).join(", ")}
+          `,
+        )
+        .setColor(flatColors.green);
+
+      message.channel.send(embed);
+
+      logger.info("Winners:");
+      logger.info(winners.map((w) => `${w.user.tag} ${w.user.id}`).join(", "));
+
+      // eslint-disable-next-line no-console
+      console.log(winners.map((w) => ({ ...w, user: undefined })));
+    }
+
+    logger.info(`Game ended: ${new Date()}`);
+
+    setCurrentJottoGame(channelId, null);
+
+    return;
+  }
 
   let targetPlayer = game.playersData[targetPlayerIndex];
 
@@ -85,38 +146,8 @@ export const changeJottoTurn = async (
   }
 
   if (targetPlayer.secretFoundBy) {
-    const embed = new MessageEmbed()
-      .setTitle("Congratulations!")
-      .setDescription(`Here is your winner, the mastermind of this Jotto game.`)
-      .addField("Winner", `<@${currentPlayer.user.id}>`)
-      .setColor(flatColors.green);
-
-    let url = currentPlayer.user.defaultAvatarURL;
-
-    if (typeof currentPlayer.user.avatarURL === "function") {
-      url =
-        currentPlayer.user.avatarURL({ dynamic: true }) ||
-        currentPlayer.user.avatar ||
-        currentPlayer.user.defaultAvatarURL;
-    } else if (typeof currentPlayer.user.avatarURL === "string") {
-      // @ts-ignore
-      url = currentPlayer.user.avatarURL;
-    }
-
-    embed.setThumbnail(url);
-
-    message.channel.send(embed);
-
-    logger.info("Winner:");
-    logger.info(currentPlayer.user);
-
-    // eslint-disable-next-line no-console
-    console.log({ ...currentPlayer, user: undefined });
-
-    logger.info(`Game ended: ${new Date()}`);
-
-    setCurrentJottoGame(channelId, null);
-
+    currentPlayer.winner = true;
+    await changeJottoTurn(message, targetPlayerIndex);
     return;
   }
 
@@ -187,7 +218,7 @@ export const changeJottoTurn = async (
   const criteriaMessage = await message.channel
     .send({
       content: oneLine`<@${currentPlayer.user.id}>,
-      you have ${currentPlayer.attempts} attempts left.`,
+      you have ${currentPlayer.attemptsLeft} attempts left.`,
       embed,
     })
     .catch((e) => {
@@ -232,7 +263,7 @@ export const changeJottoTurn = async (
       ${new Date()}
       Turn: ${currentPlayer.user.tag}
       Time Remaining: ${timeRemainingInSeconds}s
-      Attempts: ${currentPlayer.attempts}
+      Attempts Left: ${currentPlayer.attemptsLeft}
       Target:
       Secret: ${targetPlayer.secret}
       Revealed: ${targetPlayer.revealedLetters.join(" ")}
@@ -269,15 +300,15 @@ export const changeJottoTurn = async (
 
   game.currentPlayerIndex = targetPlayerIndex;
 
-  const attempts = game.playersData[currentPlayerIndex].attempts - 1;
+  const attemptsLeft = game.playersData[currentPlayerIndex].attemptsLeft - 1;
 
-  if (attempts < 1) {
+  if (attemptsLeft < 1) {
     message.channel.send(
       `<@${currentPlayer.user.id}> doesn't have any more attempts.`,
     );
   }
 
-  game.playersData[currentPlayerIndex].attempts = attempts;
+  game.playersData[currentPlayerIndex].attemptsLeft = attemptsLeft;
 
   setCurrentJottoGame(channelId, game);
 

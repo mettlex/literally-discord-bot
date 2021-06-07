@@ -12,11 +12,13 @@ import { getCurrentJottoGame, setCurrentJottoGame } from "..";
 import { getDiscordJSClient } from "../../../app";
 import {
   askToJoinJottoGame,
+  getInitialMessageAndEmbed,
   getTurnInverval,
   notifyJoined,
+  startJottoGame,
 } from "../game-loop";
 import { JottoData } from "../types";
-import { attempts } from "../config";
+import { attemptsLeft } from "../config";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 
@@ -81,6 +83,18 @@ export const makeJottoCommands = (guildIDs: string[]) => {
           set **${existingData.secret}** as your secret word.`;
         }
 
+        if (
+          game &&
+          !game.gameStarted &&
+          game.playersData[0].secret.length !== word.length
+        ) {
+          return oneLine`The first player chose
+            ${game.playersData[0].secret.length}-letter word
+            so you also need to give a word with the same number of
+            letters for your secret.
+          `;
+        }
+
         if (word.length > 6 || word.length < 3) {
           return oneLine`The secret word can't be less than 3
             or more than 6 letters. Please try again.
@@ -107,12 +121,13 @@ export const makeJottoCommands = (guildIDs: string[]) => {
           playersData: [
             ...(game?.playersData || []),
             {
-              attempts,
+              attemptsLeft,
               user,
               secret: word,
               availableLetters: alphabet,
               revealedLetters: [],
               removedLetters: [],
+              winner: false,
             },
           ],
           gameStarted: false,
@@ -127,6 +142,12 @@ export const makeJottoCommands = (guildIDs: string[]) => {
           await askToJoinJottoGame(ctx);
         } else {
           await notifyJoined(ctx);
+
+          if (game.playersData.length === 30) {
+            const initialData = getInitialMessageAndEmbed(ctx.channelID);
+
+            initialData && (await startJottoGame(initialData.message));
+          }
         }
 
         return `Successfully set your secret word.`;
