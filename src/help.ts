@@ -18,15 +18,17 @@ import {
   flatColors,
   prefixes as wordchainPrefixes,
 } from "./games/word-chain/config";
-import { actions } from "./games/word-chain";
-import { stripIndents } from "common-tags";
+import { actions as wcActions } from "./games/word-chain";
+import { oneLine, stripIndents } from "common-tags";
 // prettier-ignore
 import {
   slashCommandOptions as slashCommandOptionsForTwoTruthsAndALie,
 } from "./games/two-truths-and-a-lie/slash-commands";
-import { prefixes } from "./config";
+import { prefixes as lyPrefixes } from "./config";
 import "./extension";
 import { ExtendedDMChannel, ExtendedTextChannel } from "./extension";
+import { actions as jottoActions } from "./games/jotto";
+import { prefixes as jottoPrefixes } from "./games/jotto/config";
 
 const helpButtons: ComponentButton[] = [
   {
@@ -40,6 +42,12 @@ const helpButtons: ComponentButton[] = [
     label: "Two Truths & A Lie",
     style: ButtonStyle.SUCCESS,
     custom_id: "help_two_truths_and_a_lie",
+  },
+  {
+    type: 2,
+    label: "Jotto",
+    style: ButtonStyle.SUCCESS,
+    custom_id: "help_jotto",
   },
 ];
 
@@ -61,13 +69,18 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     } else if (ctx.customID === helpButtons[1].custom_id) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "two_truths_and_a_lie", client);
+    } else if (ctx.customID === helpButtons[2].custom_id) {
+      await ctx.send("Check the message below 👇");
+      sendHelpMessage(ctx.user.id, channel, "jotto", client);
+    } else {
+      await ctx.send("Not available :(");
     }
   });
 
   client.on("message", (message) => {
     if (
       message.author.bot ||
-      !prefixes.find((p) => message.content.toLowerCase().startsWith(p)) ||
+      !lyPrefixes.find((p) => message.content.toLowerCase().startsWith(p)) ||
       !message.content.toLowerCase().trim().endsWith("help")
     ) {
       return;
@@ -109,7 +122,7 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
   }, 3000);
 };
 
-const gameValues = ["word_chain", "two_truths_and_a_lie"] as const;
+const gameValues = ["word_chain", "two_truths_and_a_lie", "jotto"] as const;
 
 const options: ApplicationCommandOption[] = [
   {
@@ -126,6 +139,10 @@ const options: ApplicationCommandOption[] = [
       {
         name: "Two Truths & A Lie",
         value: gameValues[1],
+      },
+      {
+        name: "Jotto",
+        value: gameValues[2],
       },
     ],
   },
@@ -209,7 +226,7 @@ export const sendHelpMessage = (
     embed
       .setDescription(
         stripIndents`
-        ${actions
+        ${wcActions
           .sort((a, b) => {
             if (a.commands[0].charCodeAt(0) > b.commands[0].charCodeAt(0)) {
               return 1;
@@ -274,6 +291,41 @@ export const sendHelpMessage = (
         > 4. Send it and wait for others to react on the question!
         `,
     );
+  } else if (gameValue === "jotto") {
+    embed.setTitle("Jotto - guess the secret word");
+
+    embed.setDescription(stripIndents`
+    In Jotto, each player thinks of a secret word.
+    Then, you take turns trying to guess your opponent's word.
+
+    ${oneLine`If you get it wrong, you'll at least find out
+      how many letters your guess has in common with the correct word.`}
+    
+    ${oneLine`Use smart guesses to eliminate letters and
+      figure out other player's secret word before they figure out yours!`}
+    
+    ${oneLine`To start the game a player uses the slash command
+      \`/jotto\` and sets the secret word. Other players joins
+      using the same \`/jotto\` command.
+      `}
+
+    Additional Commands:
+
+    ${jottoActions
+      .map((action) => {
+        return stripIndents`${action.commands
+          .map((c) => `\`${c}\``)
+          .join(" / ")}
+          > ${action.description}
+          > Example: \`${jottoPrefixes[0]}${action.commands[0]}\`
+        `;
+      })
+      .join("\n\n")}
+    
+    Available Prefixes:
+    ${jottoPrefixes.map((p) => `\`${p}\``).join(", ")}
+    
+    `);
   } else {
     return;
   }

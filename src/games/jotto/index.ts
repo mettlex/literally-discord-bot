@@ -1,21 +1,33 @@
+/* eslint-disable indent */
 import path from "path";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
-import { Client } from "discord.js";
+import { Client, Message, TextChannel } from "discord.js";
 import { SlashCreator } from "slash-create";
 import { getGuildIds } from "../../app";
 import { ActiveJottoGames, JottoData } from "./types";
 import { setupGame } from "../setup";
 import { Action } from "../types";
 import { makeJottoCommands } from "./slash-commands";
-import { prefixes } from "./config";
+import { prefixes, timeToJoinInSeconds } from "./config";
 import {
   getInitialMessageAndEmbed,
   startJottoGame,
   changeJottoTurn,
 } from "./game-loop";
 import { flatColors } from "../word-chain/config";
+import { oneLine } from "common-tags";
+import { sendHelpMessage } from "../../help";
 
-const actions: Action[] = [
+export const sendJottoHelpMessage = (message: Message) => {
+  sendHelpMessage(
+    message.author.id,
+    message.channel as TextChannel,
+    "jotto",
+    message.client,
+  );
+};
+
+export const actions: Action[] = [
   {
     commands: ["fs", "force-start", "force start"],
     handler: async (message) => {
@@ -52,6 +64,13 @@ const actions: Action[] = [
         );
       }
     },
+    description: oneLine`Start the game immediately ignoring
+      the ${timeToJoinInSeconds} seconds time to join.`,
+  },
+  {
+    commands: ["h", "help"],
+    handler: sendJottoHelpMessage,
+    description: "Display help message",
   },
 ];
 
@@ -137,5 +156,5 @@ export const setupJottoGame = (client: Client, creator: SlashCreator) => {
     }
   }, 3000);
 
-  setupGame(client, prefixes, actions);
+  setupGame(client, prefixes, [...actions]);
 };
