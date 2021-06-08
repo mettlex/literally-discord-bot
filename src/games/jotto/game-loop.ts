@@ -66,15 +66,6 @@ export const changeJottoTurn = async (
     targetPlayerIndex = 0;
   }
 
-  if (game.playersData[currentPlayerIndex].attemptsLeft < 1) {
-    await changeJottoTurn(message, nextPlayerIndex);
-    return;
-  }
-
-  logger.info("=== Current Player Log Start ===");
-  logger.info(currentPlayer.user);
-  logger.info("=== Current Player Log End ===");
-
   const maxScore = Math.max(...game.playersData.map((p) => p.score));
 
   const declareWinnersAndEndGame = () => {
@@ -157,6 +148,41 @@ export const changeJottoTurn = async (
 
     return;
   };
+
+  if (
+    !game.playersData.find((p) => p.attemptsLeft > 0) &&
+    !game.playersData.find((p) => p.score > 0)
+  ) {
+    message.channel
+      .send("> No player has scored so the game ends without a winner.")
+      .catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      });
+
+    setCurrentJottoGame(channelId, null);
+
+    return;
+  } else if (
+    !game.playersData.find((p) => p.attemptsLeft > 0) &&
+    game.playersData.find((p) => p.score > 0)
+  ) {
+    if (currentPlayer.winner) {
+      declareWinnersAndEndGame();
+      return;
+    } else {
+      currentPlayer.winner = true;
+    }
+  }
+
+  if (game.playersData[currentPlayerIndex].attemptsLeft < 1) {
+    await changeJottoTurn(message, nextPlayerIndex);
+    return;
+  }
+
+  logger.info("=== Current Player Log Start ===");
+  logger.info(currentPlayer.user);
+  logger.info("=== Current Player Log End ===");
 
   if (currentPlayer.score === maxScore && maxScore > 0) {
     if (currentPlayer.winner) {
