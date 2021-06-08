@@ -255,7 +255,13 @@ export const sendHelpMessage = (
                   : ""
               }
               > e.g. \`${wordchainPrefixes[0]}${action.commands[0]}${
-              action.args ? ` ${action.args[Object.keys(action.args)[0]]}` : ""
+              action.args
+                ? ` ${
+                    (action.args as { [key: string]: string })[
+                      Object.keys(action.args)[0]
+                    ]
+                  }`
+                : ""
             }\`
             `,
           )

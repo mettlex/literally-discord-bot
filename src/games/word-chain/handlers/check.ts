@@ -10,7 +10,7 @@ export const args: {
   word: "Hello",
 };
 
-const testSpell = (
+const testSpell = async (
   message: Message,
   commands: string[],
   messageContentWithoutPrefix: string,
@@ -25,7 +25,7 @@ const testSpell = (
       const lastWord = words[words.length - 1];
 
       if (lastWord) {
-        const correct = checkSpell(lastWord);
+        const correct = await checkSpell(lastWord);
 
         logger.info({ lastWord, correct });
 
