@@ -72,8 +72,6 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     } else if (ctx.customID === helpButtons[2].custom_id) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "jotto", client);
-    } else {
-      await ctx.send("Not available :(");
     }
   });
 
