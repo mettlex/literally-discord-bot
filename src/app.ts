@@ -10,6 +10,7 @@ import { setupHelpMenu } from "./help";
 import { setupEconomy } from "./economy/setup";
 import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
 import { setupJottoGame } from "./games/jotto";
+import { setupCoupReformationGame } from "./games/coup-reformation";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 
@@ -58,6 +59,7 @@ client.once("ready", () => {
   setupEconomy(client, creator);
   setupTheWinkingAssassinGame(client, creator);
   setupJottoGame(client, creator);
+  setupCoupReformationGame(client, creator);
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
