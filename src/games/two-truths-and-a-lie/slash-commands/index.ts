@@ -13,7 +13,7 @@ import {
 } from "slash-create";
 import { getDiscordJSClient } from "../../../app";
 import { shuffleArray } from "../../../utils/array";
-import { flatColors } from "../../word-chain/config";
+import { flatColors } from "../../../config";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 

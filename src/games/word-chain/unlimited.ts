@@ -2,7 +2,8 @@ import { stripIndents } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
 import { actions } from ".";
-import { flatColors, prefixes } from "./config";
+import { prefixes } from "./config";
+import { flatColors } from "../../config";
 import { checkSpell } from "./spell-checker";
 import { ActiveUnlimitedWordChains, UnlimitedWordChainGame } from "./types";
 

@@ -4,7 +4,8 @@ import { ButtonStyle, ComponentButton, ComponentType } from "slash-create";
 import { actions, getAllActiveGames } from "..";
 import { ExtendedTextChannel } from "../../../extension";
 import { shuffleArray } from "../../../utils/array";
-import { prefixes, secondsToJoin, flatColors } from "../config";
+import { prefixes, secondsToJoin } from "../config";
+import { flatColors } from "../../../config";
 import { changeTurn } from "../game-loop";
 import { WordChainGameMode } from "../types";
 

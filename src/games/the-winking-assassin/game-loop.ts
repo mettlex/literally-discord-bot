@@ -12,7 +12,7 @@ import {
 import { getCurrentTWAGame, setCurrentTWAGame } from ".";
 import { getDiscordJSClient } from "../../app";
 import { ExtendedTextChannel } from "../../extension";
-import { flatColors } from "../word-chain/config";
+import { flatColors } from "../../config";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
 

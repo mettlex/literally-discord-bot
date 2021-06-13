@@ -1,6 +1,7 @@
 import { addSeconds, differenceInSeconds } from "date-fns";
 import { Client, Message, MessageEmbed } from "discord.js";
-import { prefixes, secondsToJoin, flatColors } from "../config";
+import { prefixes, secondsToJoin } from "../config";
+import { flatColors } from "../../../config";
 import { actions, getAllActiveGames } from "..";
 import { ButtonStyle, ComponentContext } from "slash-create";
 import { ExtendedTextChannel } from "../../../extension";

@@ -1,7 +1,7 @@
 import { oneLine } from "common-tags";
 import { Message, MessageEmbed } from "discord.js";
 import { Client } from "unb-api";
-import { flatColors } from "../../games/word-chain/config";
+import { flatColors } from "../../config";
 import { getUser } from "../unb";
 
 export const balance = async (client: Client, message: Message) => {

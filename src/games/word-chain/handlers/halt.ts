@@ -1,6 +1,6 @@
 import { Message, MessageEmbed } from "discord.js";
 import { getAllActiveGames, getCurrentGame } from "..";
-import { flatColors } from "../config";
+import { flatColors } from "../../../config";
 
 const haltHanlder = (message: Message) => {
   if (!message.member?.hasPermission("MANAGE_GUILD")) {

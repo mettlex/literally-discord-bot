@@ -14,7 +14,7 @@ import {
   startJottoGame,
   changeJottoTurn,
 } from "./game-loop";
-import { flatColors } from "../word-chain/config";
+import { flatColors } from "../../config";
 import { oneLine } from "common-tags";
 import { sendHelpMessage } from "../../help";
 

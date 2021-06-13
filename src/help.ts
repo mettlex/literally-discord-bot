@@ -14,10 +14,8 @@ import {
 import { getDiscordJSClient, getGuildIds } from "./app";
 import packageInfo from "../package.json";
 import sleep from "./utils/sleep";
-import {
-  flatColors,
-  prefixes as wordchainPrefixes,
-} from "./games/word-chain/config";
+import { prefixes as wordchainPrefixes } from "./games/word-chain/config";
+import { flatColors } from "./config";
 import { actions as wcActions } from "./games/word-chain";
 import { oneLine, stripIndents } from "common-tags";
 // prettier-ignore

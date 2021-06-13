@@ -5,8 +5,8 @@ import pino from "pino";
 import { CommandContext } from "slash-create";
 import { getCurrentJottoGame, setCurrentJottoGame } from ".";
 import { getDiscordJSClient } from "../../app";
+import { flatColors } from "../../config";
 import { shuffleArray } from "../../utils/array";
-import { flatColors } from "../word-chain/config";
 import { timeToJoinInSeconds, turnSeconds } from "./config";
 
 const notInProduction = process.env.NODE_ENV !== "production";

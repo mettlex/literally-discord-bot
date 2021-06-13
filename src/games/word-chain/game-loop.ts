@@ -11,11 +11,11 @@ import { addToCashBalance, checkPermission, getGuild } from "../../economy/unb";
 import { UNBServerConfig } from "../../economy/unb/types";
 import {
   mediumTurnSeconds,
-  flatColors,
   easyTurnSeconds,
   hardTurnSeconds,
   getGuildConfig,
 } from "./config";
+import { flatColors } from "../../config";
 import { checkSpell } from "./spell-checker";
 import "../../economy/unb/server-config.json";
 
