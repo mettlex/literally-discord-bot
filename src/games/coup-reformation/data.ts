@@ -1,16 +1,21 @@
 import path from "path";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import {
-  CoupReformationGame,
-  CurrentCoupReformationGames,
+  CoupGame,
+  CurrentCoupGames,
+  Deck,
+  InfluenceCard,
+  influenceCardNamesInClassic,
+  influenceCardNamesInReformation,
   InitialData,
 } from "./types";
+import { shuffleArray } from "../../utils/array";
 
 export const gameDataDir = path.resolve(
   process.env.COUP_GAME_DATA_DIR || "/tmp/",
 );
 
-const currentCoupReformationGames: CurrentCoupReformationGames = {};
+const currentCoupReformationGames: CurrentCoupGames = {};
 
 const initialMessages: {
   [channelId: string]: InitialData | undefined;
@@ -21,7 +26,7 @@ export const getFileNameForGameData = (channelId: string) =>
 
 export const getCurrentCoupReformationGame = (
   channelId: string,
-): CoupReformationGame | undefined | null => {
+): CoupGame | undefined | null => {
   const filepath = path.resolve(gameDataDir, getFileNameForGameData(channelId));
 
   if (!currentCoupReformationGames[channelId] && existsSync(filepath)) {
@@ -35,7 +40,7 @@ export const getCurrentCoupReformationGame = (
 
 export const setCurrentCoupReformationGame = (
   channelId: string,
-  gameData: CoupReformationGame | null,
+  gameData: CoupGame | null,
 ) => {
   const filepath = path.resolve(gameDataDir, getFileNameForGameData(channelId));
 
@@ -74,4 +79,59 @@ export const getInitialMessageAndEmbed = (channelId: string) =>
 
 export const setInitialMessageAndEmbed = (data: InitialData) => {
   initialMessages[data.message.channel.id] = data;
+};
+
+interface CreateDeckParams {
+  playersCount: number;
+  gameMode: CoupGame["mode"];
+}
+
+const getImageURLForInfluenceCard = (name: InfluenceCard["name"]): string => {
+  return name;
+};
+
+export const createDeck = ({
+  playersCount,
+  gameMode,
+}: CreateDeckParams): Deck => {
+  const deck: Deck = [];
+
+  // prettier-ignore
+  const cardNamesCount =
+    gameMode === "classic"
+      ? influenceCardNamesInClassic.length
+      : gameMode === "reformation"
+        ? influenceCardNamesInReformation.length
+        : 1;
+
+  const addCardsToDeck = (maxCards: number) => {
+    const maxCardsForEachInfluence = maxCards / cardNamesCount;
+
+    for (let i = 0; i < maxCards; i += maxCardsForEachInfluence) {
+      for (let j = 0; j < maxCardsForEachInfluence; j++) {
+        const name =
+          influenceCardNamesInClassic[cardNamesCount * (i / maxCards)];
+
+        deck.push({
+          name,
+          imageURL: getImageURLForInfluenceCard(name),
+          performAction: (game, ...args) => {
+            return game;
+          },
+        });
+      }
+    }
+  };
+
+  if (playersCount > 1 && playersCount < 7) {
+    addCardsToDeck(15);
+  } else if (playersCount > 6 && playersCount < 9) {
+    addCardsToDeck(20);
+  } else if (playersCount > 8 && playersCount < 13) {
+    addCardsToDeck(25);
+  }
+
+  shuffleArray(deck);
+
+  return deck;
 };
