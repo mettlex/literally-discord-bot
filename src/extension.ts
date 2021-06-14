@@ -62,6 +62,22 @@ export class ExtendedTextChannel extends Structures.get("TextChannel") {
 
 Structures.extend("TextChannel", () => ExtendedTextChannel);
 
+export class ExtendedMessage extends Structures.get("Message") {
+  editWithComponents({
+    content,
+    options,
+    components,
+  }: ParamsForSendWithComponents) {
+    return this.edit(
+      addComponentsToAPIMessage(components)
+        .create(this.channel, content, options || {})
+        .resolveData(),
+    );
+  }
+}
+
+Structures.extend("Message", () => ExtendedMessage);
+
 export class ExtendedDMChannel extends Structures.get("DMChannel") {
   sendWithComponents({
     content,
