@@ -10,6 +10,7 @@ import {
   InitialData,
 } from "./types";
 import { shuffleArray } from "../../utils/array";
+import { oneLine } from "common-tags";
 
 export const gameDataDir = path.resolve(
   process.env.COUP_GAME_DATA_DIR || "/tmp/",
@@ -81,14 +82,62 @@ export const setInitialMessageAndEmbed = (data: InitialData) => {
   initialMessages[data.message.channel.id] = data;
 };
 
+export const influenceCardImagesClassic = influenceCardNamesInClassic.reduce<{
+  [name: string]: string[];
+}>((data, curr) => {
+  if (curr === "ambassador") {
+    data[curr] = [
+      "https://cdn.discordapp.com/attachments/848495134874271764/854028201629188116/ambassador_lg_1.jpg",
+    ];
+  } else if (curr === "assassin") {
+    data[curr] = [
+      "https://cdn.discordapp.com/attachments/848495134874271764/854028204376588308/assassin_lg_1.jpg",
+    ];
+  } else if (curr === "captain") {
+    data[curr] = [
+      "https://cdn.discordapp.com/attachments/848495134874271764/854028203236524093/captain_lg_1.jpg",
+    ];
+  } else if (curr === "contessa") {
+    data[curr] = [
+      "https://cdn.discordapp.com/attachments/848495134874271764/854028202385080340/contessa_lg_1.jpg",
+    ];
+  } else if (curr === "duke") {
+    data[curr] = [
+      "https://cdn.discordapp.com/attachments/848495134874271764/854028204082462760/duke_lg_1.jpg",
+    ];
+  }
+
+  return data;
+}, {});
+
+export const getImageURLForInfluenceCard = (
+  name: InfluenceCard["name"],
+): string | undefined => {
+  return influenceCardImagesClassic[name][0];
+};
+
 interface CreateDeckParams {
   playersCount: number;
   gameMode: CoupGame["mode"];
 }
 
-const getImageURLForInfluenceCard = (name: InfluenceCard["name"]): string => {
-  return name;
-};
+// prettier-ignore
+export const getDescriptionFromCardName = (name: InfluenceCard["name"]) =>
+  name === "duke"
+    ? oneLine`Takes 3 coins from the treasury. This action can't be blocked.
+      Duke can block foreign aid.`
+    : name === "captain"
+      ? oneLine`Steals 2 coins from any other player.
+        This action can be blocked by captain or ambassador.`
+      : name === "ambassador"
+        ? oneLine`Exchanges cards with the court deck.
+        This action can't be blocked.`
+        : name === "assassin"
+          ? oneLine`Spends 3 coins to assassinate any other player.
+          This action can be blocked by contessa.`
+          : name === "contessa"
+            ? oneLine`Blocks assassinations.`
+            : "";
 
 export const createDeck = ({
   playersCount,
@@ -112,12 +161,12 @@ export const createDeck = ({
         const name =
           influenceCardNamesInClassic[cardNamesCount * (i / maxCards)];
 
+        // prettier-ignore
         deck.push({
           name,
-          imageURL: getImageURLForInfluenceCard(name),
-          performAction: (game, ...args) => {
-            return game;
-          },
+          description:
+            getDescriptionFromCardName(name),
+          imageURL: getImageURLForInfluenceCard(name) || "",
         });
       }
     }
