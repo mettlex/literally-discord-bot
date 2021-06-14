@@ -14,6 +14,7 @@ export interface CoupGame {
   gameStartedAt: Date;
   mode: typeof gameModes[number];
   players: CoupPlayer[];
+  currentPlayer: string;
   deck: Deck;
 }
 
@@ -45,7 +46,7 @@ export interface InfluenceCard {
     | typeof influenceCardNamesInClassic[number]
     | typeof influenceCardNamesInReformation[number];
   imageURL: string;
-  performAction: (game: CoupGame, ...args: any) => CoupGame;
+  description: string;
 }
 
 export type Deck = InfluenceCard[];
