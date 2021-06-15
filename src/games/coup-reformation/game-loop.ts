@@ -8,8 +8,9 @@ import { flatColors } from "../../config";
 import { ExtendedTextChannel } from "../../extension";
 import { shuffleArray } from "../../utils/array";
 import sleep from "../../utils/sleep";
-import { prefixes, timeToJoinInSeconds } from "./config";
+import { prefixes, timeToJoinInSeconds, turnSeconds } from "./config";
 import {
+  coupActions,
   createDeck,
   getCurrentCoupReformationGame,
   setCurrentCoupReformationGame,
@@ -154,6 +155,8 @@ export const changeCoupTurn = async (message: Message) => {
 
   const currentPlayerId = game.currentPlayer;
 
+  game.turnCount++;
+
   logger.info(`channelId: ${channelId}, turnCount: ${game.turnCount}`);
 
   if (game.turnCount > 0) {
@@ -196,5 +199,65 @@ export const changeCoupTurn = async (message: Message) => {
 
   logger.info(player);
 
-  game.turnCount += 1;
+  {
+    const embed = new MessageEmbed()
+      .setTitle(`Make your move, ${player.name}`)
+      .addField(`Coins`, player.coins, true)
+      .addField(
+        `Influences`,
+        player.influences.filter((inf) => !inf.disarmed).length,
+        true,
+      )
+      .setDescription(`${player.name}, it's your turn. Choose an action below.`)
+      .setColor(flatColors.blue)
+      .setFooter(`${turnSeconds} seconds remaining`, player.avatarURL);
+
+    // channel.sendWithComponents({
+    //   content: `<@${player.id}>`,
+    //   options: { embed },
+    //   components: [
+    //     {
+    //       components: [{}],
+    //     },
+    //   ],
+    // });
+
+    channel.send(embed);
+
+    // #region Simulation
+    /* const activePlayers = game.players.filter(
+      (p) =>
+        p.influences[0] &&
+        p.influences[1] &&
+        (!p.influences[0].disarmed || !p.influences[1].disarmed),
+    );
+
+    if (activePlayers.length === 0 || game.turnCount > 5) {
+      setCurrentCoupReformationGame(channelId, null);
+      return;
+    }
+
+    const currentPlayerIndex = activePlayers.findIndex(
+      (p) => p.id === currentPlayerId,
+    );
+
+    const nextPlayerIndex =
+      currentPlayerIndex !== activePlayers.length - 1
+        ? currentPlayerIndex + 1
+        : 0;
+
+    const performDefaultAction = () =>
+      coupActions.income(channelId, game, player);
+
+    performDefaultAction();
+
+    game.currentPlayer = activePlayers[nextPlayerIndex].id;
+
+    setCurrentCoupReformationGame(channelId, game);
+
+    await sleep(1000);
+
+    changeCoupTurn(message); */
+    // #endregion Simulation
+  }
 };
