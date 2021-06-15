@@ -37,6 +37,9 @@ export const askToJoinCoupGame = async (message: Message) => {
         message.member?.nickname || message.author.username
       } is asking you to join`,
     )
+    .setThumbnail(
+      "https://cdn.discordapp.com/attachments/848495134874271764/854318440654831636/roles.png",
+    )
     .setColor(flatColors.yellow);
 
   const channel = message.channel as ExtendedTextChannel;
