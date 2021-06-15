@@ -189,8 +189,13 @@ export const actions: Action[] = [
           {
             id: message.author.id,
             tag: message.author.tag,
+            name: message.member?.nickname || message.author.username,
             coins: 2,
             influences: [],
+            avatarURL:
+              message.author.avatarURL({ dynamic: true }) ||
+              message.author.avatarURL() ||
+              message.author.defaultAvatarURL,
           },
         ],
         currentPlayer: message.author.id,
@@ -229,8 +234,13 @@ export const actions: Action[] = [
       game.players.push({
         id: message.author.id,
         tag: message.author.tag,
+        name: message.member?.nickname || message.author.username,
         coins: 2,
         influences: [],
+        avatarURL:
+          message.author.avatarURL({ dynamic: true }) ||
+          message.author.avatarURL() ||
+          message.author.defaultAvatarURL,
       });
 
       message.channel.send(`${message.author} joined the game.`);
@@ -348,8 +358,13 @@ export const setupCoupReformationGame = (
       game.players.push({
         id: ctx.user.id,
         tag: `${ctx.user.username}#${ctx.user.discriminator}`,
+        name: ctx.member?.nick || ctx.user.username,
         coins: 2,
         influences: [],
+        avatarURL:
+          ctx.user.dynamicAvatarURL() ||
+          ctx.user.avatarURL ||
+          ctx.user.defaultAvatarURL,
       });
 
       ctx.send(`${ctx.user.mention} joined the game.`);

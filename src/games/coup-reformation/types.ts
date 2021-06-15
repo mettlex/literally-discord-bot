@@ -3,9 +3,11 @@ import { Message, MessageEmbed, User } from "discord.js";
 export interface CoupPlayer {
   id: User["id"];
   tag: User["tag"];
+  name: string;
   allegiance?: "loyalist" | "reformist";
   influences: [Influence, Influence] | [];
   coins: number;
+  avatarURL: string;
 }
 
 export const gameModes = ["classic", "reformation"] as const;
