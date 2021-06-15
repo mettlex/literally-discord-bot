@@ -2,6 +2,7 @@ import path from "path";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import {
   CoupGame,
+  CoupPlayer,
   CurrentCoupGames,
   Deck,
   InfluenceCard,
@@ -184,3 +185,150 @@ export const createDeck = ({
 
   return deck;
 };
+
+export const coupActions = {
+  income: (channelId: string, game: CoupGame, player: CoupPlayer) => {
+    player && player.coins++;
+    setCurrentCoupReformationGame(channelId, game);
+  },
+  foreignAid: (channelId: string, game: CoupGame, player: CoupPlayer) => {
+    player && (player.coins += 2);
+    setCurrentCoupReformationGame(channelId, game);
+  },
+  coup: (
+    channelId: string,
+    game: CoupGame,
+    player: CoupPlayer,
+    targetPlayer: CoupPlayer,
+    disarmedInfluenceIndex: number,
+  ) => {
+    if (!player || !targetPlayer) {
+      return;
+    }
+
+    player.coins -= 7;
+
+    for (let i = 0; i < game.players.length; i++) {
+      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
+        game.players[i].influences[disarmedInfluenceIndex].disarmed = true;
+        break;
+      }
+    }
+
+    setCurrentCoupReformationGame(channelId, game);
+  },
+  tax: (channelId: string, game: CoupGame, player: CoupPlayer) => {
+    player && (player.coins += 3);
+    setCurrentCoupReformationGame(channelId, game);
+  },
+  assassinate: (
+    channelId: string,
+    game: CoupGame,
+    player: CoupPlayer,
+    targetPlayer: CoupPlayer,
+    disarmedInfluenceIndex: number,
+  ) => {
+    if (!player || !targetPlayer) {
+      return;
+    }
+
+    player.coins -= 3;
+
+    for (let i = 0; i < game.players.length; i++) {
+      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
+        game.players[i].influences[disarmedInfluenceIndex].disarmed = true;
+        break;
+      }
+    }
+
+    setCurrentCoupReformationGame(channelId, game);
+  },
+  exchange: (
+    channelId: string,
+    game: CoupGame,
+    player: CoupPlayer,
+    numberOfInfluences: number,
+    selectedInfluenceIndexesForDeck:
+      | [number, number]
+      | [undefined, number]
+      | [number, undefined]
+      | [number]
+      | [],
+    selectedInfluenceIndexesForPlayer:
+      | [number, number]
+      | [undefined, number]
+      | [number, undefined]
+      | [number]
+      | [],
+  ) => {
+    if (
+      !player ||
+      !numberOfInfluences ||
+      !selectedInfluenceIndexesForDeck ||
+      !selectedInfluenceIndexesForPlayer
+    ) {
+      return;
+    }
+
+    const performExchange = (deckInfIndex: number, playersInfIndex: number) => {
+      const taken = game.deck.splice(deckInfIndex, 1)[0];
+      const put = player.influences.splice(playersInfIndex, 1)[0];
+
+      player.influences[playersInfIndex] = {
+        ...taken,
+        disarmed: false,
+      };
+
+      game.deck[deckInfIndex] = {
+        name: put.name,
+        description: put.description,
+        imageURL: put.imageURL,
+      };
+
+      shuffleArray(game.deck);
+    };
+
+    if (numberOfInfluences === 2) {
+      if (
+        typeof selectedInfluenceIndexesForDeck[0] === "number" &&
+        typeof selectedInfluenceIndexesForPlayer[0] === "number"
+      ) {
+        performExchange(
+          selectedInfluenceIndexesForDeck[0],
+          selectedInfluenceIndexesForPlayer[0],
+        );
+      }
+
+      if (
+        typeof selectedInfluenceIndexesForDeck[1] === "number" &&
+        typeof selectedInfluenceIndexesForPlayer[1] === "number"
+      ) {
+        performExchange(
+          selectedInfluenceIndexesForDeck[1],
+          selectedInfluenceIndexesForPlayer[1],
+        );
+      }
+    } else if (numberOfInfluences === 1) {
+      if (
+        typeof selectedInfluenceIndexesForDeck[0] === "number" &&
+        typeof selectedInfluenceIndexesForPlayer[0] === "number"
+      ) {
+        performExchange(
+          selectedInfluenceIndexesForDeck[0],
+          selectedInfluenceIndexesForPlayer[0],
+        );
+      }
+    }
+
+    setCurrentCoupReformationGame(channelId, game);
+  },
+  steal: (channelId: string, game: CoupGame, targetPlayer: CoupPlayer) => {
+    if (!targetPlayer) {
+      return;
+    }
+
+    targetPlayer.coins -= 2;
+
+    setCurrentCoupReformationGame(channelId, game);
+  },
+} as const;
