@@ -1,6 +1,9 @@
 require("source-map-support").install();
 export const getAppRootDir = () => __dirname;
 import pino from "pino";
+const notInProduction = process.env.NODE_ENV !== "production";
+const logger = pino({ prettyPrint: notInProduction });
+export const getLogger = () => logger;
 import { Client } from "discord.js";
 import { setupWordChainGame } from "./games/word-chain";
 import checkEnv from "./utils/check-env";
@@ -11,10 +14,6 @@ import { setupEconomy } from "./economy/setup";
 import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
 import { setupJottoGame } from "./games/jotto";
 import { setupCoupReformationGame } from "./games/coup-reformation";
-
-const notInProduction = process.env.NODE_ENV !== "production";
-
-const logger = pino({ prettyPrint: notInProduction });
 
 process.on(
   "unhandledRejection",
