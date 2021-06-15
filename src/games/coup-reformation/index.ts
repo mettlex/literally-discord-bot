@@ -20,7 +20,7 @@ import {
   slashCommandOptionsForCheckCards,
 } from "./slash-commands";
 import { InfluenceCard } from "./types";
-import { askToJoinCoupGame, startCoupGame } from "./game-loop";
+import { askToJoinCoupGame, changeCoupTurn, startCoupGame } from "./game-loop";
 
 export const actions: Action[] = [
   {
@@ -57,7 +57,7 @@ export const actions: Action[] = [
       if (game && !game.gameStarted) {
         startCoupGame(message);
       } else if (game && game.gameStarted) {
-        // changeCoupTurn(message);
+        changeCoupTurn(message);
       } else {
         message.reply(
           oneLine`there is no initiated game so
@@ -194,6 +194,7 @@ export const actions: Action[] = [
           },
         ],
         currentPlayer: message.author.id,
+        turnCount: 0,
       };
 
       setCurrentCoupReformationGame(message.channel.id, game);

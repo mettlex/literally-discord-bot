@@ -4,7 +4,7 @@ export interface CoupPlayer {
   id: User["id"];
   tag: User["tag"];
   allegiance?: "loyalist" | "reformist";
-  influences: [InfluenceCard, InfluenceCard] | [InfluenceCard] | [];
+  influences: [Influence, Influence] | [];
   coins: number;
 }
 
@@ -16,6 +16,7 @@ export interface CoupGame {
   players: CoupPlayer[];
   currentPlayer: string;
   deck: Deck;
+  turnCount: number;
 }
 
 export interface CurrentCoupGames {
@@ -47,6 +48,10 @@ export interface InfluenceCard {
     | typeof influenceCardNamesInReformation[number];
   imageURL: string;
   description: string;
+}
+
+export interface Influence extends InfluenceCard {
+  disarmed: boolean;
 }
 
 export type Deck = InfluenceCard[];

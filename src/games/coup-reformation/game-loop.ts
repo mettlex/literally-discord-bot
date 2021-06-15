@@ -1,10 +1,13 @@
+/* eslint-disable indent */
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
 import { Message, MessageEmbed } from "discord.js";
 import { ButtonStyle, ComponentType } from "slash-create";
+import { getLogger } from "../../app";
 import { flatColors } from "../../config";
 import { ExtendedTextChannel } from "../../extension";
 import { shuffleArray } from "../../utils/array";
+import sleep from "../../utils/sleep";
 import { prefixes, timeToJoinInSeconds } from "./config";
 import {
   createDeck,
@@ -12,6 +15,8 @@ import {
   setCurrentCoupReformationGame,
   setInitialMessageAndEmbed,
 } from "./data";
+
+const logger = getLogger();
 
 export const askToJoinCoupGame = async (message: Message) => {
   const embed = new MessageEmbed()
@@ -126,8 +131,70 @@ export const startCoupGame = (message: Message) => {
   game.currentPlayer = game.players[0].id;
 
   for (let i = 0; i < game.players.length; i++) {
-    game.players[i].influences = [game.deck.pop()!, game.deck.pop()!];
+    game.players[i].influences = [
+      { ...game.deck.pop()!, disarmed: false },
+      { ...game.deck.pop()!, disarmed: false },
+    ];
   }
 
   setCurrentCoupReformationGame(message.channel.id, game);
+
+  changeCoupTurn(message);
+};
+
+export const changeCoupTurn = async (message: Message) => {
+  const channel = message.channel as ExtendedTextChannel;
+  const channelId = channel.id;
+
+  const game = getCurrentCoupReformationGame(channelId);
+
+  if (!game) {
+    return;
+  }
+
+  const currentPlayerId = game.currentPlayer;
+
+  logger.info(`channelId: ${channelId}, turnCount: ${game.turnCount}`);
+
+  if (game.turnCount > 0) {
+    const influencesEmbed = new MessageEmbed()
+      .setTitle("DISARMED INFLUENCES")
+      .setTimestamp()
+      .setColor(flatColors.blue);
+
+    let currentInflencesText = "";
+
+    for (const p of game.players) {
+      const foundDisarmed = p.influences.find((inf) => inf.disarmed);
+
+      if (foundDisarmed) {
+        currentInflencesText += `\n\n${
+          p.id === currentPlayerId ? "> " : ""
+        } <@${p.id}> had `;
+
+        currentInflencesText += oneLine`
+        ${p.influences[0]?.disarmed ? `\`${p.influences[0]?.name}\`` : ""}
+        ${p.influences[1]?.disarmed ? `\`${p.influences[1]?.name}\`` : ""}
+        `;
+      }
+    }
+
+    if (currentInflencesText.length > 0) {
+      influencesEmbed.setDescription(currentInflencesText);
+
+      await message.channel.send(influencesEmbed);
+
+      await sleep(1000);
+    }
+  }
+
+  const player = game.players.find((p) => p.id === currentPlayerId);
+
+  if (!player) {
+    return;
+  }
+
+  logger.info(player);
+
+  game.turnCount += 1;
 };
