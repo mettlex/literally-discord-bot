@@ -326,6 +326,32 @@ export const setupCoupReformationGame = (
         // eslint-disable-next-line no-console
         console.error(e);
       });
+    } else if (ctx.customID === "join_coup") {
+      const game = getCurrentCoupReformationGame(ctx.channelID);
+
+      if (!game) {
+        ctx.send("There is no Coup game running.");
+        return;
+      }
+
+      if (game.gameStarted) {
+        ctx.send("The game started already so it's not joinable now.");
+        return;
+      }
+
+      if (game.players.find((p) => p.id === ctx.user.id)) {
+        ctx.send("You already joined the game.");
+        return;
+      }
+
+      game.players.push({
+        id: ctx.user.id,
+        tag: `${ctx.user.username}#${ctx.user.discriminator}`,
+        coins: 2,
+        influences: [],
+      });
+
+      ctx.send(`${ctx.user.mention} joined the game.`);
     }
   });
 };
