@@ -12,8 +12,8 @@ import { prefixes, timeToJoinInSeconds, turnSeconds } from "./config";
 import {
   coupActions,
   createDeck,
-  getCurrentCoupReformationGame,
-  setCurrentCoupReformationGame,
+  getCurrentCoupGame,
+  setCurrentCoupGame,
   setInitialMessageAndEmbed,
 } from "./data";
 
@@ -70,7 +70,7 @@ export const askToJoinCoupGame = async (message: Message) => {
   const startTime = new Date();
 
   const interval = setInterval(() => {
-    const game = getCurrentCoupReformationGame(message.channel.id);
+    const game = getCurrentCoupGame(message.channel.id);
 
     if (!game) {
       clearInterval(interval);
@@ -102,7 +102,7 @@ export const askToJoinCoupGame = async (message: Message) => {
 };
 
 export const startCoupGame = (message: Message) => {
-  let game = getCurrentCoupReformationGame(message.channel.id);
+  let game = getCurrentCoupGame(message.channel.id);
 
   if (!game) {
     message.channel.send("> No initial game data found to start.");
@@ -112,7 +112,7 @@ export const startCoupGame = (message: Message) => {
   if (game.players.length < 2) {
     message.channel.send("> At least 2 players are needed to start Coup game.");
 
-    setCurrentCoupReformationGame(message.channel.id, null);
+    setCurrentCoupGame(message.channel.id, null);
 
     return;
   }
@@ -138,7 +138,7 @@ export const startCoupGame = (message: Message) => {
     ];
   }
 
-  setCurrentCoupReformationGame(message.channel.id, game);
+  setCurrentCoupGame(message.channel.id, game);
 
   changeCoupTurn(message);
 };
@@ -147,7 +147,7 @@ export const changeCoupTurn = async (message: Message) => {
   const channel = message.channel as ExtendedTextChannel;
   const channelId = channel.id;
 
-  const game = getCurrentCoupReformationGame(channelId);
+  const game = getCurrentCoupGame(channelId);
 
   if (!game) {
     return;
@@ -233,7 +233,7 @@ export const changeCoupTurn = async (message: Message) => {
     );
 
     if (activePlayers.length === 0 || game.turnCount > 5) {
-      setCurrentCoupReformationGame(channelId, null);
+      setCurrentCoupGame(channelId, null);
       return;
     }
 
@@ -253,7 +253,7 @@ export const changeCoupTurn = async (message: Message) => {
 
     game.currentPlayer = activePlayers[nextPlayerIndex].id;
 
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
 
     await sleep(1000);
 

@@ -6,11 +6,11 @@ import { Action } from "../types";
 import { prefixes, timeToJoinInSeconds } from "./config";
 import { flatColors } from "../../config";
 import {
-  getCurrentCoupReformationGame,
+  getCurrentCoupGame,
   getDescriptionFromCardName,
   getInitialMessageAndEmbed,
   influenceCardImagesClassic,
-  setCurrentCoupReformationGame,
+  setCurrentCoupGame,
 } from "./data";
 import { sendCoupHelpMessage } from "./handlers/help";
 import { ExtendedMessage, ExtendedTextChannel } from "../../extension";
@@ -52,7 +52,7 @@ export const actions: Action[] = [
         }
       }
 
-      const game = getCurrentCoupReformationGame(message.channel.id);
+      const game = getCurrentCoupGame(message.channel.id);
 
       if (game && !game.gameStarted) {
         startCoupGame(message);
@@ -154,14 +154,14 @@ export const actions: Action[] = [
         return;
       }
 
-      const game = getCurrentCoupReformationGame(message.channel.id);
+      const game = getCurrentCoupGame(message.channel.id);
 
       if (!game) {
         message.reply("There is no Coup game running.");
         return;
       }
 
-      setCurrentCoupReformationGame(message.channel.id, null);
+      setCurrentCoupGame(message.channel.id, null);
 
       message.channel.send("> Successfully stopped the current Coup game.");
     },
@@ -173,7 +173,7 @@ export const actions: Action[] = [
         return;
       }
 
-      let game = getCurrentCoupReformationGame(message.channel.id);
+      let game = getCurrentCoupGame(message.channel.id);
 
       if (game) {
         message.reply("There is already a Coup game running.");
@@ -202,7 +202,7 @@ export const actions: Action[] = [
         turnCount: 0,
       };
 
-      setCurrentCoupReformationGame(message.channel.id, game);
+      setCurrentCoupGame(message.channel.id, game);
 
       askToJoinCoupGame(message).catch((e) => {
         // eslint-disable-next-line no-console
@@ -214,7 +214,7 @@ export const actions: Action[] = [
   {
     commands: ["j", "join"],
     handler: (message) => {
-      const game = getCurrentCoupReformationGame(message.channel.id);
+      const game = getCurrentCoupGame(message.channel.id);
 
       if (!game) {
         message.reply("There is no Coup game running.");
@@ -338,7 +338,7 @@ export const setupCoupReformationGame = (
         console.error(e);
       });
     } else if (ctx.customID === "join_coup") {
-      const game = getCurrentCoupReformationGame(ctx.channelID);
+      const game = getCurrentCoupGame(ctx.channelID);
 
       if (!game) {
         ctx.send("There is no Coup game running.");

@@ -17,7 +17,7 @@ export const gameDataDir = path.resolve(
   process.env.COUP_GAME_DATA_DIR || "/tmp/",
 );
 
-const currentCoupReformationGames: CurrentCoupGames = {};
+const currentCoupGames: CurrentCoupGames = {};
 
 const initialMessages: {
   [channelId: string]: InitialData | undefined;
@@ -26,27 +26,27 @@ const initialMessages: {
 export const getFileNameForGameData = (channelId: string) =>
   `coup_reformation_${channelId}.json`;
 
-export const getCurrentCoupReformationGame = (
+export const getCurrentCoupGame = (
   channelId: string,
 ): CoupGame | undefined | null => {
   const filepath = path.resolve(gameDataDir, getFileNameForGameData(channelId));
 
-  if (!currentCoupReformationGames[channelId] && existsSync(filepath)) {
+  if (!currentCoupGames[channelId] && existsSync(filepath)) {
     const filedata = JSON.parse(readFileSync(filepath, { encoding: "utf-8" }));
 
-    currentCoupReformationGames[channelId] = filedata;
+    currentCoupGames[channelId] = filedata;
   }
 
-  return currentCoupReformationGames[channelId];
+  return currentCoupGames[channelId];
 };
 
-export const setCurrentCoupReformationGame = (
+export const setCurrentCoupGame = (
   channelId: string,
   gameData: CoupGame | null,
 ) => {
   const filepath = path.resolve(gameDataDir, getFileNameForGameData(channelId));
 
-  currentCoupReformationGames[channelId] = gameData;
+  currentCoupGames[channelId] = gameData;
 
   try {
     if (gameData) {
@@ -73,7 +73,7 @@ export const setCurrentCoupReformationGame = (
     console.error(error);
   }
 
-  return currentCoupReformationGames[channelId];
+  return currentCoupGames[channelId];
 };
 
 export const getInitialMessageAndEmbed = (channelId: string) =>
@@ -189,11 +189,11 @@ export const createDeck = ({
 export const coupActions = {
   income: (channelId: string, game: CoupGame, player: CoupPlayer) => {
     player && player.coins++;
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
   foreignAid: (channelId: string, game: CoupGame, player: CoupPlayer) => {
     player && (player.coins += 2);
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
   coup: (
     channelId: string,
@@ -215,11 +215,11 @@ export const coupActions = {
       }
     }
 
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
   tax: (channelId: string, game: CoupGame, player: CoupPlayer) => {
     player && (player.coins += 3);
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
   assassinate: (
     channelId: string,
@@ -241,7 +241,7 @@ export const coupActions = {
       }
     }
 
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
   exchange: (
     channelId: string,
@@ -320,7 +320,7 @@ export const coupActions = {
       }
     }
 
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
   steal: (channelId: string, game: CoupGame, targetPlayer: CoupPlayer) => {
     if (!targetPlayer) {
@@ -329,6 +329,6 @@ export const coupActions = {
 
     targetPlayer.coins -= 2;
 
-    setCurrentCoupReformationGame(channelId, game);
+    setCurrentCoupGame(channelId, game);
   },
 } as const;

@@ -6,7 +6,7 @@ import {
   SlashCreator,
 } from "slash-create";
 import {
-  getCurrentCoupReformationGame,
+  getCurrentCoupGame,
   getDescriptionFromCardName,
 } from "../data";
 
@@ -28,7 +28,7 @@ export const makeCoupCommands = (guildIDs: string[]) => {
     async run(ctx: CommandContext) {
       await ctx.defer(true);
 
-      const game = getCurrentCoupReformationGame(ctx.channelID);
+      const game = getCurrentCoupGame(ctx.channelID);
 
       if (!game) {
         return "No Coup game is running now.";
