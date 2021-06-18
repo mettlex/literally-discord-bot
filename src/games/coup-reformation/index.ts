@@ -6,6 +6,7 @@ import { Action } from "../types";
 import { prefixes, timeToJoinInSeconds } from "./config";
 import { flatColors } from "../../config";
 import {
+  coupActionNamesInClassic,
   getCurrentCoupGame,
   getDescriptionFromCardName,
   getInitialMessageAndEmbed,
@@ -19,8 +20,13 @@ import {
   makeCoupCommands,
   slashCommandOptionsForCheckCards,
 } from "./slash-commands";
-import { InfluenceCard } from "./types";
+import {
+  ActionEventName,
+  CoupActionNameInClassic,
+  InfluenceCard,
+} from "./types";
 import { askToJoinCoupGame, changeCoupTurn, startCoupGame } from "./game-loop";
+import EventEmitter from "events";
 
 export const actions: Action[] = [
   {
@@ -200,6 +206,7 @@ export const actions: Action[] = [
         ],
         currentPlayer: message.author.id,
         turnCount: 0,
+        eventEmitter: new EventEmitter(),
       };
 
       setCurrentCoupGame(message.channel.id, game);
@@ -278,6 +285,10 @@ export const setupCoupReformationGame = (
   }, 3000);
 
   creator.on("componentInteraction", async (ctx) => {
+    if (ctx.user.bot) {
+      return;
+    }
+
     const nextCustomIdPartial = "next_influence_card_";
     const previousCustomIdPartial = "previous_influence_card_";
 
@@ -368,6 +379,52 @@ export const setupCoupReformationGame = (
       });
 
       ctx.send(`${ctx.user.mention} joined the game.`);
+    } else if (
+      coupActionNamesInClassic.find((a) => ctx.customID.startsWith(a))
+    ) {
+      await ctx.acknowledge();
+
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game) {
+        return;
+      }
+
+      if (
+        !game.eventEmitter ||
+        !game.eventEmitter.on ||
+        !game.eventEmitter.emit
+      ) {
+        game.eventEmitter = new EventEmitter();
+      }
+
+      if (game.mode === "classic") {
+        const action: CoupActionNameInClassic | undefined =
+          coupActionNamesInClassic.find((a) => ctx.customID.startsWith(a));
+
+        if (!action) {
+          return;
+        }
+
+        const playerId = ctx.customID.replace(`${action}_`, "");
+
+        const player = game.players.find((p) => p.id === playerId);
+
+        if (!player) {
+          return;
+        }
+
+        if (playerId !== game.currentPlayer || playerId !== ctx.user.id) {
+          return;
+        }
+
+        const actionEventName: ActionEventName = `action_${action}`;
+
+        game.eventEmitter.emit(actionEventName, {
+          channelId: ctx.channelID,
+          player,
+        });
+      }
     }
   });
 };

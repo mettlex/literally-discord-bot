@@ -1,6 +1,7 @@
 import path from "path";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import {
+  CoupActionNameInClassic,
   CoupGame,
   CoupPlayer,
   CurrentCoupGames,
@@ -186,7 +187,7 @@ export const createDeck = ({
   return deck;
 };
 
-export const coupActions = {
+export const coupActionsInClassic = {
   income: (channelId: string, game: CoupGame, player: CoupPlayer) => {
     player && player.coins++;
     setCurrentCoupGame(channelId, game);
@@ -332,3 +333,7 @@ export const coupActions = {
     setCurrentCoupGame(channelId, game);
   },
 } as const;
+
+export const coupActionNamesInClassic = Object.keys(
+  coupActionsInClassic,
+) as CoupActionNameInClassic[];

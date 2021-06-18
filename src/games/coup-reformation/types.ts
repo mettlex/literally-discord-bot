@@ -1,4 +1,45 @@
 import { Message, MessageEmbed, User } from "discord.js";
+import EventEmitter from "events";
+
+export type CoupActionNameInClassic =
+  | "income"
+  | "foreignAid"
+  | "coup"
+  | "tax"
+  | "assassinate"
+  | "exchange"
+  | "steal";
+
+export type CoupActionsInClassic = Record<
+  CoupActionNameInClassic,
+  (...args: any[]) => void
+>;
+
+export type ActionEventName = `action_${CoupActionNameInClassic}`;
+
+export interface CoupGameActionEventEmitter extends EventEmitter {
+  once(
+    eventName: ActionEventName,
+    callback: ({
+      channelId,
+      player,
+      target,
+    }: {
+      channelId: string;
+      player: CoupPlayer;
+      target?: CoupPlayer;
+    }) => void,
+  ): this;
+
+  emit(
+    eventName: ActionEventName,
+    data: {
+      channelId: string;
+      player: CoupPlayer;
+      target?: CoupPlayer;
+    },
+  ): boolean;
+}
 
 export interface CoupPlayer {
   id: User["id"];
@@ -19,6 +60,7 @@ export interface CoupGame {
   currentPlayer: string;
   deck: Deck;
   turnCount: number;
+  eventEmitter: CoupGameActionEventEmitter;
 }
 
 export interface CurrentCoupGames {

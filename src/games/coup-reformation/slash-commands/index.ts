@@ -5,10 +5,7 @@ import {
   SlashCommandOptions,
   SlashCreator,
 } from "slash-create";
-import {
-  getCurrentCoupGame,
-  getDescriptionFromCardName,
-} from "../data";
+import { getCurrentCoupGame, getDescriptionFromCardName } from "../data";
 
 export const slashCommandOptionsForCheckCards: SlashCommandOptions = {
   name: "check_influences",
@@ -51,7 +48,10 @@ export const makeCoupCommands = (guildIDs: string[]) => {
           {
             title: `${ctx.member?.nick || ctx.user.username}'s influences`,
             description: `Your current influences are ${player.influences
-              .map((inf) => `**${inf.name.toUpperCase()}**`)
+              .map(
+                (inf, i) =>
+                  `**${inf.name.toUpperCase()}** (Serial No. ${i + 1})`,
+              )
               .join(" & ")}`,
             fields: player.influences.map((inf) => ({
               name: inf.name.toUpperCase(),

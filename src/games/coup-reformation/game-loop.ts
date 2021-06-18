@@ -2,20 +2,24 @@
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
 import { Message, MessageEmbed } from "discord.js";
+import EventEmitter from "events";
 import { ButtonStyle, ComponentType } from "slash-create";
 import { getLogger } from "../../app";
 import { flatColors } from "../../config";
 import { ExtendedTextChannel } from "../../extension";
 import { shuffleArray } from "../../utils/array";
 import sleep from "../../utils/sleep";
-import { prefixes, timeToJoinInSeconds, turnSeconds } from "./config";
+import { prefixes, timeToJoinInSeconds } from "./config";
 import {
-  coupActions,
+  coupActionsInClassic,
   createDeck,
   getCurrentCoupGame,
   setCurrentCoupGame,
   setInitialMessageAndEmbed,
+  coupActionNamesInClassic,
 } from "./data";
+import { slashCommandOptionsForCheckCards } from "./slash-commands";
+import { CoupActionNameInClassic, CoupGame } from "./types";
 
 const logger = getLogger();
 
@@ -147,10 +151,14 @@ export const changeCoupTurn = async (message: Message) => {
   const channel = message.channel as ExtendedTextChannel;
   const channelId = channel.id;
 
-  const game = getCurrentCoupGame(channelId);
+  let game = getCurrentCoupGame(channelId);
 
   if (!game) {
     return;
+  }
+
+  if (!game.eventEmitter || !game.eventEmitter.on || !game.eventEmitter.emit) {
+    game.eventEmitter = new EventEmitter();
   }
 
   const currentPlayerId = game.currentPlayer;
@@ -191,7 +199,7 @@ export const changeCoupTurn = async (message: Message) => {
     }
   }
 
-  const player = game.players.find((p) => p.id === currentPlayerId);
+  let player = game.players.find((p) => p.id === currentPlayerId);
 
   if (!player) {
     return;
@@ -199,65 +207,171 @@ export const changeCoupTurn = async (message: Message) => {
 
   logger.info(player);
 
-  {
-    const embed = new MessageEmbed()
-      .setTitle(`Make your move, ${player.name}`)
-      .addField(`Coins`, player.coins, true)
-      .addField(
-        `Influences`,
-        player.influences.filter((inf) => !inf.disarmed).length,
-        true,
-      )
-      .setDescription(`${player.name}, it's your turn. Choose an action below.`)
-      .setColor(flatColors.blue)
-      .setFooter(`${turnSeconds} seconds remaining`, player.avatarURL);
+  const embed = new MessageEmbed()
+    .setTitle(`Make your move, ${player.name}`)
+    .addField(`Coins`, player.coins, true)
+    .addField(
+      `Influences`,
+      player.influences.filter((inf) => !inf.disarmed).length,
+      true,
+    )
+    .setDescription(`${player.name}, it's your turn. Choose an action below.`)
+    .setColor(flatColors.blue)
+    .setFooter(
+      oneLine`Check your influences with
+        /${slashCommandOptionsForCheckCards.name} command`,
+      player.avatarURL,
+    );
 
-    // channel.sendWithComponents({
-    //   content: `<@${player.id}>`,
-    //   options: { embed },
-    //   components: [
-    //     {
-    //       components: [{}],
-    //     },
-    //   ],
-    // });
+  let actions: CoupActionNameInClassic[] = [];
+
+  if (game.mode === "classic") {
+    actions = coupActionNamesInClassic;
+  }
+
+  channel.sendWithComponents({
+    content: `<@${player.id}>`,
+    options: { embed },
+    components: [
+      {
+        components: actions.slice(0, 4).map((a) => ({
+          type: ComponentType.BUTTON,
+          style:
+            a === "coup" || a === "assassinate"
+              ? ButtonStyle.DESTRUCTIVE
+              : ButtonStyle.PRIMARY,
+          label: getLabelForCoupActionButton(a),
+          custom_id: `${a}_${player!.id}`,
+          disabled:
+            player!.coins < 7 && a === "coup"
+              ? true
+              : player!.coins < 3 && a === "assassinate"
+              ? true
+              : player!.coins > 9 && a !== "coup"
+              ? true
+              : false,
+        })),
+      },
+      {
+        components: actions.slice(4).map((a) => ({
+          type: ComponentType.BUTTON,
+          style:
+            a === "coup" || a === "assassinate"
+              ? ButtonStyle.DESTRUCTIVE
+              : ButtonStyle.PRIMARY,
+          label: getLabelForCoupActionButton(a),
+          custom_id: `${a}_${player!.id}`,
+          disabled:
+            player!.coins < 7 && a === "coup"
+              ? true
+              : player!.coins < 3 && a === "assassinate"
+              ? true
+              : player!.coins > 9 && a !== "coup"
+              ? true
+              : false,
+        })),
+      },
+    ],
+  });
+
+  let takenAction: CoupActionNameInClassic | undefined;
+
+  const waitForPlayerTurnInCoup = new Promise<CoupGame | undefined | null>(
+    (resolve) => {
+      if (!game) {
+        resolve(undefined);
+        return;
+      }
+
+      game.eventEmitter.once(
+        "action_income",
+        ({ channelId: eventChannelId, player }) => {
+          if (eventChannelId === channelId) {
+            if (!game) {
+              resolve(undefined);
+              return;
+            }
+
+            coupActionsInClassic.income(channelId, game, player);
+
+            takenAction = "income";
+
+            resolve(game);
+          }
+        },
+      );
+    },
+  );
+
+  game = await waitForPlayerTurnInCoup;
+  player = game?.players.find((p) => p.id === currentPlayerId);
+
+  if (!takenAction || !game || !player) {
+    return;
+  }
+
+  if (takenAction === "income") {
+    const embed = new MessageEmbed()
+      .setColor(flatColors.blue)
+      .setAuthor(player.name, player.avatarURL)
+      .setDescription(
+        oneLine`
+          I took 1 coin as income and I have ${player.coins} coins now.
+          ${
+            (player.coins > 2 &&
+              player.coins < 7 &&
+              oneLine`If I have an assassin,
+              I may assassinate in my next turn.`) ||
+            ""
+          }
+          ${
+            (player.coins > 6 &&
+              player.coins < 10 &&
+              oneLine`I can coup against a player in my next turn.`) ||
+            ""
+          }
+          ${
+            (player.coins > 9 &&
+              oneLine`I have to coup against a player in my next turn.`) ||
+            ""
+          }
+        `,
+      );
 
     channel.send(embed);
-
-    // #region Simulation
-    /* const activePlayers = game.players.filter(
-      (p) =>
-        p.influences[0] &&
-        p.influences[1] &&
-        (!p.influences[0].disarmed || !p.influences[1].disarmed),
-    );
-
-    if (activePlayers.length === 0 || game.turnCount > 5) {
-      setCurrentCoupGame(channelId, null);
-      return;
-    }
-
-    const currentPlayerIndex = activePlayers.findIndex(
-      (p) => p.id === currentPlayerId,
-    );
-
-    const nextPlayerIndex =
-      currentPlayerIndex !== activePlayers.length - 1
-        ? currentPlayerIndex + 1
-        : 0;
-
-    const performDefaultAction = () =>
-      coupActions.income(channelId, game, player);
-
-    performDefaultAction();
-
-    game.currentPlayer = activePlayers[nextPlayerIndex].id;
-
-    setCurrentCoupGame(channelId, game);
-
-    await sleep(1000);
-
-    changeCoupTurn(message); */
-    // #endregion Simulation
   }
+
+  const activePlayers = game.players.filter(
+    (p) =>
+      p.influences[0] &&
+      p.influences[1] &&
+      (!p.influences[0].disarmed || !p.influences[1].disarmed),
+  );
+
+  // if (activePlayers.length === 0 || game.turnCount > 20) {
+  //   setCurrentCoupGame(channelId, null);
+  //   return;
+  // }
+
+  const currentPlayerIndex = activePlayers.findIndex(
+    (p) => p.id === currentPlayerId,
+  );
+
+  const nextPlayerIndex =
+    currentPlayerIndex !== activePlayers.length - 1
+      ? currentPlayerIndex + 1
+      : 0;
+
+  game.currentPlayer = activePlayers[nextPlayerIndex].id;
+
+  setCurrentCoupGame(channelId, game);
+
+  changeCoupTurn(message);
+};
+
+export const getLabelForCoupActionButton = (actionName: string) => {
+  return (
+    actionName[0].toUpperCase() +
+    actionName.slice(1).replace(/(.)([A-Z])/g, "$1 $2")
+  );
 };
