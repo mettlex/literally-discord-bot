@@ -177,7 +177,7 @@ export const createDeck = ({
     addCardsToDeck(15);
   } else if (playersCount > 6 && playersCount < 9) {
     addCardsToDeck(20);
-  } else if (playersCount > 8 && playersCount < 13) {
+  } else if (playersCount > 8 && playersCount < 11) {
     addCardsToDeck(25);
   }
 
