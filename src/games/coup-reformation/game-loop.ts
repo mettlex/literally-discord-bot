@@ -234,6 +234,23 @@ export const changeCoupTurn = async (message: Message) => {
     options: { embed },
     components: [
       {
+        components: [
+          {
+            type: ComponentType.BUTTON,
+            style: ButtonStyle.SECONDARY,
+            label: "Show Cheat Sheet",
+            custom_id: "cheat_sheet",
+          },
+          {
+            type: ComponentType.BUTTON,
+            // @ts-ignore
+            style: ButtonStyle.LINK,
+            label: "How To Play",
+            url: "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
+          },
+        ],
+      },
+      {
         components: actions.slice(0, 4).map((a) => ({
           type: ComponentType.BUTTON,
           style:

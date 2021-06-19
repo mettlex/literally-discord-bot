@@ -425,6 +425,18 @@ export const setupCoupReformationGame = (
           player,
         });
       }
+    } else if (ctx.customID === "cheat_sheet") {
+      await ctx.send({
+        ephemeral: true,
+        embeds: [
+          {
+            title: "Coup Cheat Sheet",
+            image: {
+              url: "https://cdn.discordapp.com/attachments/848495134874271764/855743509926510602/coup_game_rules.png",
+            },
+          },
+        ],
+      });
     }
   });
 };
