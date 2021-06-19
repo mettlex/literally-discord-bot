@@ -211,7 +211,7 @@ export const coupActionsInClassic = {
 
     for (let i = 0; i < game.players.length; i++) {
       if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
-        game.players[i].influences[disarmedInfluenceIndex].disarmed = true;
+        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
         break;
       }
     }
@@ -237,7 +237,7 @@ export const coupActionsInClassic = {
 
     for (let i = 0; i < game.players.length; i++) {
       if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
-        game.players[i].influences[disarmedInfluenceIndex].disarmed = true;
+        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
         break;
       }
     }
@@ -277,7 +277,7 @@ export const coupActionsInClassic = {
 
       player.influences[playersInfIndex] = {
         ...taken,
-        disarmed: false,
+        dismissed: false,
       };
 
       game.deck[deckInfIndex] = {

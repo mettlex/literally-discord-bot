@@ -49,6 +49,8 @@ export interface CoupPlayer {
   influences: [Influence, Influence] | [];
   coins: number;
   avatarURL: string;
+  decidedAction?: CoupActionNameInClassic;
+  lostChallenge?: boolean;
 }
 
 export const gameModes = ["classic", "reformation"] as const;
@@ -95,7 +97,7 @@ export interface InfluenceCard {
 }
 
 export interface Influence extends InfluenceCard {
-  disarmed: boolean;
+  dismissed: boolean;
 }
 
 export type Deck = InfluenceCard[];

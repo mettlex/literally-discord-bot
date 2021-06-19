@@ -1,6 +1,10 @@
 import { oneLine } from "common-tags";
 import {
+  ButtonStyle,
   CommandContext,
+  ComponentActionRow,
+  ComponentContext,
+  ComponentType,
   SlashCommand,
   SlashCommandOptions,
   SlashCreator,
@@ -23,43 +27,9 @@ export const makeCoupCommands = (guildIDs: string[]) => {
     }
 
     async run(ctx: CommandContext) {
-      await ctx.defer(true);
-
-      const game = getCurrentCoupGame(ctx.channelID);
-
-      if (!game) {
-        return "No Coup game is running now.";
-      }
-
-      const player = game?.players.find((p) => p.id === ctx.user.id);
-
-      if (!player) {
-        return oneLine`You're not a player in the current Coup game.
-        Please wait for the next game.`;
-      }
-
-      if (player.influences.length === 0) {
-        return "You don't have any influence left.";
-      }
-
-      await ctx.send({
-        ephemeral: true,
-        embeds: [
-          {
-            title: `${ctx.member?.nick || ctx.user.username}'s influences`,
-            description: `Your current influences are ${player.influences
-              .map(
-                (inf, i) =>
-                  `**${inf.name.toUpperCase()}** (Serial No. ${i + 1})`,
-              )
-              .join(" & ")}`,
-            fields: player.influences.map((inf) => ({
-              name: inf.name.toUpperCase(),
-              value: getDescriptionFromCardName(inf.name),
-              inline: true,
-            })),
-          },
-        ],
+      await showInfluences(ctx).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error(e);
       });
     }
 
@@ -72,4 +42,64 @@ export const makeCoupCommands = (guildIDs: string[]) => {
   }
 
   return [CoupCheckCardsCommand];
+};
+
+export const showInfluences = async (
+  ctx: CommandContext | ComponentContext,
+) => {
+  await ctx.defer(true);
+
+  const game = getCurrentCoupGame(ctx.channelID);
+
+  if (!game) {
+    return "No Coup game is running now.";
+  }
+
+  const player = game?.players.find((p) => p.id === ctx.user.id);
+
+  if (!player) {
+    return oneLine`You're not a player in the current Coup game.
+        Please wait for the next game.`;
+  }
+
+  if (player.influences.length === 0) {
+    return "You don't have any influence left.";
+  }
+
+  let components: ComponentActionRow[] | undefined;
+
+  if (player.lostChallenge) {
+    components = [
+      {
+        type: ComponentType.ACTION_ROW,
+        components: player.influences.map((inf, i) => ({
+          type: ComponentType.BUTTON,
+          style: ButtonStyle.DESTRUCTIVE,
+          label: `DISMISS ${inf.name.toUpperCase()}`,
+          custom_id: `coup_dismiss_influence_${i}`,
+          disabled: inf.dismissed,
+        })),
+      },
+    ];
+  }
+
+  await ctx.send({
+    ephemeral: true,
+    embeds: [
+      {
+        title: `${player.name}'s influences`,
+        description: `Your current influences are:`,
+        fields: player.influences.map((inf, i) => ({
+          name: `${(inf.dismissed && "~~") || ""}${
+            i + 1
+          }. ${inf.name.toUpperCase()}${(inf.dismissed && "~~") || ""} ${
+            (inf.dismissed && "(Dismissed)") || ""
+          }`,
+          value: getDescriptionFromCardName(inf.name),
+          inline: true,
+        })),
+      },
+    ],
+    components,
+  });
 };

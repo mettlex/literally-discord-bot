@@ -18,7 +18,6 @@ import {
   setInitialMessageAndEmbed,
   coupActionNamesInClassic,
 } from "./data";
-import { slashCommandOptionsForCheckCards } from "./slash-commands";
 import { CoupActionNameInClassic, CoupGame } from "./types";
 
 const logger = getLogger();
@@ -137,8 +136,8 @@ export const startCoupGame = (message: Message) => {
 
   for (let i = 0; i < game.players.length; i++) {
     game.players[i].influences = [
-      { ...game.deck.pop()!, disarmed: false },
-      { ...game.deck.pop()!, disarmed: false },
+      { ...game.deck.pop()!, dismissed: false },
+      { ...game.deck.pop()!, dismissed: false },
     ];
   }
 
@@ -163,20 +162,36 @@ export const changeCoupTurn = async (message: Message) => {
 
   const currentPlayerId = game.currentPlayer;
 
+  const activePlayers = game.players.filter(
+    (p) =>
+      p.influences[0] &&
+      p.influences[1] &&
+      (!p.influences[0].dismissed || !p.influences[1].dismissed),
+  );
+
+  // if (activePlayers.length === 0 || game.turnCount > 20) {
+  //   setCurrentCoupGame(channelId, null);
+  //   return;
+  // }
+
+  const currentPlayerIndex = activePlayers.findIndex(
+    (p) => p.id === currentPlayerId,
+  );
+
   game.turnCount++;
 
   logger.info(`channelId: ${channelId}, turnCount: ${game.turnCount}`);
 
   if (game.turnCount > 0) {
     const influencesEmbed = new MessageEmbed()
-      .setTitle("DISARMED INFLUENCES")
+      .setTitle("DISMISSED INFLUENCES")
       .setTimestamp()
       .setColor(flatColors.blue);
 
     let currentInflencesText = "";
 
     for (const p of game.players) {
-      const foundDisarmed = p.influences.find((inf) => inf.disarmed);
+      const foundDisarmed = p.influences.find((inf) => inf.dismissed);
 
       if (foundDisarmed) {
         currentInflencesText += `\n\n${
@@ -184,8 +199,8 @@ export const changeCoupTurn = async (message: Message) => {
         } <@${p.id}> had `;
 
         currentInflencesText += oneLine`
-        ${p.influences[0]?.disarmed ? `\`${p.influences[0]?.name}\`` : ""}
-        ${p.influences[1]?.disarmed ? `\`${p.influences[1]?.name}\`` : ""}
+        ${p.influences[0]?.dismissed ? `\`${p.influences[0]?.name}\`` : ""}
+        ${p.influences[1]?.dismissed ? `\`${p.influences[1]?.name}\`` : ""}
         `;
       }
     }
@@ -208,20 +223,16 @@ export const changeCoupTurn = async (message: Message) => {
   logger.info(player);
 
   const embed = new MessageEmbed()
-    .setTitle(`Make your move, ${player.name}`)
+    .setTitle(`Make your move!`)
     .addField(`Coins`, player.coins, true)
     .addField(
       `Influences`,
-      player.influences.filter((inf) => !inf.disarmed).length,
+      player.influences.filter((inf) => !inf.dismissed).length,
       true,
     )
     .setDescription(`${player.name}, it's your turn. Choose an action below.`)
     .setColor(flatColors.blue)
-    .setFooter(
-      oneLine`Check your influences with
-        /${slashCommandOptionsForCheckCards.name} command`,
-      player.avatarURL,
-    );
+    .setFooter(oneLine`${player.name}, take an action now!`, player.avatarURL);
 
   let actions: CoupActionNameInClassic[] = [];
 
@@ -238,8 +249,8 @@ export const changeCoupTurn = async (message: Message) => {
           {
             type: ComponentType.BUTTON,
             style: ButtonStyle.SECONDARY,
-            label: "Show Cheat Sheet",
-            custom_id: "cheat_sheet",
+            label: "Cheat Sheet",
+            custom_id: "coup_cs",
           },
           {
             type: ComponentType.BUTTON,
@@ -247,6 +258,12 @@ export const changeCoupTurn = async (message: Message) => {
             style: ButtonStyle.LINK,
             label: "How To Play",
             url: "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
+          },
+          {
+            type: ComponentType.BUTTON,
+            style: ButtonStyle.SECONDARY,
+            label: "My Influences 🤫",
+            custom_id: "coup_show_influences",
           },
         ],
       },
@@ -257,7 +274,7 @@ export const changeCoupTurn = async (message: Message) => {
             a === "coup" || a === "assassinate"
               ? ButtonStyle.DESTRUCTIVE
               : ButtonStyle.PRIMARY,
-          label: getLabelForCoupActionButton(a),
+          label: getLabelForCoupAction(a),
           custom_id: `${a}_${player!.id}`,
           disabled:
             player!.coins < 7 && a === "coup"
@@ -276,7 +293,7 @@ export const changeCoupTurn = async (message: Message) => {
             a === "coup" || a === "assassinate"
               ? ButtonStyle.DESTRUCTIVE
               : ButtonStyle.PRIMARY,
-          label: getLabelForCoupActionButton(a),
+          label: getLabelForCoupAction(a),
           custom_id: `${a}_${player!.id}`,
           disabled:
             player!.coins < 7 && a === "coup"
@@ -317,6 +334,60 @@ export const changeCoupTurn = async (message: Message) => {
           }
         },
       );
+
+      game.eventEmitter.once(
+        "action_foreignAid",
+        ({ channelId: eventChannelId, player }) => {
+          if (eventChannelId === channelId) {
+            if (!game) {
+              resolve(undefined);
+              return;
+            }
+
+            const embed = new MessageEmbed()
+              .setColor(flatColors.yellow)
+              .setTitle(`${player.name} wants to take foreign aid`)
+              .setAuthor("2 coins please!", player.avatarURL)
+              .setDescription(oneLine`
+                If you claim that you have a **duke**,
+                you can block ${player.name}'s foreign aid.
+                If you don't, press allow button below.
+              `);
+
+            channel.sendWithComponents({
+              content: game.players
+                .filter((p) => p.id !== player.id)
+                .map((p) => `<@${p.id}>`)
+                .join(", "),
+              options: { embed },
+              components: [
+                {
+                  components: [
+                    {
+                      label: "Allow",
+                      custom_id: "allow_action_in_coup",
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.PRIMARY,
+                    },
+                    {
+                      label: "Block Foreign Aid",
+                      custom_id: "block_foreign_aid_in_coup",
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.DESTRUCTIVE,
+                    },
+                  ],
+                },
+              ],
+            });
+
+            game.players[currentPlayerIndex].decidedAction = "foreignAid";
+
+            takenAction = "foreignAid";
+
+            resolve(game);
+          }
+        },
+      );
     },
   );
 
@@ -333,7 +404,7 @@ export const changeCoupTurn = async (message: Message) => {
       .setAuthor(player.name, player.avatarURL)
       .setDescription(
         oneLine`
-          I took 1 coin as income and I have ${player.coins} coins now.
+          I took **1** coin as income and I have **${player.coins}** coins now.
           ${
             (player.coins > 2 &&
               player.coins < 7 &&
@@ -356,23 +427,13 @@ export const changeCoupTurn = async (message: Message) => {
       );
 
     channel.send(embed);
+  } else if (takenAction === "foreignAid") {
+    const waitForCounterAction = new Promise((resolve) => {
+      resolve(true);
+    });
+
+    await waitForCounterAction;
   }
-
-  const activePlayers = game.players.filter(
-    (p) =>
-      p.influences[0] &&
-      p.influences[1] &&
-      (!p.influences[0].disarmed || !p.influences[1].disarmed),
-  );
-
-  // if (activePlayers.length === 0 || game.turnCount > 20) {
-  //   setCurrentCoupGame(channelId, null);
-  //   return;
-  // }
-
-  const currentPlayerIndex = activePlayers.findIndex(
-    (p) => p.id === currentPlayerId,
-  );
 
   const nextPlayerIndex =
     currentPlayerIndex !== activePlayers.length - 1
@@ -386,7 +447,7 @@ export const changeCoupTurn = async (message: Message) => {
   changeCoupTurn(message);
 };
 
-export const getLabelForCoupActionButton = (actionName: string) => {
+export const getLabelForCoupAction = (actionName: string) => {
   return (
     actionName[0].toUpperCase() +
     actionName.slice(1).replace(/(.)([A-Z])/g, "$1 $2")

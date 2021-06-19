@@ -18,13 +18,10 @@ import { ExtendedMessage, ExtendedTextChannel } from "../../extension";
 import { getGuildIds } from "../../app";
 import {
   makeCoupCommands,
+  showInfluences,
   slashCommandOptionsForCheckCards,
 } from "./slash-commands";
-import {
-  ActionEventName,
-  CoupActionNameInClassic,
-  InfluenceCard,
-} from "./types";
+import { ActionEventName, InfluenceCard } from "./types";
 import { askToJoinCoupGame, changeCoupTurn, startCoupGame } from "./game-loop";
 import EventEmitter from "events";
 
@@ -336,7 +333,56 @@ export const setupCoupReformationGame = (
       });
     };
 
-    if (ctx.customID.startsWith(nextCustomIdPartial)) {
+    if (ctx.customID === "coup_cs") {
+      await ctx.send({
+        ephemeral: true,
+        embeds: [
+          {
+            title: "Coup Cheat Sheet",
+            image: {
+              url: "https://cdn.discordapp.com/attachments/848495134874271764/855743509926510602/coup_game_rules.png",
+            },
+          },
+        ],
+      });
+
+      return;
+    } else if (ctx.customID === "coup_show_influences") {
+      await showInfluences(ctx).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      });
+
+      return;
+    } else if (ctx.customID.startsWith("coup_dismiss_influence_")) {
+      await ctx.acknowledge();
+
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game) {
+        return;
+      }
+
+      const player = game.players.find((p) => p.id === ctx.user.id);
+
+      if (!player) {
+        return;
+      }
+
+      const playerId = player.id;
+
+      if (playerId !== game.currentPlayer) {
+        return;
+      }
+
+      const i = parseInt(ctx.customID.replace("coup_dismiss_influence_", ""));
+
+      game.players[game.players.findIndex((p) => p.id === playerId)].influences[
+        i
+      ].dismissed = true;
+
+      setCurrentCoupGame(ctx.channelID, game);
+    } else if (ctx.customID.startsWith(nextCustomIdPartial)) {
       const i = parseInt(ctx.customID.replace(nextCustomIdPartial, ""));
       changeCardEmbed(i).catch((e) => {
         // eslint-disable-next-line no-console
@@ -379,9 +425,13 @@ export const setupCoupReformationGame = (
       });
 
       ctx.send(`${ctx.user.mention} joined the game.`);
-    } else if (
-      coupActionNamesInClassic.find((a) => ctx.customID.startsWith(a))
-    ) {
+    }
+
+    const actionName = coupActionNamesInClassic.find((a) =>
+      ctx.customID.startsWith(a),
+    );
+
+    if (actionName && /_\d+$/g.test(ctx.customID)) {
       await ctx.acknowledge();
 
       const game = getCurrentCoupGame(ctx.channelID);
@@ -399,14 +449,11 @@ export const setupCoupReformationGame = (
       }
 
       if (game.mode === "classic") {
-        const action: CoupActionNameInClassic | undefined =
-          coupActionNamesInClassic.find((a) => ctx.customID.startsWith(a));
-
-        if (!action) {
+        if (!actionName) {
           return;
         }
 
-        const playerId = ctx.customID.replace(`${action}_`, "");
+        const playerId = ctx.customID.replace(`${actionName}_`, "");
 
         const player = game.players.find((p) => p.id === playerId);
 
@@ -418,25 +465,15 @@ export const setupCoupReformationGame = (
           return;
         }
 
-        const actionEventName: ActionEventName = `action_${action}`;
+        const actionEventName: ActionEventName = `action_${actionName}`;
 
         game.eventEmitter.emit(actionEventName, {
           channelId: ctx.channelID,
           player,
         });
       }
-    } else if (ctx.customID === "cheat_sheet") {
-      await ctx.send({
-        ephemeral: true,
-        embeds: [
-          {
-            title: "Coup Cheat Sheet",
-            image: {
-              url: "https://cdn.discordapp.com/attachments/848495134874271764/855743509926510602/coup_game_rules.png",
-            },
-          },
-        ],
-      });
+
+      return;
     }
   });
 };
