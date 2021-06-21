@@ -140,7 +140,7 @@ export const makeJottoCommands = (guildIDs: string[]) => {
         setCurrentJottoGame(ctx.channelID, newJottoGame);
 
         if (!game) {
-          await askToJoinJottoGame(ctx);
+          await askToJoinJottoGame(ctx, newJottoGame);
         } else {
           await notifyJoined(ctx);
 
