@@ -297,6 +297,19 @@ export const changeJottoTurn = async (
     return;
   }
 
+  {
+    const intervalForGameChecking = setInterval(async () => {
+      const game = getCurrentJottoGame(channelId);
+
+      if (!game) {
+        setTurnInverval(channelId, undefined);
+        setCurrentJottoGame(channelId, null);
+        clearInterval(intervalForGameChecking);
+        return;
+      }
+    }, 500);
+  }
+
   const tick = 3;
 
   const interval = setInterval(async () => {
@@ -304,6 +317,7 @@ export const changeJottoTurn = async (
 
     if (!game) {
       setTurnInverval(channelId, undefined);
+      setCurrentJottoGame(channelId, null);
       clearInterval(interval);
       return;
     }
@@ -614,6 +628,7 @@ export const askToJoinJottoGame = async (ctx: CommandContext) => {
     const game = getCurrentJottoGame(message.channel.id);
 
     if (!game) {
+      setCurrentJottoGame(message.channel.id, null);
       clearInterval(interval);
       return;
     }
