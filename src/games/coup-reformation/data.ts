@@ -13,6 +13,7 @@ import {
 } from "./types";
 import { shuffleArray } from "../../utils/array";
 import { oneLine } from "common-tags";
+import glob from "glob";
 
 export const gameDataDir = path.resolve(
   process.env.COUP_GAME_DATA_DIR || "/tmp/",
@@ -75,6 +76,34 @@ export const setCurrentCoupGame = (
   }
 
   return currentCoupGames[channelId];
+};
+
+export const getAllCurrentCoupGames = () => {
+  if (Object.keys(currentCoupGames).length === 0) {
+    const fileNamePrefix = "coup_reformation_";
+    const fileExt = ".json";
+
+    const filePaths = glob.sync(
+      `${path.resolve(gameDataDir)}/${fileNamePrefix}*${fileExt}`,
+    );
+
+    for (const filePath of filePaths) {
+      if (existsSync(filePath)) {
+        const text = readFileSync(filePath, { encoding: "utf-8" });
+        const game = JSON.parse(text);
+
+        const channelId = filePath
+          .split("/")
+          .slice(-1)[0]
+          .replace(fileNamePrefix, "")
+          .replace(fileExt, "");
+
+        currentCoupGames[channelId] = game;
+      }
+    }
+  }
+
+  return currentCoupGames;
 };
 
 export const getInitialMessageAndEmbed = (channelId: string) =>

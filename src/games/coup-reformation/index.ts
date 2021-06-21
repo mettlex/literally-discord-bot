@@ -1,5 +1,5 @@
 import { oneLine } from "common-tags";
-import { Client, MessageEmbed } from "discord.js";
+import { Client, Message, MessageEmbed, TextChannel } from "discord.js";
 import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
 import { setupGame } from "../setup";
 import { Action } from "../types";
@@ -7,6 +7,7 @@ import { prefixes, timeToJoinInSeconds } from "./config";
 import { flatColors } from "../../config";
 import {
   coupActionNamesInClassic,
+  getAllCurrentCoupGames,
   getCurrentCoupGame,
   getDescriptionFromCardName,
   getInitialMessageAndEmbed,
@@ -186,6 +187,7 @@ export const actions: Action[] = [
       game = {
         gameStarted: false,
         gameStartedAt: new Date(),
+        startMessageId: message.id,
         mode: "classic",
         deck: [],
         players: [
@@ -257,7 +259,7 @@ const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
   creator.registerCommands(makeCoupCommands(guildIDs));
 };
 
-export const setupCoupReformationGame = (
+export const setupCoupReformationGame = async (
   client: Client,
   creator: SlashCreator,
 ) => {
@@ -443,6 +445,7 @@ export const setupCoupReformationGame = (
       if (
         !game.eventEmitter ||
         !game.eventEmitter.on ||
+        !game.eventEmitter.once ||
         !game.eventEmitter.emit
       ) {
         game.eventEmitter = new EventEmitter();
@@ -476,4 +479,41 @@ export const setupCoupReformationGame = (
       return;
     }
   });
+
+  try {
+    const currentCoupGames = getAllCurrentCoupGames();
+
+    for (const channelId in currentCoupGames) {
+      if (typeof channelId === "string") {
+        const game = currentCoupGames[channelId];
+
+        if (!game) {
+          continue;
+        }
+
+        let message: Message | undefined;
+
+        if (!game.startMessageId) {
+          const channel = (await client.channels.fetch(
+            channelId,
+          )) as TextChannel;
+
+          message = (await channel.messages.fetch({ limit: 1 })).first();
+        }
+
+        if (!message) {
+          continue;
+        }
+
+        if (game.gameStarted) {
+          changeCoupTurn(message);
+        } else {
+          startCoupGame(message);
+        }
+      }
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
 };

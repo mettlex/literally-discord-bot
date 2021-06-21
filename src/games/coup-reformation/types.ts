@@ -57,6 +57,7 @@ export const gameModes = ["classic", "reformation"] as const;
 export interface CoupGame {
   gameStarted: boolean;
   gameStartedAt: Date;
+  startMessageId: string;
   mode: typeof gameModes[number];
   players: CoupPlayer[];
   currentPlayer: string;
