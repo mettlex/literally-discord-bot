@@ -1,5 +1,7 @@
-# literally-discord-bot
-A Discord bot for various text-based games
+# Literally (Discord Bot)
+[![Discord Bots](https://top.gg/api/widget/status/842397311916310539.svg)](https://top.gg/bot/842397311916310539)
+
+A Discord bot for word-games & social games
 
 ## Environment variables
 
