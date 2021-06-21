@@ -156,7 +156,12 @@ export const changeCoupTurn = async (message: Message) => {
     return;
   }
 
-  if (!game.eventEmitter || !game.eventEmitter.on || !game.eventEmitter.emit) {
+  if (
+    !game.eventEmitter ||
+    !game.eventEmitter.on ||
+    !game.eventEmitter.once ||
+    !game.eventEmitter.emit
+  ) {
     game.eventEmitter = new EventEmitter();
   }
 
@@ -382,6 +387,9 @@ export const changeCoupTurn = async (message: Message) => {
 
             game.players[currentPlayerIndex].decidedAction = "foreignAid";
 
+            game.players[currentPlayerIndex].votesRequiredForAction =
+              game.players.length - 2;
+
             takenAction = "foreignAid";
 
             resolve(game);
@@ -392,9 +400,14 @@ export const changeCoupTurn = async (message: Message) => {
   );
 
   game = await waitForPlayerTurnInCoup;
-  player = game?.players.find((p) => p.id === currentPlayerId);
 
-  if (!takenAction || !game || !player) {
+  if (!game) {
+    return;
+  }
+
+  player = game.players.find((p) => p.id === currentPlayerId);
+
+  if (!takenAction || !player) {
     return;
   }
 
@@ -428,11 +441,61 @@ export const changeCoupTurn = async (message: Message) => {
 
     channel.send(embed);
   } else if (takenAction === "foreignAid") {
-    const waitForCounterAction = new Promise((resolve) => {
-      resolve(true);
-    });
+    let counterAction = { type: "allowed" };
 
-    await waitForCounterAction;
+    const waitForCounterAction = new Promise<typeof counterAction>(
+      (resolve) => {
+        if (!game) {
+          resolve(counterAction);
+          return;
+        }
+
+        game.eventEmitter.once("all_players_allowed_action", () => {
+          resolve(counterAction);
+        });
+      },
+    );
+
+    counterAction = await waitForCounterAction;
+
+    if (counterAction.type === "allowed") {
+      coupActionsInClassic.foreignAid(channelId, game, player);
+
+      const embed = new MessageEmbed()
+        .setColor(flatColors.blue)
+        .setAuthor(player.name, player.avatarURL)
+        .setDescription(
+          oneLine`
+          I took **2** coins as foreign aid
+          and I have **${player.coins}** coins now.
+          ${
+            (player.coins > 2 &&
+              player.coins < 7 &&
+              oneLine`If I have an assassin,
+              I may assassinate in my next turn.`) ||
+            ""
+          }
+          ${
+            (player.coins > 6 &&
+              player.coins < 10 &&
+              oneLine`I can coup against a player in my next turn.`) ||
+            ""
+          }
+          ${
+            (player.coins > 9 &&
+              oneLine`I have to coup against a player in my next turn.`) ||
+            ""
+          }
+        `,
+        );
+
+      await channel.send(embed);
+
+      await sleep(2000);
+    }
+    if (counterAction.type === "block") {
+      // blocked by player
+    }
   }
 
   const nextPlayerIndex =

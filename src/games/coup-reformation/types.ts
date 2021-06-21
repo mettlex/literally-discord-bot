@@ -15,32 +15,6 @@ export type CoupActionsInClassic = Record<
   (...args: any[]) => void
 >;
 
-export type ActionEventName = `action_${CoupActionNameInClassic}`;
-
-export interface CoupGameActionEventEmitter extends EventEmitter {
-  once(
-    eventName: ActionEventName,
-    callback: ({
-      channelId,
-      player,
-      target,
-    }: {
-      channelId: string;
-      player: CoupPlayer;
-      target?: CoupPlayer;
-    }) => void,
-  ): this;
-
-  emit(
-    eventName: ActionEventName,
-    data: {
-      channelId: string;
-      player: CoupPlayer;
-      target?: CoupPlayer;
-    },
-  ): boolean;
-}
-
 export interface CoupPlayer {
   id: User["id"];
   tag: User["tag"];
@@ -51,6 +25,7 @@ export interface CoupPlayer {
   avatarURL: string;
   decidedAction?: CoupActionNameInClassic;
   lostChallenge?: boolean;
+  votesRequiredForAction?: number;
 }
 
 export const gameModes = ["classic", "reformation"] as const;
@@ -63,7 +38,7 @@ export interface CoupGame {
   currentPlayer: string;
   deck: Deck;
   turnCount: number;
-  eventEmitter: CoupGameActionEventEmitter;
+  eventEmitter: EventEmitter;
 }
 
 export interface CurrentCoupGames {

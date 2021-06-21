@@ -22,7 +22,7 @@ import {
   showInfluences,
   slashCommandOptionsForCheckCards,
 } from "./slash-commands";
-import { ActionEventName, InfluenceCard } from "./types";
+import { InfluenceCard } from "./types";
 import { askToJoinCoupGame, changeCoupTurn, startCoupGame } from "./game-loop";
 import EventEmitter from "events";
 
@@ -468,7 +468,7 @@ export const setupCoupReformationGame = async (
           return;
         }
 
-        const actionEventName: ActionEventName = `action_${actionName}`;
+        const actionEventName = `action_${actionName}`;
 
         game.eventEmitter.emit(actionEventName, {
           channelId: ctx.channelID,
@@ -477,6 +477,35 @@ export const setupCoupReformationGame = async (
       }
 
       return;
+    }
+
+    if (ctx.customID === "allow_action_in_coup") {
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game || !game.gameStarted) {
+        return;
+      }
+
+      if (game.currentPlayer === ctx.user.id) {
+        return;
+      }
+
+      const player = game.players.find((p) => p.id === game.currentPlayer);
+
+      if (!player) {
+        return;
+      }
+
+      if (typeof player.votesRequiredForAction === "number") {
+        if (player.votesRequiredForAction <= 0) {
+          game.eventEmitter.emit("all_players_allowed_action");
+          return;
+        }
+
+        player.votesRequiredForAction--;
+
+        setCurrentCoupGame(ctx.channelID, game);
+      }
     }
   });
 
