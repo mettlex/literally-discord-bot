@@ -8,6 +8,7 @@ import { getDiscordJSClient } from "../../app";
 import { flatColors } from "../../config";
 import { shuffleArray } from "../../utils/array";
 import { timeToJoinInSeconds, turnSeconds } from "./config";
+import { JottoData } from "./types";
 
 const notInProduction = process.env.NODE_ENV !== "production";
 
@@ -297,6 +298,19 @@ export const changeJottoTurn = async (
     return;
   }
 
+  {
+    const intervalForGameChecking = setInterval(async () => {
+      const game = getCurrentJottoGame(channelId);
+
+      if (!game) {
+        setTurnInverval(channelId, undefined);
+        setCurrentJottoGame(channelId, null);
+        clearInterval(intervalForGameChecking);
+        return;
+      }
+    }, 500);
+  }
+
   const tick = 3;
 
   const interval = setInterval(async () => {
@@ -304,6 +318,7 @@ export const changeJottoTurn = async (
 
     if (!game) {
       setTurnInverval(channelId, undefined);
+      setCurrentJottoGame(channelId, null);
       clearInterval(interval);
       return;
     }
@@ -583,7 +598,10 @@ export const setInitialMessageAndEmbed = (data: InitialData) => {
   initialMessages[data.message.channel.id] = data;
 };
 
-export const askToJoinJottoGame = async (ctx: CommandContext) => {
+export const askToJoinJottoGame = async (
+  ctx: CommandContext,
+  game: JottoData,
+) => {
   const client = getDiscordJSClient();
 
   const channel = (await client.channels.fetch(ctx.channelID)) as TextChannel;
@@ -595,9 +613,12 @@ export const askToJoinJottoGame = async (ctx: CommandContext) => {
   embed.setTitle("Jotto - Guess the secret word");
 
   embed.setDescription(stripIndents`
-    ${ctx.user.mention} started a Jotto game.
+    ${oneLine`${ctx.user.mention} started a Jotto game
+    with a secret word with **${game.playersData[0].secret.length}** letters.`}
     
-    Use \`/jotto\` slash command and set your own secret word to join.
+    Use \`/jotto\` slash command and set your own ${
+      game.playersData[0].secret.length
+    }-letter secret word to join.
   `);
 
   embed.setFooter(`${timeToJoinInSeconds} seconds remaining`);
@@ -614,6 +635,7 @@ export const askToJoinJottoGame = async (ctx: CommandContext) => {
     const game = getCurrentJottoGame(message.channel.id);
 
     if (!game) {
+      setCurrentJottoGame(message.channel.id, null);
       clearInterval(interval);
       return;
     }

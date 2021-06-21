@@ -311,15 +311,17 @@ export const sendHelpMessage = (
       using the same \`/jotto\` command.
       `}
 
+    \`/stop_jotto\` slash command:
+    > Stop the current Jotto game (requires Manage Server permission)
+
     Additional Commands:
 
     ${jottoActions
       .map((action) => {
         return stripIndents`${action.commands
-          .map((c) => `\`${c}\``)
-          .join(" / ")}
+          .map((c) => `\`${jottoPrefixes[0]}${c}\``)
+          .join(", ")}
           > ${action.description}
-          > Example: \`${jottoPrefixes[0]}${action.commands[0]}\`
         `;
       })
       .join("\n\n")}
