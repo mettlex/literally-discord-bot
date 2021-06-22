@@ -10,7 +10,7 @@ import {
   setCurrentCoupGame,
 } from "./data";
 import { showInfluences } from "./slash-commands";
-import { InfluenceCard } from "./types";
+import { Influence, InfluenceCard, influenceCardNamesInClassic } from "./types";
 
 export const handleInteractions = (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", async (ctx) => {
@@ -210,6 +210,8 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
     }
 
     if (ctx.customID === "allow_action_in_coup") {
+      await ctx.acknowledge();
+
       const game = getCurrentCoupGame(ctx.channelID);
 
       if (!game || !game.gameStarted) {
@@ -236,6 +238,43 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
         setCurrentCoupGame(ctx.channelID, game);
       }
+    } else if (ctx.customID === "block_foreign_aid_in_coup") {
+      await ctx.acknowledge();
+
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game || !game.gameStarted) {
+        return;
+      }
+
+      if (game.currentPlayer === ctx.user.id) {
+        return;
+      }
+
+      const player = game.players.find((p) => p.id === game.currentPlayer);
+
+      if (!player) {
+        return;
+      }
+
+      const blockingPlayer = game.players.find(
+        (p) => p.id === ctx.user.id && p.id !== player.id,
+      );
+
+      if (!blockingPlayer) {
+        return;
+      }
+
+      const action = coupActionNamesInClassic.find((a) => a === "foreignAid");
+      const influence: Influence["name"] | undefined =
+        influenceCardNamesInClassic.find((inf) => inf === "duke");
+
+      game.eventEmitter.emit("block", {
+        player,
+        blockingPlayer,
+        action,
+        influence,
+      });
     }
   });
 };

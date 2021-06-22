@@ -18,7 +18,12 @@ import {
   setInitialMessageAndEmbed,
   coupActionNamesInClassic,
 } from "./data";
-import { CoupActionNameInClassic, CoupGame } from "./types";
+import {
+  CoupActionNameInClassic,
+  CoupGame,
+  CoupPlayer,
+  Influence,
+} from "./types";
 
 const logger = getLogger();
 
@@ -441,7 +446,13 @@ export const changeCoupTurn = async (message: Message) => {
 
     channel.send(embed);
   } else if (takenAction === "foreignAid") {
-    let counterAction = { type: "allowed" };
+    let counterAction: {
+      type: "allowed" | "block";
+      player?: CoupPlayer;
+      blockingPlayer?: CoupPlayer;
+      action?: CoupActionNameInClassic;
+      influence?: Influence["name"];
+    } = { type: "allowed" };
 
     const waitForCounterAction = new Promise<typeof counterAction>(
       (resolve) => {
@@ -452,6 +463,11 @@ export const changeCoupTurn = async (message: Message) => {
 
         game.eventEmitter.once("all_players_allowed_action", () => {
           resolve(counterAction);
+        });
+
+        game.eventEmitter.once("block", (data) => {
+          counterAction.type = "block";
+          resolve({ ...counterAction, ...data });
         });
       },
     );
@@ -494,7 +510,61 @@ export const changeCoupTurn = async (message: Message) => {
       await sleep(2000);
     }
     if (counterAction.type === "block") {
-      // blocked by player
+      const { blockingPlayer, action, influence } = counterAction;
+
+      if (!blockingPlayer || !action || !influence) {
+        return;
+      }
+
+      const embed = new MessageEmbed()
+        .setColor(flatColors.yellow)
+        .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
+        .setDescription(
+          oneLine`
+            I block ${player.name}'s foreign aid with my **${influence}**.
+          `,
+        );
+
+      await channel.sendWithComponents({
+        content: "",
+        options: { embed },
+        components: [
+          {
+            components: [
+              {
+                type: ComponentType.BUTTON,
+                style: ButtonStyle.PRIMARY,
+                label: `Let it go`,
+                custom_id: `let_go_in_coup`,
+              },
+              {
+                type: ComponentType.BUTTON,
+                style: ButtonStyle.DESTRUCTIVE,
+                label: `Challenge ${blockingPlayer.name}`,
+                custom_id: `challenge_${blockingPlayer.id}_${influence}`,
+              },
+            ],
+          },
+        ],
+      });
+
+      const isChallenging = await new Promise<boolean>((resolve) => {
+        if (!game) {
+          resolve(false);
+          return;
+        }
+
+        game.eventEmitter.once(
+          "blocked_foreign_aid_answered",
+          (challenging: boolean) => {
+            resolve(challenging);
+          },
+        );
+      });
+
+      if (isChallenging) {
+        // handle challenge
+      }
     }
   }
 
