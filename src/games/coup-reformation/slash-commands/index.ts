@@ -5,11 +5,16 @@ import {
   ComponentActionRow,
   ComponentContext,
   ComponentType,
+  MessageEmbedOptions,
   SlashCommand,
   SlashCommandOptions,
   SlashCreator,
 } from "slash-create";
-import { getCurrentCoupGame, getDescriptionFromCardName } from "../data";
+import {
+  getCurrentCoupGame,
+  getDescriptionFromCardName,
+  getImageURLForInfluenceCard,
+} from "../data";
 
 export const slashCommandOptionsForCheckCards: SlashCommandOptions = {
   name: "check_influences",
@@ -83,23 +88,23 @@ export const showInfluences = async (
     ];
   }
 
+  const influenceEmbedsWithImages: MessageEmbedOptions[] =
+    player.influences.map((inf, i) => ({
+      author: {
+        name: `${(inf.dismissed && "~~") || ""}${
+          i + 1
+        }. ${inf.name.toUpperCase()}${(inf.dismissed && "~~") || ""} ${
+          (inf.dismissed && "(Dismissed)") || ""
+        }`,
+      },
+      description: getDescriptionFromCardName(inf.name),
+      thumbnail: { url: getImageURLForInfluenceCard(inf.name) },
+    }));
+
   await ctx.send({
     ephemeral: true,
-    embeds: [
-      {
-        title: `${player.name}'s influences`,
-        description: `Your current influences are:`,
-        fields: player.influences.map((inf, i) => ({
-          name: `${(inf.dismissed && "~~") || ""}${
-            i + 1
-          }. ${inf.name.toUpperCase()}${(inf.dismissed && "~~") || ""} ${
-            (inf.dismissed && "(Dismissed)") || ""
-          }`,
-          value: getDescriptionFromCardName(inf.name),
-          inline: true,
-        })),
-      },
-    ],
+    content: `__**${player.name}'s Influences**__`,
+    embeds: [...influenceEmbedsWithImages],
     components,
   });
 };
