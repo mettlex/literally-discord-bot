@@ -297,12 +297,12 @@ export const setupCoupReformationGame = async (
 
         let message: Message | undefined;
 
-        if (!game.startMessageId) {
-          const channel = (await client.channels.fetch(
-            channelId,
-          )) as TextChannel;
+        const channel = (await client.channels.fetch(channelId)) as TextChannel;
 
+        if (!game.startMessageId) {
           message = (await channel.messages.fetch({ limit: 1 })).first();
+        } else {
+          message = await channel.messages.fetch(game.startMessageId);
         }
 
         if (!message) {
