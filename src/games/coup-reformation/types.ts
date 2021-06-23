@@ -26,6 +26,8 @@ export interface CoupPlayer {
   decidedAction?: CoupActionNameInClassic;
   lostChallenge?: boolean;
   votesRequiredForAction?: number;
+  voteReceivedFromIds?: string[];
+  blockingPlayer?: CoupPlayer;
 }
 
 export const gameModes = ["classic", "reformation"] as const;
@@ -77,3 +79,9 @@ export interface Influence extends InfluenceCard {
 }
 
 export type Deck = InfluenceCard[];
+
+export type AnswerToForeignAidBlock = {
+  challenging: boolean;
+  challengingPlayer?: CoupPlayer;
+  influenceName?: Influence["name"];
+};

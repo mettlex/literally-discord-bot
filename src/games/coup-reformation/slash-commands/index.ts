@@ -91,9 +91,7 @@ export const showInfluences = async (
   const influenceEmbedsWithImages: MessageEmbedOptions[] =
     player.influences.map((inf, i) => ({
       author: {
-        name: `${(inf.dismissed && "~~") || ""}${
-          i + 1
-        }. ${inf.name.toUpperCase()}${(inf.dismissed && "~~") || ""} ${
+        name: `${i + 1}. ${inf.name.toUpperCase()} ${
           (inf.dismissed && "(Dismissed)") || ""
         }`,
       },

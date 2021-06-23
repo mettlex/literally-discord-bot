@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
-import { Message, MessageEmbed } from "discord.js";
+import { Message, MessageEmbed, TextChannel } from "discord.js";
 import EventEmitter from "events";
 import { ButtonStyle, ComponentType } from "slash-create";
 import { getLogger } from "../../app";
@@ -19,6 +19,7 @@ import {
   coupActionNamesInClassic,
 } from "./data";
 import {
+  AnswerToForeignAidBlock,
   CoupActionNameInClassic,
   CoupGame,
   CoupPlayer,
@@ -188,14 +189,18 @@ export const changeCoupTurn = async (message: Message) => {
     (p) => p.id === currentPlayerId,
   );
 
+  const nextPlayerIndex =
+    currentPlayerIndex !== activePlayers.length - 1
+      ? currentPlayerIndex + 1
+      : 0;
+
   game.turnCount++;
 
   logger.info(`channelId: ${channelId}, turnCount: ${game.turnCount}`);
 
   if (game.turnCount > 0) {
     const influencesEmbed = new MessageEmbed()
-      .setTitle("DISMISSED INFLUENCES")
-      .setTimestamp()
+      .setTitle("Dismissed Influences")
       .setColor(flatColors.blue);
 
     let currentInflencesText = "";
@@ -209,7 +214,7 @@ export const changeCoupTurn = async (message: Message) => {
         } <@${p.id}> had `;
 
         currentInflencesText += oneLine`
-        ${p.influences[0]?.dismissed ? `\`${p.influences[0]?.name}\`` : ""}
+        ${p.influences[0]?.dismissed ? `\`${p.influences[0]?.name}\`, ` : ""}
         ${p.influences[1]?.dismissed ? `\`${p.influences[1]?.name}\`` : ""}
         `;
       }
@@ -230,7 +235,12 @@ export const changeCoupTurn = async (message: Message) => {
     return;
   }
 
-  logger.info(player);
+  if (game && player && !player.influences.find((inf) => !inf.dismissed)) {
+    game.currentPlayer = activePlayers[nextPlayerIndex].id;
+    setCurrentCoupGame(channelId, game);
+    changeCoupTurn(message);
+    return;
+  }
 
   const embed = new MessageEmbed()
     .setTitle(`Make your move!`)
@@ -250,7 +260,7 @@ export const changeCoupTurn = async (message: Message) => {
     actions = coupActionNamesInClassic;
   }
 
-  channel.sendWithComponents({
+  const messageWithActionButtons = await channel.sendWithComponents({
     content: `<@${player.id}>`,
     options: { embed },
     components: [
@@ -356,12 +366,15 @@ export const changeCoupTurn = async (message: Message) => {
 
             const embed = new MessageEmbed()
               .setColor(flatColors.yellow)
-              .setTitle(`${player.name} wants to take foreign aid`)
-              .setAuthor("2 coins please!", player.avatarURL)
-              .setDescription(oneLine`
+              .setAuthor(player.name, player.avatarURL)
+              .setDescription(stripIndents`
+                I want to take foreign aid. **2** coins please!
+              
+                ${oneLine`
                 If you claim that you have a **duke**,
-                you can block ${player.name}'s foreign aid.
+                you can block my foreign aid.
                 If you don't, press allow button below.
+                `}
               `);
 
             channel.sendWithComponents({
@@ -384,6 +397,12 @@ export const changeCoupTurn = async (message: Message) => {
                       custom_id: "block_foreign_aid_in_coup",
                       type: ComponentType.BUTTON,
                       style: ButtonStyle.DESTRUCTIVE,
+                    },
+                    {
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.SECONDARY,
+                      label: "My Influences 🤫",
+                      custom_id: "coup_show_influences",
                     },
                   ],
                 },
@@ -408,6 +427,15 @@ export const changeCoupTurn = async (message: Message) => {
 
   if (!game) {
     return;
+  }
+
+  try {
+    if (!(messageWithActionButtons instanceof Array)) {
+      await messageWithActionButtons.delete();
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
   }
 
   player = game.players.find((p) => p.id === currentPlayerId);
@@ -516,6 +544,10 @@ export const changeCoupTurn = async (message: Message) => {
         return;
       }
 
+      player.blockingPlayer = blockingPlayer;
+
+      blockingPlayer.votesRequiredForAction = game.players.length - 2;
+
       const embed = new MessageEmbed()
         .setColor(flatColors.yellow)
         .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
@@ -526,7 +558,12 @@ export const changeCoupTurn = async (message: Message) => {
         );
 
       await channel.sendWithComponents({
-        content: "",
+        content: game.players
+          .filter(
+            (p) => player?.blockingPlayer && p.id !== player.blockingPlayer.id,
+          )
+          .map((p) => `<@${p.id}>`)
+          .join(", "),
         options: { embed },
         components: [
           {
@@ -540,38 +577,156 @@ export const changeCoupTurn = async (message: Message) => {
               {
                 type: ComponentType.BUTTON,
                 style: ButtonStyle.DESTRUCTIVE,
-                label: `Challenge ${blockingPlayer.name}`,
-                custom_id: `challenge_${blockingPlayer.id}_${influence}`,
+                label: `Challenge`,
+                custom_id: `challenge_${blockingPlayer.id}_${influence}_coup`,
               },
             ],
           },
         ],
       });
 
-      const isChallenging = await new Promise<boolean>((resolve) => {
+      const answer = await new Promise<AnswerToForeignAidBlock>((resolve) => {
         if (!game) {
-          resolve(false);
+          resolve({ challenging: false });
           return;
         }
 
         game.eventEmitter.once(
           "blocked_foreign_aid_answered",
-          (challenging: boolean) => {
-            resolve(challenging);
+          (answer: AnswerToForeignAidBlock) => {
+            resolve(answer);
           },
         );
       });
 
-      if (isChallenging) {
-        // handle challenge
+      const { challenging, challengingPlayer, influenceName } = answer;
+
+      if (challenging && challengingPlayer && influenceName) {
+        const embed = new MessageEmbed()
+          .setColor(flatColors.yellow)
+          .setAuthor(challengingPlayer.name, challengingPlayer.avatarURL)
+          .setDescription(
+            oneLine`
+            I challenge!
+            ${blockingPlayer.name} doesn't have a **${influenceName}**.
+          `,
+          );
+
+        await channel.send({
+          content: `<@${blockingPlayer.id}>`,
+          embed,
+        });
+
+        await sleep(2000);
+
+        const duke = blockingPlayer.influences.find(
+          (inf) => !inf.dismissed && inf.name === "duke",
+        );
+
+        if (duke) {
+          const activeInfluences = challengingPlayer.influences.filter(
+            (inf) => !inf.dismissed,
+          );
+
+          if (activeInfluences.length === 2) {
+            challengingPlayer.lostChallenge = true;
+
+            setCurrentCoupGame(channelId, game);
+
+            const embed = new MessageEmbed()
+              .setTitle("Challenge Failed")
+              .setColor(flatColors.blue)
+              .setThumbnail(duke.imageURL)
+              .setDescription(
+                oneLine`
+                ${blockingPlayer.name} really had **${influenceName}**!
+              `,
+              );
+
+            await channel.sendWithComponents({
+              content: `<@${challengingPlayer.id}>`,
+              options: { embed },
+              components: [
+                {
+                  components: [
+                    {
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.PRIMARY,
+                      label: `Dismiss One Influence`,
+                      custom_id: `coup_show_influences`,
+                    },
+                  ],
+                },
+              ],
+            });
+
+            await new Promise((resolve) => {
+              if (!game) {
+                resolve(false);
+                return;
+              }
+
+              game.eventEmitter.once("dismissed_influence_in_coup", () => {
+                resolve(true);
+              });
+            });
+          } else {
+            eliminatePlayer(challengingPlayer, channel, game);
+          }
+        } else {
+          const activeInfluences = blockingPlayer.influences.filter(
+            (inf) => !inf.dismissed,
+          );
+
+          if (activeInfluences.length === 2) {
+            blockingPlayer.lostChallenge = true;
+
+            setCurrentCoupGame(channelId, game);
+
+            const embed = new MessageEmbed()
+              .setTitle("Challenge Succeeded")
+              .setColor(flatColors.blue)
+              .setDescription(
+                oneLine`
+                ${blockingPlayer.name}, you don't have any **${influenceName}**!
+                Now you dismiss one of your influences.
+              `,
+              );
+
+            await channel.sendWithComponents({
+              content: `<@${blockingPlayer.id}>`,
+              options: { embed },
+              components: [
+                {
+                  components: [
+                    {
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.PRIMARY,
+                      label: `Dismiss One Influence`,
+                      custom_id: `coup_show_influences`,
+                    },
+                  ],
+                },
+              ],
+            });
+
+            await new Promise((resolve) => {
+              if (!game) {
+                resolve(false);
+                return;
+              }
+
+              game.eventEmitter.once("dismissed_influence_in_coup", () => {
+                resolve(true);
+              });
+            });
+          } else {
+            eliminatePlayer(blockingPlayer, channel, game);
+          }
+        }
       }
     }
   }
-
-  const nextPlayerIndex =
-    currentPlayerIndex !== activePlayers.length - 1
-      ? currentPlayerIndex + 1
-      : 0;
 
   game.currentPlayer = activePlayers[nextPlayerIndex].id;
 
@@ -585,4 +740,28 @@ export const getLabelForCoupAction = (actionName: string) => {
     actionName[0].toUpperCase() +
     actionName.slice(1).replace(/(.)([A-Z])/g, "$1 $2")
   );
+};
+
+export const eliminatePlayer = (
+  p: CoupPlayer,
+  channel: TextChannel,
+  game: CoupGame,
+) => {
+  for (let i = 0; i < p.influences.length; i++) {
+    p.influences[i].dismissed = true;
+  }
+
+  setCurrentCoupGame(channel.id, game);
+
+  const embed = new MessageEmbed()
+    .setAuthor(`Player Eliminated`, p.avatarURL)
+    .setColor(flatColors.red)
+    .setDescription(
+      oneLine`${p.name}'s
+      **${p.influences[0]?.name}** &
+      **${p.influences[0]?.name}** got dismissed so
+      ${p.name} is out of the game.`,
+    );
+
+  channel.send(embed);
 };
