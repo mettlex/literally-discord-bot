@@ -706,9 +706,11 @@ export const changeCoupTurn = async (message: Message) => {
               });
             });
           } else {
-            eliminatePlayer(challengingPlayer, channel, game);
+            await eliminatePlayer(challengingPlayer, channel, game);
           }
         } else {
+          coupActionsInClassic.foreignAid(channelId, game, player);
+
           const activeInfluences = blockingPlayer.influences.filter(
             (inf) => !inf.dismissed,
           );
@@ -756,8 +758,40 @@ export const changeCoupTurn = async (message: Message) => {
               });
             });
           } else {
-            eliminatePlayer(blockingPlayer, channel, game);
+            await eliminatePlayer(blockingPlayer, channel, game);
           }
+
+          const embed = new MessageEmbed()
+            .setColor(flatColors.blue)
+            .setAuthor(player.name, player.avatarURL)
+            .setDescription(
+              oneLine`
+          I took **2** coins as foreign aid
+          and I have **${player.coins}** coins now.
+          ${
+            (player.coins > 2 &&
+              player.coins < 7 &&
+              oneLine`If I have an assassin,
+              I may assassinate in my next turn.`) ||
+            ""
+          }
+          ${
+            (player.coins > 6 &&
+              player.coins < 10 &&
+              oneLine`I can coup against a player in my next turn.`) ||
+            ""
+          }
+          ${
+            (player.coins > 9 &&
+              oneLine`I have to coup against a player in my next turn.`) ||
+            ""
+          }
+        `,
+            );
+
+          await channel.send(embed);
+
+          await sleep(2000);
         }
       }
     }
@@ -777,7 +811,7 @@ export const getLabelForCoupAction = (actionName: string) => {
   );
 };
 
-export const eliminatePlayer = (
+export const eliminatePlayer = async (
   p: CoupPlayer,
   channel: TextChannel,
   game: CoupGame,
@@ -799,4 +833,6 @@ export const eliminatePlayer = (
     );
 
   channel.send(embed);
+
+  await sleep(2000);
 };
