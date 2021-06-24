@@ -12,7 +12,7 @@ import {
 } from "./data";
 import { showInfluences } from "./slash-commands";
 import {
-  AnswerToForeignAidBlock,
+  ChallengeOrNotData,
   Influence,
   InfluenceCard,
   influenceCardNamesInClassic,
@@ -405,8 +405,8 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       if (typeof player.blockingPlayer.votesRequiredForAction === "number") {
         if (player.blockingPlayer.votesRequiredForAction <= 0) {
           player.blockingPlayer.voteReceivedFromIds = [];
-          const answer: AnswerToForeignAidBlock = { challenging: false };
-          game.eventEmitter.emit("blocked_foreign_aid_answered", answer);
+          const answer: ChallengeOrNotData = { challenging: false };
+          game.eventEmitter.emit("challenged_or_not", answer);
           removeButtonsFromMessage(channel, ctx.message.id, flatColors.green);
           return;
         }
@@ -450,13 +450,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const answer: AnswerToForeignAidBlock = {
+      const answer: ChallengeOrNotData = {
         challenging: true,
         challengingPlayer,
         influenceName,
       };
 
-      game.eventEmitter.emit("blocked_foreign_aid_answered", answer);
+      game.eventEmitter.emit("challenged_or_not", answer);
 
       removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
     }

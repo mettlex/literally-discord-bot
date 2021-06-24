@@ -80,7 +80,7 @@ export interface Influence extends InfluenceCard {
 
 export type Deck = InfluenceCard[];
 
-export type AnswerToForeignAidBlock = {
+export type ChallengeOrNotData = {
   challenging: boolean;
   challengingPlayer?: CoupPlayer;
   influenceName?: Influence["name"];
