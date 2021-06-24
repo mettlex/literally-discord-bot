@@ -15,6 +15,31 @@ import { shuffleArray } from "../../utils/array";
 import { oneLine } from "common-tags";
 import glob from "glob";
 
+export const numberEmojis = [
+  "0️⃣",
+  "1️⃣",
+  "2️⃣",
+  "3️⃣",
+  "4️⃣",
+  "5️⃣",
+  "6️⃣",
+  "7️⃣",
+  "8️⃣",
+  "9️⃣",
+] as const;
+
+export const convertNumberToEmojis = (num: number): string => {
+  if (num < 10) {
+    return numberEmojis[num];
+  }
+
+  return num
+    .toString()
+    .split("")
+    .map((n) => convertNumberToEmojis(+n))
+    .join("");
+};
+
 export const gameDataDir = path.resolve(
   process.env.COUP_GAME_DATA_DIR || "/tmp/",
 );
@@ -225,52 +250,8 @@ export const coupActionsInClassic = {
     player && (player.coins += 2);
     setCurrentCoupGame(channelId, game);
   },
-  coup: (
-    channelId: string,
-    game: CoupGame,
-    player: CoupPlayer,
-    targetPlayer: CoupPlayer,
-    disarmedInfluenceIndex: number,
-  ) => {
-    if (!player || !targetPlayer) {
-      return;
-    }
-
-    player.coins -= 7;
-
-    for (let i = 0; i < game.players.length; i++) {
-      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
-        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
-        break;
-      }
-    }
-
-    setCurrentCoupGame(channelId, game);
-  },
   tax: (channelId: string, game: CoupGame, player: CoupPlayer) => {
     player && (player.coins += 3);
-    setCurrentCoupGame(channelId, game);
-  },
-  assassinate: (
-    channelId: string,
-    game: CoupGame,
-    player: CoupPlayer,
-    targetPlayer: CoupPlayer,
-    disarmedInfluenceIndex: number,
-  ) => {
-    if (!player || !targetPlayer) {
-      return;
-    }
-
-    player.coins -= 3;
-
-    for (let i = 0; i < game.players.length; i++) {
-      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
-        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
-        break;
-      }
-    }
-
     setCurrentCoupGame(channelId, game);
   },
   exchange: (
@@ -358,6 +339,50 @@ export const coupActionsInClassic = {
     }
 
     targetPlayer.coins -= 2;
+
+    setCurrentCoupGame(channelId, game);
+  },
+  assassinate: (
+    channelId: string,
+    game: CoupGame,
+    player: CoupPlayer,
+    targetPlayer: CoupPlayer,
+    disarmedInfluenceIndex: number,
+  ) => {
+    if (!player || !targetPlayer) {
+      return;
+    }
+
+    player.coins -= 3;
+
+    for (let i = 0; i < game.players.length; i++) {
+      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
+        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
+        break;
+      }
+    }
+
+    setCurrentCoupGame(channelId, game);
+  },
+  coup: (
+    channelId: string,
+    game: CoupGame,
+    player: CoupPlayer,
+    targetPlayer: CoupPlayer,
+    disarmedInfluenceIndex: number,
+  ) => {
+    if (!player || !targetPlayer) {
+      return;
+    }
+
+    player.coins -= 7;
+
+    for (let i = 0; i < game.players.length; i++) {
+      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
+        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
+        break;
+      }
+    }
 
     setCurrentCoupGame(channelId, game);
   },

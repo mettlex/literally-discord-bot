@@ -17,6 +17,7 @@ import {
   setCurrentCoupGame,
   setInitialMessageAndEmbed,
   coupActionNamesInClassic,
+  convertNumberToEmojis,
 } from "./data";
 import {
   AnswerToForeignAidBlock,
@@ -244,10 +245,12 @@ export const changeCoupTurn = async (message: Message) => {
 
   const embed = new MessageEmbed()
     .setTitle(`Make your move!`)
-    .addField(`Coins`, player.coins, true)
+    .addField(`Coins 💰`, convertNumberToEmojis(player.coins), true)
     .addField(
-      `Influences`,
-      player.influences.filter((inf) => !inf.dismissed).length,
+      `Influences 👥`,
+      convertNumberToEmojis(
+        player.influences.filter((inf) => !inf.dismissed).length,
+      ),
       true,
     )
     .setDescription(`${player.name}, it's your turn. Choose an action below.`)
@@ -288,13 +291,29 @@ export const changeCoupTurn = async (message: Message) => {
         ],
       },
       {
-        components: actions.slice(0, 4).map((a) => ({
+        components: actions.slice(0, 3).map((a) => ({
           type: ComponentType.BUTTON,
           style:
             a === "coup" || a === "assassinate"
               ? ButtonStyle.DESTRUCTIVE
               : ButtonStyle.PRIMARY,
-          label: getLabelForCoupAction(a),
+          label: `${getLabelForCoupAction(a)} ${
+            a === "assassinate"
+              ? "🔪"
+              : a === "coup"
+              ? "💥"
+              : a === "steal"
+              ? "🔓"
+              : a === "exchange"
+              ? "♻️"
+              : a === "foreignAid"
+              ? "💸"
+              : a === "tax"
+              ? "🏦"
+              : a === "income"
+              ? "☝️"
+              : ""
+          }`,
           custom_id: `${a}_${player!.id}`,
           disabled:
             player!.coins < 7 && a === "coup"
@@ -307,13 +326,29 @@ export const changeCoupTurn = async (message: Message) => {
         })),
       },
       {
-        components: actions.slice(4).map((a) => ({
+        components: actions.slice(3).map((a) => ({
           type: ComponentType.BUTTON,
           style:
             a === "coup" || a === "assassinate"
               ? ButtonStyle.DESTRUCTIVE
               : ButtonStyle.PRIMARY,
-          label: getLabelForCoupAction(a),
+          label: `${getLabelForCoupAction(a)} ${
+            a === "assassinate"
+              ? "🔪"
+              : a === "coup"
+              ? "💥"
+              : a === "steal"
+              ? "🔓"
+              : a === "exchange"
+              ? "♻️"
+              : a === "foreignAid"
+              ? "💸"
+              : a === "tax"
+              ? "🏦"
+              : a === "income"
+              ? "☝️"
+              : ""
+          }`,
           custom_id: `${a}_${player!.id}`,
           disabled:
             player!.coins < 7 && a === "coup"
