@@ -92,11 +92,15 @@ export const showInfluences = async (
     player.influences.map((inf, i) => ({
       author: {
         name: `${i + 1}. ${inf.name.toUpperCase()} ${
-          (inf.dismissed && "(Dismissed)") || ""
+          (inf.dismissed && "🚫") || ""
         }`,
       },
       description: getDescriptionFromCardName(inf.name),
       thumbnail: { url: getImageURLForInfluenceCard(inf.name) },
+      footer: {
+        text:
+          (inf.dismissed && "You can't use this dismissed influence.") || "",
+      },
     }));
 
   await ctx.send({
