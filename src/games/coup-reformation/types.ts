@@ -27,7 +27,8 @@ export interface CoupPlayer {
   lostChallenge?: boolean;
   votesRequiredForAction?: number;
   voteReceivedFromIds?: string[];
-  blockingPlayer?: CoupPlayer;
+  blockingPlayerId?: string;
+  targetPlayerId?: string;
 }
 
 export const gameModes = ["classic", "reformation"] as const;
@@ -84,4 +85,11 @@ export type ChallengeOrNotData = {
   challenging: boolean;
   challengingPlayer?: CoupPlayer;
   influenceName?: Influence["name"];
+  influenceName2?: Influence["name"];
+};
+
+export type BlockData = {
+  blockingPlayer?: CoupPlayer;
+  action?: CoupActionNameInClassic;
+  influences?: Influence["name"][];
 };

@@ -282,6 +282,51 @@ export const setupCoupReformationGame = async (
     }
   }, 3000);
 
+  client.on("message", (message) => {
+    const firstMentionedUser = message.mentions.users.first();
+
+    if (message.author.bot || !firstMentionedUser) {
+      return;
+    }
+
+    const game = getCurrentCoupGame(message.channel.id);
+
+    if (!game) {
+      return;
+    }
+
+    if (game.currentPlayer !== message.author.id) {
+      return;
+    }
+
+    const player = game.players.find((p) => p.id === message.author.id);
+
+    if (!player) {
+      return;
+    }
+
+    const targetPlayer = game.players.find(
+      (p) => p.id === firstMentionedUser.id,
+    );
+
+    if (!targetPlayer || player.id === targetPlayer.id) {
+      return;
+    }
+
+    if (!targetPlayer.influences.find((inf) => !inf.dismissed)) {
+      message.reply(
+        oneLine`${targetPlayer.name} is out of the game
+        for having all influences dismissed.`,
+      );
+
+      return;
+    }
+
+    player.targetPlayerId = targetPlayer.id;
+
+    game.eventEmitter.emit("got_target_player");
+  });
+
   handleInteractions(client, creator);
 
   try {

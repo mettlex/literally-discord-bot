@@ -243,7 +243,7 @@ export const createDeck = ({
 
 export const coupActionsInClassic = {
   income: (channelId: string, game: CoupGame, player: CoupPlayer) => {
-    player && player.coins++;
+    player && (player.coins += 1);
     setCurrentCoupGame(channelId, game);
   },
   foreignAid: (channelId: string, game: CoupGame, player: CoupPlayer) => {
@@ -333,14 +333,30 @@ export const coupActionsInClassic = {
 
     setCurrentCoupGame(channelId, game);
   },
-  steal: (channelId: string, game: CoupGame, targetPlayer: CoupPlayer) => {
-    if (!targetPlayer) {
+  steal: (
+    channelId: string,
+    game: CoupGame,
+    targetPlayer: CoupPlayer,
+    player: CoupPlayer,
+  ) => {
+    if (!targetPlayer || !player || !channelId || !game) {
       return;
     }
 
-    targetPlayer.coins -= 2;
+    let stolenCoins = 0;
+
+    if (targetPlayer.coins >= 2) {
+      stolenCoins = 2;
+    } else if (targetPlayer.coins === 1) {
+      stolenCoins = 1;
+    }
+
+    targetPlayer.coins -= stolenCoins;
+    player.coins += stolenCoins;
 
     setCurrentCoupGame(channelId, game);
+
+    return stolenCoins;
   },
   assassinate: (
     channelId: string,

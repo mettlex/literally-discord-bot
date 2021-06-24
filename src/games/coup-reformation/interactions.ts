@@ -390,34 +390,42 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      if (!player.blockingPlayer) {
+      if (!player.blockingPlayerId) {
         return;
       }
 
-      if (!(player.blockingPlayer.voteReceivedFromIds instanceof Array)) {
-        player.blockingPlayer.voteReceivedFromIds = [];
-      }
+      const blockingPlayer = game.players.find(
+        (p) => p.id === player.blockingPlayerId,
+      );
 
-      if (player.blockingPlayer.voteReceivedFromIds.includes(ctx.user.id)) {
+      if (!blockingPlayer || blockingPlayer.id === ctx.user.id) {
         return;
       }
 
-      if (typeof player.blockingPlayer.votesRequiredForAction === "number") {
-        if (player.blockingPlayer.votesRequiredForAction <= 0) {
-          player.blockingPlayer.voteReceivedFromIds = [];
+      if (!(blockingPlayer.voteReceivedFromIds instanceof Array)) {
+        blockingPlayer.voteReceivedFromIds = [];
+      }
+
+      if (blockingPlayer.voteReceivedFromIds.includes(ctx.user.id)) {
+        return;
+      }
+
+      if (typeof blockingPlayer.votesRequiredForAction === "number") {
+        if (blockingPlayer.votesRequiredForAction <= 0) {
+          blockingPlayer.voteReceivedFromIds = [];
           const answer: ChallengeOrNotData = { challenging: false };
           game.eventEmitter.emit("challenged_or_not", answer);
           removeButtonsFromMessage(channel, ctx.message.id, flatColors.green);
           return;
         }
 
-        player.blockingPlayer.votesRequiredForAction--;
+        blockingPlayer.votesRequiredForAction--;
 
-        player.blockingPlayer.voteReceivedFromIds.push(ctx.user.id);
+        blockingPlayer.voteReceivedFromIds.push(ctx.user.id);
 
         setCurrentCoupGame(ctx.channelID, game);
       }
-    } else if (/challenge_\d+_\w+_coup/gi.test(ctx.customID)) {
+    } else if (/^challenge_\d+_\w+_?\w*_coup$/gi.test(ctx.customID)) {
       await ctx.acknowledge();
 
       const game = getCurrentCoupGame(ctx.channelID);
@@ -433,7 +441,14 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       }
 
       const match =
-        /challenge_(?<blockingPlayerId>\d+)_(?<influenceName>\w+)_coup/gi.exec(
+        // eslint-disable-next-line max-len
+        /^challenge_(?<blockingPlayerId>\d+)_(?<influenceName>\w+)_coup$/i.exec(
+          ctx.customID,
+        );
+
+      const match2 =
+        // eslint-disable-next-line max-len
+        /^challenge_(?<blockingPlayerId>\d+)_(?<influenceName>\w+)_(?<influenceName2>\w+)_coup$/i.exec(
           ctx.customID,
         );
 
@@ -441,22 +456,83 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const { blockingPlayerId, influenceName } = match.groups as {
-        blockingPlayerId: string;
-        influenceName: Influence["name"];
-      };
+      if (match2 && match2.groups && match2.groups.influenceName2) {
+        const { blockingPlayerId, influenceName, influenceName2 } =
+          match2.groups as {
+            blockingPlayerId: string;
+            influenceName: Influence["name"];
+            influenceName2: Influence["name"];
+          };
 
-      if (!blockingPlayerId || !influenceName) {
+        if (!blockingPlayerId || !influenceName || !influenceName2) {
+          return;
+        }
+
+        const answer: ChallengeOrNotData = {
+          challenging: true,
+          challengingPlayer,
+          influenceName,
+          influenceName2,
+        };
+
+        game.eventEmitter.emit("challenged_or_not", answer);
+      } else {
+        const { blockingPlayerId, influenceName } = match.groups as {
+          blockingPlayerId: string;
+          influenceName: Influence["name"];
+          influenceName2?: Influence["name"];
+        };
+
+        if (!blockingPlayerId || !influenceName) {
+          return;
+        }
+
+        const answer: ChallengeOrNotData = {
+          challenging: true,
+          challengingPlayer,
+          influenceName,
+        };
+
+        game.eventEmitter.emit("challenged_or_not", answer);
+      }
+
+      removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
+    } else if (ctx.customID === "block_stealing_in_coup") {
+      await ctx.acknowledge();
+
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game || !game.gameStarted) {
         return;
       }
 
-      const answer: ChallengeOrNotData = {
-        challenging: true,
-        challengingPlayer,
-        influenceName,
-      };
+      if (game.currentPlayer === ctx.user.id) {
+        return;
+      }
 
-      game.eventEmitter.emit("challenged_or_not", answer);
+      const player = game.players.find((p) => p.id === game.currentPlayer);
+
+      if (!player) {
+        return;
+      }
+
+      const blockingPlayer = game.players.find(
+        (p) => p.id === ctx.user.id && p.id !== player.id,
+      );
+
+      if (!blockingPlayer) {
+        return;
+      }
+
+      const action = coupActionNamesInClassic.find((a) => a === "steal");
+      const influences: Influence["name"][] = ["ambassador", "captain"];
+
+      game.eventEmitter.emit("block", {
+        player,
+        blockingPlayer,
+        action,
+        influences,
+      });
 
       removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
     }
