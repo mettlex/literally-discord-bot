@@ -310,9 +310,19 @@ export const setupCoupReformationGame = async (
         }
 
         if (game.gameStarted) {
+          channel.send(
+            oneLine`> **The bot needed a technical restart.
+            Please resume the game by selecting an action.**`,
+          );
+
           changeCoupTurn(message);
         } else {
-          startCoupGame(message);
+          channel.send(
+            oneLine`> **The bot needed a technical restart.
+            Please rejoin the game.**`,
+          );
+
+          askToJoinCoupGame(message);
         }
       }
     }
