@@ -5,6 +5,7 @@ const notInProduction = process.env.NODE_ENV !== "production";
 const logger = pino({ prettyPrint: notInProduction });
 export const getLogger = () => logger;
 import { Client } from "discord.js";
+import "./extension";
 import { setupWordChainGame } from "./games/word-chain";
 import checkEnv from "./utils/check-env";
 import { setupTwoTruthsAndALieGame } from "./games/two-truths-and-a-lie";
@@ -14,6 +15,7 @@ import { setupEconomy } from "./economy/setup";
 import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
 import { setupJottoGame } from "./games/jotto";
 import { setupCoupReformationGame } from "./games/coup-reformation";
+import { setupVote } from "./vote";
 
 process.on(
   "unhandledRejection",
@@ -59,6 +61,7 @@ client.once("ready", () => {
   setupTheWinkingAssassinGame(client, creator);
   setupJottoGame(client, creator);
   setupCoupReformationGame(client, creator);
+  setupVote(client);
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
