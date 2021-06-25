@@ -24,6 +24,7 @@ import { InfluenceCard } from "./types";
 import { askToJoinCoupGame, changeCoupTurn, startCoupGame } from "./game-loop";
 import EventEmitter from "events";
 import { handleInteractions } from "./interactions";
+import { hasVoted } from "../../top.gg/api";
 
 export const actions: Action[] = [
   {
@@ -171,8 +172,39 @@ export const actions: Action[] = [
   },
   {
     commands: ["s", "start", "begin"],
-    handler: (message) => {
-      if (message.author.bot) {
+    handler: async (message) => {
+      if (message.author.bot || message.channel.type !== "text") {
+        return;
+      }
+
+      const voted = await hasVoted(message.author.id);
+
+      if (voted === false) {
+        const channel = message.channel as ExtendedTextChannel;
+
+        channel
+          .sendWithComponents({
+            content: "Please vote on Top.gg and then start the game.",
+            components: [
+              {
+                type: ComponentType.ACTION_ROW,
+                components: [
+                  {
+                    label: "Vote for Literally",
+                    type: ComponentType.BUTTON,
+                    // @ts-ignore
+                    style: ButtonStyle.LINK,
+                    url: "https://top.gg/bot/842397311916310539/vote",
+                  },
+                ],
+              },
+            ],
+          })
+          .catch((e) => {
+            // eslint-disable-next-line no-console
+            console.error(e);
+          });
+
         return;
       }
 
@@ -218,11 +250,42 @@ export const actions: Action[] = [
   },
   {
     commands: ["j", "join"],
-    handler: (message) => {
+    handler: async (message) => {
       const game = getCurrentCoupGame(message.channel.id);
 
       if (!game) {
         message.reply("There is no Coup game running.");
+        return;
+      }
+
+      const voted = await hasVoted(message.author.id);
+
+      if (voted === false) {
+        const channel = message.channel as ExtendedTextChannel;
+
+        channel
+          .sendWithComponents({
+            content: "Please vote on Top.gg and then join the game.",
+            components: [
+              {
+                type: ComponentType.ACTION_ROW,
+                components: [
+                  {
+                    label: "Vote for Literally",
+                    type: ComponentType.BUTTON,
+                    // @ts-ignore
+                    style: ButtonStyle.LINK,
+                    url: "https://top.gg/bot/842397311916310539/vote",
+                  },
+                ],
+              },
+            ],
+          })
+          .catch((e) => {
+            // eslint-disable-next-line no-console
+            console.error(e);
+          });
+
         return;
       }
 

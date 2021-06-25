@@ -3,6 +3,7 @@ import EventEmitter from "events";
 import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
 import { flatColors } from "../../config";
 import { ExtendedMessage, ExtendedTextChannel } from "../../extension";
+import { hasVoted } from "../../top.gg/api";
 import {
   coupActionNamesInClassic,
   getCurrentCoupGame,
@@ -209,6 +210,29 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         console.error(e);
       });
     } else if (ctx.customID === "join_coup") {
+      const voted = await hasVoted(ctx.user.id);
+
+      if (voted === false) {
+        ctx.send("Please vote on Top.gg and then join the game.", {
+          components: [
+            {
+              type: ComponentType.ACTION_ROW,
+              components: [
+                {
+                  label: "Vote for Literally",
+                  type: ComponentType.BUTTON,
+                  // @ts-ignore
+                  style: ButtonStyle.LINK,
+                  url: "https://top.gg/bot/842397311916310539/vote",
+                },
+              ],
+            },
+          ],
+        });
+
+        return;
+      }
+
       const game = getCurrentCoupGame(ctx.channelID);
 
       if (!game) {
