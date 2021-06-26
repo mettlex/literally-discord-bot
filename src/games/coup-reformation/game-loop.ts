@@ -112,7 +112,7 @@ export const askToJoinCoupGame = async (message: Message) => {
   setInitialMessageAndEmbed({ message: initialMessage, embed, interval });
 };
 
-export const startCoupGame = (message: Message) => {
+export const startCoupGame = async (message: Message) => {
   let game = getCurrentCoupGame(message.channel.id);
 
   if (!game) {
@@ -149,7 +149,44 @@ export const startCoupGame = (message: Message) => {
     ];
   }
 
-  setCurrentCoupGame(message.channel.id, game);
+  const channel = message.channel as ExtendedTextChannel;
+
+  setCurrentCoupGame(channel.id, game);
+
+  const embed = new MessageEmbed()
+    .setTitle("Coup Game Started!")
+    .setColor(flatColors.blue)
+    .setImage(
+      `https://cdn.discordapp.com/attachments/848495134874271764/858310160472211466/coupcards.jpg`,
+    )
+    .addField(
+      "Turn Order",
+      game.players.map((p) => `${p.name}`).join(", "),
+      false,
+    )
+    .addField("Influences in Deck", `${game.deck.length}`, true)
+    .addField("Total Players", `${game.players.length}`, true)
+
+    .setFooter(`Check your influences by tapping the button below.`);
+
+  await channel.sendWithComponents({
+    content: "",
+    options: { embed },
+    components: [
+      {
+        components: [
+          {
+            type: ComponentType.BUTTON,
+            style: ButtonStyle.SECONDARY,
+            label: `My Influences 🤫`,
+            custom_id: `coup_show_influences`,
+          },
+        ],
+      },
+    ],
+  });
+
+  await sleep(5000);
 
   changeCoupTurn(message);
 };
