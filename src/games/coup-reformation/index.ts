@@ -25,6 +25,7 @@ import { askToJoinCoupGame, changeCoupTurn, startCoupGame } from "./game-loop";
 import EventEmitter from "events";
 import { handleInteractions } from "./interactions";
 import { hasVoted } from "../../top.gg/api";
+import { getLiterallyUserModel } from "../../database";
 
 export const actions: Action[] = [
   {
@@ -179,33 +180,58 @@ export const actions: Action[] = [
 
       const voted = await hasVoted(message.author.id);
 
-      if (voted === false) {
-        const channel = message.channel as ExtendedTextChannel;
+      const LiterallyUser = await getLiterallyUserModel();
 
-        channel
-          .sendWithComponents({
-            content: "Please vote on Top.gg and then start the game.",
-            components: [
-              {
-                type: ComponentType.ACTION_ROW,
-                components: [
-                  {
-                    label: "Vote for Literally",
-                    type: ComponentType.BUTTON,
-                    // @ts-ignore
-                    style: ButtonStyle.LINK,
-                    url: "https://top.gg/bot/842397311916310539/vote",
-                  },
-                ],
-              },
-            ],
-          })
-          .catch((e) => {
-            // eslint-disable-next-line no-console
-            console.error(e);
-          });
+      const literallyUser = await LiterallyUser.findOrCreate({
+        id: message.author.id,
+      });
 
-        return;
+      if (literallyUser) {
+        if (
+          voted === false &&
+          literallyUser.specialGamesPlayedAt &&
+          literallyUser.specialGamesPlayedAt.length >= 2
+        ) {
+          const channel = message.channel as ExtendedTextChannel;
+
+          channel
+            .sendWithComponents({
+              content: oneLine`${message.author}, please vote on Top.gg
+              and then start the game.`,
+              components: [
+                {
+                  type: ComponentType.ACTION_ROW,
+                  components: [
+                    {
+                      label: "Vote for Literally",
+                      type: ComponentType.BUTTON,
+                      // @ts-ignore
+                      style: ButtonStyle.LINK,
+                      url: "https://top.gg/bot/842397311916310539/vote",
+                    },
+                  ],
+                },
+              ],
+            })
+            .catch((e) => {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            });
+
+          return;
+        }
+
+        if (!literallyUser.specialGamesPlayedAt) {
+          literallyUser.specialGamesPlayedAt = [];
+        }
+
+        if (literallyUser.specialGamesPlayedAt.length >= 2) {
+          literallyUser.specialGamesPlayedAt.shift();
+        }
+
+        literallyUser.specialGamesPlayedAt.push(new Date());
+
+        literallyUser.save();
       }
 
       let game = getCurrentCoupGame(message.channel.id);
@@ -260,33 +286,58 @@ export const actions: Action[] = [
 
       const voted = await hasVoted(message.author.id);
 
-      if (voted === false) {
-        const channel = message.channel as ExtendedTextChannel;
+      const LiterallyUser = await getLiterallyUserModel();
 
-        channel
-          .sendWithComponents({
-            content: "Please vote on Top.gg and then join the game.",
-            components: [
-              {
-                type: ComponentType.ACTION_ROW,
-                components: [
-                  {
-                    label: "Vote for Literally",
-                    type: ComponentType.BUTTON,
-                    // @ts-ignore
-                    style: ButtonStyle.LINK,
-                    url: "https://top.gg/bot/842397311916310539/vote",
-                  },
-                ],
-              },
-            ],
-          })
-          .catch((e) => {
-            // eslint-disable-next-line no-console
-            console.error(e);
-          });
+      const literallyUser = await LiterallyUser.findOrCreate({
+        id: message.author.id,
+      });
 
-        return;
+      if (literallyUser) {
+        if (
+          voted === false &&
+          literallyUser.specialGamesPlayedAt &&
+          literallyUser.specialGamesPlayedAt.length >= 2
+        ) {
+          const channel = message.channel as ExtendedTextChannel;
+
+          channel
+            .sendWithComponents({
+              content: oneLine`${message.author}, please vote on Top.gg
+              and then start the game.`,
+              components: [
+                {
+                  type: ComponentType.ACTION_ROW,
+                  components: [
+                    {
+                      label: "Vote for Literally",
+                      type: ComponentType.BUTTON,
+                      // @ts-ignore
+                      style: ButtonStyle.LINK,
+                      url: "https://top.gg/bot/842397311916310539/vote",
+                    },
+                  ],
+                },
+              ],
+            })
+            .catch((e) => {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            });
+
+          return;
+        }
+
+        if (!literallyUser.specialGamesPlayedAt) {
+          literallyUser.specialGamesPlayedAt = [];
+        }
+
+        if (literallyUser.specialGamesPlayedAt.length >= 2) {
+          literallyUser.specialGamesPlayedAt.shift();
+        }
+
+        literallyUser.specialGamesPlayedAt.push(new Date());
+
+        literallyUser.save();
       }
 
       if (game.gameStarted) {

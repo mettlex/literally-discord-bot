@@ -1,7 +1,9 @@
+import { oneLine } from "common-tags";
 import { Client, MessageEmbed, TextChannel } from "discord.js";
 import EventEmitter from "events";
 import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
 import { flatColors } from "../../config";
+import { getLiterallyUserModel } from "../../database";
 import { ExtendedMessage, ExtendedTextChannel } from "../../extension";
 import { hasVoted } from "../../top.gg/api";
 import {
@@ -212,25 +214,53 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
     } else if (ctx.customID === "join_coup") {
       const voted = await hasVoted(ctx.user.id);
 
-      if (voted === false) {
-        ctx.send("Please vote on Top.gg and then join the game.", {
-          components: [
+      const LiterallyUser = await getLiterallyUserModel();
+
+      const literallyUser = await LiterallyUser.findOrCreate({
+        id: ctx.user.id,
+      });
+
+      if (literallyUser) {
+        if (
+          voted === false &&
+          literallyUser.specialGamesPlayedAt &&
+          literallyUser.specialGamesPlayedAt.length >= 2
+        ) {
+          ctx.send(
+            oneLine`${ctx.user.mention}, please vote on Top.gg
+            and then join the game.`,
             {
-              type: ComponentType.ACTION_ROW,
               components: [
                 {
-                  label: "Vote for Literally",
-                  type: ComponentType.BUTTON,
-                  // @ts-ignore
-                  style: ButtonStyle.LINK,
-                  url: "https://top.gg/bot/842397311916310539/vote",
+                  type: ComponentType.ACTION_ROW,
+                  components: [
+                    {
+                      label: "Vote for Literally",
+                      type: ComponentType.BUTTON,
+                      // @ts-ignore
+                      style: ButtonStyle.LINK,
+                      url: "https://top.gg/bot/842397311916310539/vote",
+                    },
+                  ],
                 },
               ],
             },
-          ],
-        });
+          );
 
-        return;
+          return;
+        }
+
+        if (!literallyUser.specialGamesPlayedAt) {
+          literallyUser.specialGamesPlayedAt = [];
+        }
+
+        if (literallyUser.specialGamesPlayedAt.length >= 2) {
+          literallyUser.specialGamesPlayedAt.shift();
+        }
+
+        literallyUser.specialGamesPlayedAt.push(new Date());
+
+        literallyUser.save();
       }
 
       const game = getCurrentCoupGame(ctx.channelID);
