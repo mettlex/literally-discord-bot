@@ -1302,27 +1302,27 @@ export const getLabelForCoupAction = (actionName: string) => {
 };
 
 export const eliminatePlayer = async (
-  p: CoupPlayer,
+  eliminatedPlayer: CoupPlayer,
   channel: TextChannel,
   game: CoupGame,
 ) => {
-  for (let i = 0; i < p.influences.length; i++) {
-    p.influences[i].dismissed = true;
+  for (let i = 0; i < eliminatedPlayer.influences.length; i++) {
+    eliminatedPlayer.influences[i].dismissed = true;
   }
 
   setCurrentCoupGame(channel.id, game);
 
   const embed = new MessageEmbed()
-    .setAuthor(`Player Eliminated`, p.avatarURL)
+    .setAuthor(`Player Eliminated`, eliminatedPlayer.avatarURL)
     .setColor(flatColors.red)
     .setDescription(
-      oneLine`${p.name}'s
-      **${p.influences[0]?.name}** &
-      **${p.influences[1]?.name}** got dismissed so
-      ${p.name} is out of the game.`,
+      oneLine`${eliminatedPlayer.name}'s
+      **${eliminatedPlayer.influences[0]?.name}** &
+      **${eliminatedPlayer.influences[1]?.name}** got dismissed so
+      ${eliminatedPlayer.name} is out of the game.`,
     );
 
-  channel.send(embed);
+  channel.send({ content: `<@${eliminatedPlayer.id}>`, embed });
 
   await sleep(2000);
 };
@@ -1372,6 +1372,18 @@ export const handleChallenge = async ({
   );
 
   if (foundInfluence) {
+    const index = player.influences.findIndex(
+      (inf) => inf.name === foundInfluence.name,
+    );
+
+    shuffleArray(game.deck);
+
+    game.deck.push(player.influences[index]);
+
+    player.influences[index] = { ...game.deck.shift()!, dismissed: false };
+
+    shuffleArray(game.deck);
+
     lostPlayer = challengingPlayer;
 
     const activeInfluences = challengingPlayer.influences.filter(
@@ -1389,16 +1401,26 @@ export const handleChallenge = async ({
         .setThumbnail(foundInfluence.imageURL)
         .setDescription(
           oneLine`
-                ${player.name} really had **${foundInfluence.name}**!
-              `,
+            ${player.name} really had **${foundInfluence.name}**!
+            Now **${challengingPlayer.name}** have to dismiss one of their
+            influences by pressing \`Dismiss One Influence\` button
+            and **${player.name}** will check the new influence from
+            the deck by pressing \`My Influences\` button.
+          `,
         );
 
       await channel.sendWithComponents({
-        content: `<@${challengingPlayer.id}>`,
+        content: `<@${challengingPlayer.id}> & <@${player.id}>`,
         options: { embed },
         components: [
           {
             components: [
+              {
+                type: ComponentType.BUTTON,
+                style: ButtonStyle.SECONDARY,
+                label: `My Influences 🤫`,
+                custom_id: `coup_show_influences`,
+              },
               {
                 type: ComponentType.BUTTON,
                 style: ButtonStyle.PRIMARY,
@@ -1421,6 +1443,37 @@ export const handleChallenge = async ({
         });
       });
     } else {
+      const embed = new MessageEmbed()
+        .setTitle("Challenge Failed")
+        .setColor(flatColors.blue)
+        .setThumbnail(foundInfluence.imageURL)
+        .setDescription(
+          oneLine`
+            ${player.name} really had **${foundInfluence.name}**!
+            Now **${player.name}** will check the new influence from
+            the deck by pressing \`My Influences\` button.
+          `,
+        );
+
+      await channel.sendWithComponents({
+        content: `<@${player.id}>`,
+        options: { embed },
+        components: [
+          {
+            components: [
+              {
+                type: ComponentType.BUTTON,
+                style: ButtonStyle.SECONDARY,
+                label: `My Influences 🤫`,
+                custom_id: `coup_show_influences`,
+              },
+            ],
+          },
+        ],
+      });
+
+      await sleep(2000);
+
       await eliminatePlayer(challengingPlayer, channel, game);
     }
   } else {
@@ -1438,11 +1491,11 @@ export const handleChallenge = async ({
         .setColor(flatColors.blue)
         .setDescription(
           oneLine`
-                ${player.name}, you don't have any **${influenceName}**${
+            ${player.name}, you don't have any **${influenceName}**${
             influenceName2 ? ` or **${influenceName2}**` : ""
           }!
-                Now you dismiss one of your influences.
-              `,
+            Now you dismiss one of your influences.
+          `,
         );
 
       await channel.sendWithComponents({
