@@ -324,7 +324,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
         const playerId = ctx.customID.replace(`${actionName}_`, "");
 
-        const player = game.players.find((p) => p.id === playerId);
+        const player = game.players.find(
+          (p) =>
+            p.influences[0] &&
+            p.influences[1] &&
+            (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+            p.id === playerId,
+        );
 
         if (!player) {
           return;
@@ -362,7 +368,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const player = game.players.find((p) => p.id === game.currentPlayer);
+      const player = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === game.currentPlayer,
+      );
 
       if (!player) {
         return;
@@ -403,14 +415,25 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const player = game.players.find((p) => p.id === game.currentPlayer);
+      const player = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === game.currentPlayer,
+      );
 
       if (!player) {
         return;
       }
 
       const blockingPlayer = game.players.find(
-        (p) => p.id === ctx.user.id && p.id !== player.id,
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === ctx.user.id &&
+          p.id !== player.id,
       );
 
       if (!blockingPlayer) {
@@ -438,7 +461,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const player = game.players.find((p) => p.id === game.currentPlayer);
+      const player = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === game.currentPlayer,
+      );
 
       if (!player) {
         return;
@@ -449,7 +478,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       }
 
       const blockingPlayer = game.players.find(
-        (p) => p.id === player.blockingPlayerId,
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === player.blockingPlayerId,
       );
 
       if (!blockingPlayer || blockingPlayer.id === ctx.user.id) {
@@ -488,7 +521,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const challengingPlayer = game.players.find((p) => p.id === ctx.user.id);
+      const challengingPlayer = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === ctx.user.id,
+      );
 
       if (!challengingPlayer) {
         return;
@@ -564,14 +603,25 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         return;
       }
 
-      const player = game.players.find((p) => p.id === game.currentPlayer);
+      const player = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === game.currentPlayer,
+      );
 
       if (!player) {
         return;
       }
 
       const blockingPlayer = game.players.find(
-        (p) => p.id === ctx.user.id && p.id !== player.id,
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === ctx.user.id &&
+          p.id !== player.id,
       );
 
       if (!blockingPlayer) {

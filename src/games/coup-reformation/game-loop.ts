@@ -198,8 +198,6 @@ export const changeCoupTurn = async (message: Message) => {
 
   game.turnCount++;
 
-  logger.info(`channelId: ${channelId}, turnCount: ${game.turnCount}`);
-
   if (game.turnCount > 0) {
     const influencesEmbed = new MessageEmbed()
       .setTitle("Dismissed Influences")
@@ -236,6 +234,16 @@ export const changeCoupTurn = async (message: Message) => {
   if (!player) {
     return;
   }
+
+  logger.info(oneLine`
+    guild: ${channel.guild.id},
+    channel: ${channelId},
+    turns: ${game.turnCount},
+    player: ${player.tag} (${player.id}),
+    influeces: ${player.influences
+      .map((inf) => `${inf.name}${(inf.dismissed && " (dismissed)") || ""}`)
+      .join(", ")}
+  `);
 
   if (game && player && !player.influences.find((inf) => !inf.dismissed)) {
     game.currentPlayer = activePlayers[nextPlayerIndex].id;
@@ -448,7 +456,7 @@ export const changeCoupTurn = async (message: Message) => {
             game.players[currentPlayerIndex].decidedAction = "foreignAid";
 
             game.players[currentPlayerIndex].votesRequiredForAction =
-              game.players.length - 2;
+              activePlayers.length - 2;
 
             takenAction = "foreignAid";
 
@@ -510,7 +518,7 @@ export const changeCoupTurn = async (message: Message) => {
             game.players[currentPlayerIndex].decidedAction = "tax";
 
             game.players[currentPlayerIndex].votesRequiredForAction =
-              game.players.length - 2;
+              activePlayers.length - 2;
 
             takenAction = "tax";
 
@@ -631,7 +639,7 @@ export const changeCoupTurn = async (message: Message) => {
             game.players[currentPlayerIndex].decidedAction = "steal";
 
             game.players[currentPlayerIndex].votesRequiredForAction =
-              game.players.length - 2;
+              activePlayers.length - 2;
 
             takenAction = "steal";
 
@@ -777,7 +785,7 @@ export const changeCoupTurn = async (message: Message) => {
 
       player.blockingPlayerId = blockingPlayer.id;
 
-      blockingPlayer.votesRequiredForAction = game.players.length - 2;
+      blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
 
       const embed = new MessageEmbed()
         .setColor(flatColors.yellow)
@@ -1026,7 +1034,7 @@ export const changeCoupTurn = async (message: Message) => {
       if (blockingPlayer && action && influences && influences.length === 2) {
         player.blockingPlayerId = blockingPlayer.id;
 
-        blockingPlayer.votesRequiredForAction = game.players.length - 2;
+        blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
 
         const embed = new MessageEmbed()
           .setColor(flatColors.yellow)
