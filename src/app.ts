@@ -16,6 +16,7 @@ import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
 import { setupJottoGame } from "./games/jotto";
 import { setupCoupReformationGame } from "./games/coup-reformation";
 import { setupVote } from "./vote";
+import { postStats } from "./top.gg/api";
 
 process.on(
   "unhandledRejection",
@@ -31,7 +32,7 @@ if (!checkEnv()) {
 
 const client = new Client();
 
-client.once("ready", () => {
+client.once("ready", async () => {
   const creator = new SlashCreator({
     applicationID: process.env.APP_ID || "",
     publicKey: process.env.PUBLIC_KEY,
@@ -71,6 +72,11 @@ client.once("ready", () => {
   });
 
   logger.info(`> discord bot is ready!`);
+
+  if (client.user?.id === "842397311916310539") {
+    const result = await postStats(client);
+    logger.info(`Posted stats to Top.gg: ${result?.serverCount} servers.`);
+  }
 });
 
 client.login(process.env.TOKEN);
