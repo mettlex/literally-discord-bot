@@ -182,7 +182,10 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
       setCurrentCoupGame(ctx.channelID, game);
 
-      game.eventEmitter.emit("dismissed_influence_in_coup");
+      game.eventEmitter.emit("dismissed_influence_in_coup", {
+        dismissedInfluence: influence,
+        dismissedInfluenceIndex: i,
+      });
 
       const description = `I dismissed my **${influence.name.toUpperCase()}**.`;
 
@@ -645,6 +648,55 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         blockingPlayer,
         action,
         influences,
+      });
+
+      removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
+    } else if (ctx.customID === "block_assassination_in_coup") {
+      await ctx.acknowledge();
+
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game || !game.gameStarted) {
+        return;
+      }
+
+      if (game.currentPlayer === ctx.user.id) {
+        return;
+      }
+
+      const player = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === game.currentPlayer,
+      );
+
+      if (!player) {
+        return;
+      }
+
+      const blockingPlayer = game.players.find(
+        (p) =>
+          p.influences[0] &&
+          p.influences[1] &&
+          (!p.influences[0].dismissed || !p.influences[1].dismissed) &&
+          p.id === ctx.user.id &&
+          p.id !== player.id,
+      );
+
+      if (!blockingPlayer) {
+        return;
+      }
+
+      const action = coupActionNamesInClassic.find((a) => a === "assassinate");
+      const influence: Influence["name"] = "contessa";
+
+      game.eventEmitter.emit("block", {
+        player,
+        blockingPlayer,
+        action,
+        influence,
       });
 
       removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);

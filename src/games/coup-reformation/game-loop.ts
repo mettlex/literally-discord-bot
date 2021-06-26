@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import { oneLine, oneLineTrim, stripIndents } from "common-tags";
+import { oneLine, stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
 import { Message, MessageEmbed, TextChannel } from "discord.js";
 import EventEmitter from "events";
@@ -9,6 +9,11 @@ import { flatColors } from "../../config";
 import { ExtendedTextChannel } from "../../extension";
 import { shuffleArray } from "../../utils/array";
 import sleep from "../../utils/sleep";
+import { handleAssassinate } from "./actions/assassinate";
+import { handleForeignAid } from "./actions/foreign-aid";
+import { handleIncome } from "./actions/income";
+import { handleSteal } from "./actions/steal";
+import { handleTax } from "./actions/tax";
 import { prefixes, timeToJoinInSeconds } from "./config";
 import {
   coupActionsInClassic,
@@ -20,8 +25,6 @@ import {
   convertNumberToEmojis,
 } from "./data";
 import {
-  BlockData,
-  ChallengeOrNotData,
   CoupActionNameInClassic,
   CoupGame,
   CoupPlayer,
@@ -459,7 +462,7 @@ export const changeCoupTurn = async (message: Message) => {
               `);
 
             channel.sendWithComponents({
-              content: game.players
+              content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
@@ -527,7 +530,7 @@ export const changeCoupTurn = async (message: Message) => {
             const influence: Influence["name"] = "duke";
 
             channel.sendWithComponents({
-              content: game.players
+              content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
@@ -591,22 +594,28 @@ export const changeCoupTurn = async (message: Message) => {
               console.error(error);
             }
 
-            const msg = await channel.send(
-              `**<@${player.id}>, mention a player to steal from:**`,
-            );
+            if (activePlayers.length === 2) {
+              player.targetPlayerId = activePlayers.find(
+                (p) => p.id !== player.id,
+              )!.id;
+            } else {
+              const msg = await channel.send(
+                `**<@${player.id}>, mention a player to steal from:**`,
+              );
 
-            await new Promise((resolve) => {
-              if (!game) {
-                resolve(undefined);
-                return;
-              }
+              await new Promise((resolve) => {
+                if (!game) {
+                  resolve(undefined);
+                  return;
+                }
 
-              game.eventEmitter.once("got_target_player", () => {
-                resolve(true);
+                game.eventEmitter.once("got_target_player", () => {
+                  resolve(true);
+                });
               });
-            });
 
-            msg.delete().catch(() => {});
+              msg.delete().catch(() => {});
+            }
 
             if (!player.targetPlayerId) {
               resolve(undefined);
@@ -642,7 +651,7 @@ export const changeCoupTurn = async (message: Message) => {
             const influence: Influence["name"] = "captain";
 
             channel.sendWithComponents({
-              content: game.players
+              content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
@@ -684,6 +693,134 @@ export const changeCoupTurn = async (message: Message) => {
           }
         },
       );
+
+      game.eventEmitter.once(
+        "action_assassinate",
+        async ({
+          channelId: eventChannelId,
+          player,
+        }: {
+          channelId: string;
+          player: CoupPlayer;
+        }) => {
+          if (eventChannelId === channelId) {
+            if (!game || player.coins < 3) {
+              resolve(undefined);
+              return;
+            }
+
+            try {
+              if (
+                !(messageWithActionButtons instanceof Array) &&
+                messageWithActionButtons.deletable
+              ) {
+                await messageWithActionButtons.delete();
+              }
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error(error);
+            }
+
+            if (activePlayers.length === 2) {
+              player.targetPlayerId = activePlayers.find(
+                (p) => p.id !== player.id,
+              )!.id;
+            } else {
+              const msg = await channel.send(
+                oneLine`**<@${player.id}>, mention a player
+                to assassinate one of their influences:**`,
+              );
+
+              await new Promise((resolve) => {
+                if (!game) {
+                  resolve(undefined);
+                  return;
+                }
+
+                game.eventEmitter.once("got_target_player", () => {
+                  resolve(true);
+                });
+              });
+
+              msg.delete().catch(() => {});
+            }
+
+            if (!player.targetPlayerId) {
+              resolve(undefined);
+              return;
+            }
+
+            const targetPlayer = game.players.find(
+              (p) => p.id === player.targetPlayerId,
+            );
+
+            if (!targetPlayer) {
+              resolve(undefined);
+              return;
+            }
+
+            const embed = new MessageEmbed()
+              .setColor(flatColors.yellow)
+              .setAuthor(player.name, player.avatarURL)
+              .setDescription(stripIndents`
+                I want to pay **3** coins to assasinate one of <@${
+                  targetPlayer.id
+                }>'s influences.
+              
+                ${oneLine`
+                If you think I don't have an **assassin**,
+                you can challenge me.
+                If you claim you have a **contessa**,
+                you can try to block me.
+                Otherwise, press allow button below.
+                `}
+              `);
+
+            const influence: Influence["name"] = "assassin";
+
+            channel.sendWithComponents({
+              content: activePlayers
+                .filter((p) => p.id !== player.id)
+                .map((p) => `<@${p.id}>`)
+                .join(", "),
+              options: { embed },
+              components: [
+                {
+                  components: [
+                    {
+                      label: "Allow",
+                      custom_id: "allow_action_in_coup",
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.PRIMARY,
+                    },
+                    {
+                      label: "Block Assassination",
+                      custom_id: "block_assassination_in_coup",
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.DESTRUCTIVE,
+                    },
+                    {
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.DESTRUCTIVE,
+                      label: `Challenge`,
+                      custom_id: `challenge_${player.id}_${influence}_coup`,
+                    },
+                  ],
+                },
+              ],
+            });
+
+            game.players[currentPlayerIndex].decidedAction = "assassinate";
+
+            game.players[currentPlayerIndex].votesRequiredForAction =
+              activePlayers.length - 2;
+
+            takenAction = "assassinate";
+
+            resolve(game);
+          }
+        },
+      );
     },
   );
 
@@ -717,572 +854,21 @@ export const changeCoupTurn = async (message: Message) => {
   }
 
   if (takenAction === "income") {
-    const embed = new MessageEmbed()
-      .setColor(flatColors.blue)
-      .setAuthor(player.name, player.avatarURL)
-      .setDescription(
-        oneLine`
-          I took **1** coin as income and I have **${player.coins}** coin${
-          player.coins > 1 ? "s" : ""
-        } now.
-          ${
-            (player.coins > 2 &&
-              player.coins < 7 &&
-              oneLine`If I have an assassin,
-              I may assassinate in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 6 &&
-              player.coins < 10 &&
-              oneLine`I can coup against a player in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 9 &&
-              oneLine`I have to coup against a player in my next turn.`) ||
-            ""
-          }
-        `,
-      );
-
-    channel.send(embed);
-
-    await sleep(2000);
+    await handleIncome({ player, channel });
   } else if (takenAction === "foreignAid") {
-    let counterAction: {
-      type: "allowed" | "block";
-      player?: CoupPlayer;
-      blockingPlayer?: CoupPlayer;
-      action?: CoupActionNameInClassic;
-      influence?: Influence["name"];
-    } = { type: "allowed" };
-
-    const waitForCounterAction = new Promise<typeof counterAction>(
-      (resolve) => {
-        if (!game) {
-          resolve(counterAction);
-          return;
-        }
-
-        game.eventEmitter.once("all_players_allowed_action", () => {
-          resolve(counterAction);
-        });
-
-        game.eventEmitter.once("block", (data) => {
-          counterAction.type = "block";
-          resolve({ ...counterAction, ...data });
-        });
-      },
-    );
-
-    counterAction = await waitForCounterAction;
-
-    if (counterAction.type === "allowed") {
-      coupActionsInClassic.foreignAid(channelId, game, player);
-
-      const embed = new MessageEmbed()
-        .setColor(flatColors.blue)
-        .setAuthor(player.name, player.avatarURL)
-        .setDescription(
-          oneLine`
-          I took **2** coins as foreign aid
-          and I have **${player.coins}** coin${player.coins > 1 ? "s" : ""} now.
-          ${
-            (player.coins > 2 &&
-              player.coins < 7 &&
-              oneLine`If I have an assassin,
-              I may assassinate in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 6 &&
-              player.coins < 10 &&
-              oneLine`I can coup against a player in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 9 &&
-              oneLine`I have to coup against a player in my next turn.`) ||
-            ""
-          }
-        `,
-        );
-
-      await channel.send(embed);
-
-      await sleep(2000);
-    }
-    if (counterAction.type === "block") {
-      const { blockingPlayer, action, influence } = counterAction;
-
-      if (!blockingPlayer || !action || !influence) {
-        return;
-      }
-
-      player.blockingPlayerId = blockingPlayer.id;
-
-      blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
-
-      const embed = new MessageEmbed()
-        .setColor(flatColors.yellow)
-        .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
-        .setDescription(
-          oneLine`
-            I block ${player.name}'s foreign aid with my **${influence}**.
-          `,
-        );
-
-      await channel.sendWithComponents({
-        content: game.players
-          .filter((p) => blockingPlayer && p.id !== blockingPlayer.id)
-          .map((p) => `<@${p.id}>`)
-          .join(", "),
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-                label: `Let it go`,
-                custom_id: `let_go_in_coup`,
-              },
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.DESTRUCTIVE,
-                label: `Challenge`,
-                custom_id: `challenge_${blockingPlayer.id}_${influence}_coup`,
-              },
-            ],
-          },
-        ],
-      });
-
-      const answer = await new Promise<ChallengeOrNotData>((resolve) => {
-        if (!game) {
-          resolve({ challenging: false });
-          return;
-        }
-
-        game.eventEmitter.once(
-          "challenged_or_not",
-          (answer: ChallengeOrNotData) => {
-            resolve(answer);
-          },
-        );
-      });
-
-      const { challenging, challengingPlayer, influenceName } = answer;
-
-      if (challenging && challengingPlayer && influenceName) {
-        const lostPlayer = await handleChallenge({
-          channel,
-          game,
-          challengingPlayer,
-          player: blockingPlayer,
-          influenceName: "duke",
-        });
-
-        if (lostPlayer.id === blockingPlayer.id) {
-          coupActionsInClassic.foreignAid(channel.id, game, player);
-
-          const embed = new MessageEmbed()
-            .setColor(flatColors.blue)
-            .setAuthor(player.name, player.avatarURL)
-            .setDescription(
-              oneLine`
-          I took **2** coins as foreign aid
-          and I have **${player.coins}** coin${player.coins > 1 ? "s" : ""} now.
-          ${
-            (player.coins > 2 &&
-              player.coins < 7 &&
-              oneLine`If I have an assassin,
-              I may assassinate in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 6 &&
-              player.coins < 10 &&
-              oneLine`I can coup against a player in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 9 &&
-              oneLine`I have to coup against a player in my next turn.`) ||
-            ""
-          }
-        `,
-            );
-
-          await channel.send(embed);
-
-          await sleep(2000);
-        }
-      }
-    }
+    await handleForeignAid({ game, player, channel, channelId, activePlayers });
   } else if (takenAction === "tax") {
-    const answer = await new Promise<ChallengeOrNotData>((resolve) => {
-      if (!game) {
-        resolve({ challenging: false });
-        return;
-      }
-
-      game.eventEmitter.once("all_players_allowed_action", () => {
-        resolve({ challenging: false });
-      });
-
-      game.eventEmitter.once(
-        "challenged_or_not",
-        (answer: ChallengeOrNotData) => {
-          resolve(answer);
-        },
-      );
-    });
-
-    const { challenging, challengingPlayer, influenceName } = answer;
-
-    if (challenging === false) {
-      coupActionsInClassic.tax(channelId, game, player);
-
-      const embed = new MessageEmbed()
-        .setColor(flatColors.blue)
-        .setAuthor(player.name, player.avatarURL)
-        .setDescription(
-          oneLine`
-          I took **3** coins as tax
-          and I have **${player.coins}** coin${player.coins > 1 ? "s" : ""} now.
-          ${
-            (player.coins > 2 &&
-              player.coins < 7 &&
-              oneLine`If I have an assassin,
-              I may assassinate in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 6 &&
-              player.coins < 10 &&
-              oneLine`I can coup against a player in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 9 &&
-              oneLine`I have to coup against a player in my next turn.`) ||
-            ""
-          }
-        `,
-        );
-
-      await channel.send(embed);
-
-      await sleep(2000);
-    } else if (challenging && challengingPlayer && influenceName) {
-      const lostPlayer = await handleChallenge({
-        channel,
-        game,
-        challengingPlayer,
-        player,
-        influenceName: "duke",
-      });
-
-      if (lostPlayer.id === challengingPlayer.id) {
-        coupActionsInClassic.tax(channelId, game, player);
-
-        const embed = new MessageEmbed()
-          .setColor(flatColors.blue)
-          .setAuthor(player.name, player.avatarURL)
-          .setDescription(
-            oneLine`
-          I took **3** coins as tax
-          and I have **${player.coins}** coin${player.coins > 1 ? "s" : ""} now.
-          ${
-            (player.coins > 2 &&
-              player.coins < 7 &&
-              oneLine`If I have an assassin,
-              I may assassinate in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 6 &&
-              player.coins < 10 &&
-              oneLine`I can coup against a player in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 9 &&
-              oneLine`I have to coup against a player in my next turn.`) ||
-            ""
-          }
-        `,
-          );
-
-        await channel.send(embed);
-
-        await sleep(2000);
-      }
-    }
+    await handleTax({ game, player, channel, channelId });
   } else if (takenAction === "steal") {
-    const answer = await new Promise<ChallengeOrNotData & BlockData>(
-      (resolve) => {
-        if (!game) {
-          resolve({ challenging: false });
-          return;
-        }
-
-        game.eventEmitter.once("all_players_allowed_action", () => {
-          resolve({ challenging: false });
-        });
-
-        game.eventEmitter.once("block", (data: BlockData) => {
-          resolve({ ...data, challenging: false });
-        });
-
-        game.eventEmitter.once(
-          "challenged_or_not",
-          (answer: ChallengeOrNotData) => {
-            resolve(answer);
-          },
-        );
-      },
-    );
-
-    if (!player.targetPlayerId) {
-      return;
-    }
-
-    const targetPlayer = game.players.find(
-      (p) => p.id === player?.targetPlayerId,
-    );
-
-    if (!targetPlayer) {
-      return;
-    }
-
-    const {
-      challenging,
-      challengingPlayer,
-      influenceName,
-      blockingPlayer,
-      action,
-      influences,
-    } = answer;
-
-    if (!challenging) {
-      if (blockingPlayer && action && influences && influences.length === 2) {
-        player.blockingPlayerId = blockingPlayer.id;
-
-        blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
-
-        const embed = new MessageEmbed()
-          .setColor(flatColors.yellow)
-          .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
-          .setDescription(
-            oneLine`
-            I block ${player.name}'s stealing
-            with my **${influences[0]}** or **${influences[1]}**.
-          `,
-          );
-
-        await channel.sendWithComponents({
-          content: game.players
-            .filter((p) => blockingPlayer && p.id !== blockingPlayer.id)
-            .map((p) => `<@${p.id}>`)
-            .join(", "),
-          options: { embed },
-          components: [
-            {
-              components: [
-                {
-                  type: ComponentType.BUTTON,
-                  style: ButtonStyle.PRIMARY,
-                  label: `Let it go`,
-                  custom_id: `let_go_in_coup`,
-                },
-                {
-                  type: ComponentType.BUTTON,
-                  style: ButtonStyle.DESTRUCTIVE,
-                  label: `Challenge`,
-                  custom_id: oneLineTrim`challenge_
-                  ${blockingPlayer.id}_${influences[0]}_${influences[1]}
-                  _coup`,
-                },
-              ],
-            },
-          ],
-        });
-
-        const answer = await new Promise<ChallengeOrNotData>((resolve) => {
-          if (!game) {
-            resolve({ challenging: false });
-            return;
-          }
-
-          game.eventEmitter.once(
-            "challenged_or_not",
-            (answer: ChallengeOrNotData) => {
-              resolve(answer);
-            },
-          );
-        });
-
-        const {
-          challenging,
-          challengingPlayer,
-          influenceName,
-          influenceName2,
-        } = answer;
-
-        if (
-          challenging &&
-          challengingPlayer &&
-          influenceName &&
-          influenceName2
-        ) {
-          const lostPlayer = await handleChallenge({
-            channel,
-            game,
-            challengingPlayer,
-            player: blockingPlayer,
-            influenceName,
-            influenceName2,
-          });
-
-          if (lostPlayer.id !== challengingPlayer.id) {
-            const stolenCoins = coupActionsInClassic.steal(
-              channelId,
-              game,
-              targetPlayer,
-              player,
-            );
-
-            const embed = new MessageEmbed()
-              .setColor(flatColors.blue)
-              .setAuthor(player.name, player.avatarURL)
-              .setDescription(
-                oneLine`
-                I stole **${stolenCoins}** coins from ${targetPlayer.name}
-                and I have **${player.coins}** coin${
-                  player.coins > 1 ? "s" : ""
-                } now.
-                ${
-                  (player.coins > 2 &&
-                    player.coins < 7 &&
-                    oneLine`If I have an assassin,
-                    I may assassinate in my next turn.`) ||
-                  ""
-                }
-                ${
-                  (player.coins > 6 &&
-                    player.coins < 10 &&
-                    oneLine`I can coup against a player in my next turn.`) ||
-                  ""
-                }
-                ${
-                  (player.coins > 9 &&
-                    oneLine`I have to coup against
-                    a player in my next turn.`) ||
-                  ""
-                }
-              `,
-              );
-
-            await channel.send(embed);
-
-            await sleep(2000);
-          }
-        }
-      } else {
-        const stolenCoins = coupActionsInClassic.steal(
-          channelId,
-          game,
-          targetPlayer,
-          player,
-        );
-
-        const embed = new MessageEmbed()
-          .setColor(flatColors.blue)
-          .setAuthor(player.name, player.avatarURL)
-          .setDescription(
-            oneLine`
-            I stole **${stolenCoins}** coins from ${targetPlayer.name}
-            and I have **${player.coins}** coin${
-              player.coins > 1 ? "s" : ""
-            } now.
-            ${
-              (player.coins > 2 &&
-                player.coins < 7 &&
-                oneLine`If I have an assassin,
-                I may assassinate in my next turn.`) ||
-              ""
-            }
-            ${
-              (player.coins > 6 &&
-                player.coins < 10 &&
-                oneLine`I can coup against a player in my next turn.`) ||
-              ""
-            }
-            ${
-              (player.coins > 9 &&
-                oneLine`I have to coup against a player in my next turn.`) ||
-              ""
-            }
-          `,
-          );
-
-        await channel.send(embed);
-
-        await sleep(2000);
-      }
-    } else if (challenging && challengingPlayer && influenceName) {
-      const lostPlayer = await handleChallenge({
-        channel,
-        game,
-        challengingPlayer,
-        player,
-        influenceName,
-      });
-
-      if (lostPlayer.id === challengingPlayer.id) {
-        const stolenCoins = coupActionsInClassic.steal(
-          channelId,
-          game,
-          targetPlayer,
-          player,
-        );
-
-        const embed = new MessageEmbed()
-          .setColor(flatColors.blue)
-          .setAuthor(player.name, player.avatarURL)
-          .setDescription(
-            oneLine`
-          I stole **${stolenCoins}** coins from ${targetPlayer.name}
-          and I have **${player.coins}** coin${player.coins > 1 ? "s" : ""} now.
-          ${
-            (player.coins > 2 &&
-              player.coins < 7 &&
-              oneLine`If I have an assassin,
-              I may assassinate in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 6 &&
-              player.coins < 10 &&
-              oneLine`I can coup against a player in my next turn.`) ||
-            ""
-          }
-          ${
-            (player.coins > 9 &&
-              oneLine`I have to coup against a player in my next turn.`) ||
-            ""
-          }
-        `,
-          );
-
-        await channel.send(embed);
-
-        await sleep(2000);
-      }
-    }
+    await handleSteal({ game, player, channel, channelId, activePlayers });
+  } else if (takenAction === "assassinate") {
+    await handleAssassinate({
+      game,
+      player,
+      channel,
+      channelId,
+      activePlayers,
+    });
   }
 
   game.eventEmitter = game.eventEmitter.removeAllListeners();
@@ -1403,8 +989,9 @@ export const handleChallenge = async ({
           oneLine`
             ${player.name} really had **${foundInfluence.name}**!
             Now **${challengingPlayer.name}** have to dismiss one of their
-            influences by pressing \`Dismiss One Influence\` button
-            and **${player.name}** will check the new influence from
+            influences by pressing \`Dismiss One Influence\` button.
+            **${player.name}** will put **${foundInfluence.name}** in deck
+            and check the __new influence__ from
             the deck by pressing \`My Influences\` button.
           `,
         );

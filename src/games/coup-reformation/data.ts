@@ -363,7 +363,7 @@ export const coupActionsInClassic = {
     game: CoupGame,
     player: CoupPlayer,
     targetPlayer: CoupPlayer,
-    disarmedInfluenceIndex: number,
+    dismissedInfluenceIndex?: number,
   ) => {
     if (!player || !targetPlayer) {
       return;
@@ -371,10 +371,12 @@ export const coupActionsInClassic = {
 
     player.coins -= 3;
 
-    for (let i = 0; i < game.players.length; i++) {
-      if (game.players[i].id === targetPlayer.id && disarmedInfluenceIndex) {
-        game.players[i].influences[disarmedInfluenceIndex].dismissed = true;
-        break;
+    if (dismissedInfluenceIndex) {
+      for (let i = 0; i < game.players.length; i++) {
+        if (game.players[i].id === targetPlayer.id && dismissedInfluenceIndex) {
+          game.players[i].influences[dismissedInfluenceIndex].dismissed = true;
+          break;
+        }
       }
     }
 

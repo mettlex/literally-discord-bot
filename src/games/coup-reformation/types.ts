@@ -91,5 +91,6 @@ export type ChallengeOrNotData = {
 export type BlockData = {
   blockingPlayer?: CoupPlayer;
   action?: CoupActionNameInClassic;
+  influence?: Influence["name"];
   influences?: Influence["name"][];
 };
