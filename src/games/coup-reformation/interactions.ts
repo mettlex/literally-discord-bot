@@ -535,13 +535,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
       const match =
         // eslint-disable-next-line max-len
-        /^challenge_(?<blockingPlayerId>\d+)_(?<influenceName>\w+)_coup$/i.exec(
+        /^challenge_(?<challengedPlayerId>\d+)_(?<influenceName>\w+)_coup$/i.exec(
           ctx.customID,
         );
 
       const match2 =
         // eslint-disable-next-line max-len
-        /^challenge_(?<blockingPlayerId>\d+)_(?<influenceName>\w+)_(?<influenceName2>\w+)_coup$/i.exec(
+        /^challenge_(?<challengedPlayerId>\d+)_(?<influenceName>\w+)_(?<influenceName2>\w+)_coup$/i.exec(
           ctx.customID,
         );
 
@@ -550,14 +550,19 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       }
 
       if (match2 && match2.groups && match2.groups.influenceName2) {
-        const { blockingPlayerId, influenceName, influenceName2 } =
+        const { challengedPlayerId, influenceName, influenceName2 } =
           match2.groups as {
-            blockingPlayerId: string;
+            challengedPlayerId: string;
             influenceName: Influence["name"];
             influenceName2: Influence["name"];
           };
 
-        if (!blockingPlayerId || !influenceName || !influenceName2) {
+        if (
+          !challengedPlayerId ||
+          !influenceName ||
+          !influenceName2 ||
+          challengingPlayer.id === challengedPlayerId
+        ) {
           return;
         }
 
@@ -570,13 +575,17 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
         game.eventEmitter.emit("challenged_or_not", answer);
       } else {
-        const { blockingPlayerId, influenceName } = match.groups as {
-          blockingPlayerId: string;
+        const { challengedPlayerId, influenceName } = match.groups as {
+          challengedPlayerId: string;
           influenceName: Influence["name"];
           influenceName2?: Influence["name"];
         };
 
-        if (!blockingPlayerId || !influenceName) {
+        if (
+          !challengedPlayerId ||
+          !influenceName ||
+          challengingPlayer.id === challengedPlayerId
+        ) {
           return;
         }
 
