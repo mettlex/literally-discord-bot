@@ -71,6 +71,17 @@ export const showInfluences = async (
     return "You don't have any influence left.";
   }
 
+  if ((ctx as ComponentContext).customID) {
+    await ctx.send({
+      ephemeral: true,
+      content: oneLine`Plese use \`/${slashCommandOptionsForCheckCards.name}\`
+      slash command because secret reply to button interaction
+      isn't fully supported by Discord yet.`,
+    });
+
+    return;
+  }
+
   let components: ComponentActionRow[] | undefined;
 
   if (player.lostChallenge) {
