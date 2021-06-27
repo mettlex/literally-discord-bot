@@ -119,8 +119,6 @@ export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
 
     if (ctx.customID === "join_word_chain" && ctx.member) {
       joinUsingButton(ctx, client);
-    } else {
-      ctx.acknowledge();
     }
   });
 

@@ -72,8 +72,5 @@ export const setupTheWinkingAssassinGame = (
 
       return;
     }
-
-    ctx.acknowledge();
-    return;
   });
 };

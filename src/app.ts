@@ -56,13 +56,13 @@ client.once("ready", async () => {
     console.error(message);
   });
 
+  setupCoupReformationGame(client, creator);
   setupWordChainGame(client, creator);
   setupTwoTruthsAndALieGame(client, creator);
   setupHelpMenu(client, creator);
   setupEconomy(client, creator);
   setupTheWinkingAssassinGame(client, creator);
   setupJottoGame(client, creator);
-  setupCoupReformationGame(client, creator);
   setupVote(client);
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
