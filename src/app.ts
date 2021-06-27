@@ -67,7 +67,7 @@ client.once("ready", async () => {
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
   client.user?.setActivity({
-    name: "ly.help or /help",
+    name: `${(earlyAccessMode() && "_") || ""}ly.help or /help`,
     type: "PLAYING",
   });
 
