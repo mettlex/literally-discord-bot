@@ -224,11 +224,6 @@ export const changeCoupTurn = async (message: Message) => {
       (!p.influences[0].dismissed || !p.influences[1].dismissed),
   );
 
-  // if (activePlayers.length === 0 || game.turnCount > 20) {
-  //   setCurrentCoupGame(channelId, null);
-  //   return;
-  // }
-
   const currentPlayerIndex = activePlayers.findIndex(
     (p) => p.id === currentPlayerId,
   );
@@ -239,6 +234,51 @@ export const changeCoupTurn = async (message: Message) => {
       : 0;
 
   game.turnCount++;
+
+  let player = game.players.find((p) => p.id === currentPlayerId);
+
+  if (!player) {
+    return;
+  }
+
+  logger.info(oneLine`
+    guild: ${channel.guild.id},
+    channel: ${channelId},
+    turns: ${game.turnCount},
+    player: ${player.tag} (${player.id}),
+    influeces: ${player.influences
+      .map((inf) => `${inf.name}${(inf.dismissed && " (dismissed)") || ""}`)
+      .join(", ")}
+  `);
+
+  if (game && player && !player.influences.find((inf) => !inf.dismissed)) {
+    game.currentPlayer = activePlayers[nextPlayerIndex].id;
+    setCurrentCoupGame(channelId, game);
+    changeCoupTurn(message);
+    return;
+  }
+
+  if (activePlayers.length === 1) {
+    const embed = new MessageEmbed();
+
+    embed
+      .setTitle("Congratulations!")
+      .setDescription(`Here is your winner, the successful leader of Coup!`)
+      .addField("Winner", `<@${player.id}>`)
+      .setColor(flatColors.green)
+      .setThumbnail(player.avatarURL);
+
+    await channel.send(embed);
+
+    logger.info(
+      oneLine`> coup winner: ${player.tag} (${player.id})
+      in ${channel.id} of ${channel.guild.id}`,
+    );
+
+    setCurrentCoupGame(channelId, null);
+
+    return;
+  }
 
   if (game.turnCount > 0) {
     const influencesEmbed = new MessageEmbed()
@@ -269,29 +309,6 @@ export const changeCoupTurn = async (message: Message) => {
 
       await sleep(1000);
     }
-  }
-
-  let player = game.players.find((p) => p.id === currentPlayerId);
-
-  if (!player) {
-    return;
-  }
-
-  logger.info(oneLine`
-    guild: ${channel.guild.id},
-    channel: ${channelId},
-    turns: ${game.turnCount},
-    player: ${player.tag} (${player.id}),
-    influeces: ${player.influences
-      .map((inf) => `${inf.name}${(inf.dismissed && " (dismissed)") || ""}`)
-      .join(", ")}
-  `);
-
-  if (game && player && !player.influences.find((inf) => !inf.dismissed)) {
-    game.currentPlayer = activePlayers[nextPlayerIndex].id;
-    setCurrentCoupGame(channelId, game);
-    changeCoupTurn(message);
-    return;
   }
 
   const embed = new MessageEmbed()

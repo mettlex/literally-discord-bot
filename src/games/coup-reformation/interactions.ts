@@ -247,7 +247,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         `;
 
         const embed = new MessageEmbed()
-          .setColor(flatColors.red)
+          .setColor(flatColors.blue)
           .setAuthor(player.name, player.avatarURL)
           .setDescription(description);
 
