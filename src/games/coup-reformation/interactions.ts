@@ -227,12 +227,21 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         if (
           voted === false &&
           literallyUser.specialGamesPlayedAt &&
-          literallyUser.specialGamesPlayedAt.length >= 2
+          literallyUser.specialGamesPlayedAt.length > 4
         ) {
+          const embed = new MessageEmbed()
+            .setColor(flatColors.green)
+            .setTitle("Please upvote Literally")
+            .setThumbnail(
+              "https://cdn.discordapp.com/attachments/848495134874271764/858672943130607656/tenor.gif",
+            ).setDescription(oneLine`It takes only a minute
+            to vote for Literally on Top.gg website. Just do it!`);
+
           ctx.send(
-            oneLine`${ctx.user.mention}, please vote on Top.gg
-            and then join the game.`,
+            oneLine`**${ctx.user.mention}, please vote on Top.gg
+            and then join the game.**`,
             {
+              embeds: [embed.toJSON()],
               components: [
                 {
                   type: ComponentType.ACTION_ROW,
@@ -251,13 +260,48 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           );
 
           return;
+        } else if (
+          voted === false &&
+          literallyUser.specialGamesPlayedAt &&
+          literallyUser.specialGamesPlayedAt.length <= 4
+        ) {
+          const embed = new MessageEmbed()
+            .setColor(flatColors.green)
+            .setTitle("Please upvote Literally")
+            .setImage(
+              "https://cdn.discordapp.com/attachments/848495134874271764/858666036655816704/justdoit.gif",
+            ).setDescription(oneLine`It takes only a minute
+            to vote for Literally on Top.gg website. Just do it!`);
+
+          ctx
+            .send(oneLine`${ctx.user.mention}`, {
+              embeds: [embed.toJSON()],
+              components: [
+                {
+                  type: ComponentType.ACTION_ROW,
+                  components: [
+                    {
+                      label: "Vote for Literally",
+                      type: ComponentType.BUTTON,
+                      // @ts-ignore
+                      style: ButtonStyle.LINK,
+                      url: "https://top.gg/bot/842397311916310539/vote",
+                    },
+                  ],
+                },
+              ],
+            })
+            .catch((e) => {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            });
         }
 
         if (!literallyUser.specialGamesPlayedAt) {
           literallyUser.specialGamesPlayedAt = [];
         }
 
-        if (literallyUser.specialGamesPlayedAt.length >= 2) {
+        if (literallyUser.specialGamesPlayedAt.length > 4) {
           literallyUser.specialGamesPlayedAt.shift();
         }
 
