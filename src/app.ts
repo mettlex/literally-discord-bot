@@ -17,6 +17,7 @@ import { setupJottoGame } from "./games/jotto";
 import { setupCoupReformationGame } from "./games/coup-reformation";
 import { setupVote } from "./vote";
 import { postStats } from "./top.gg/api";
+import { earlyAccessMode } from "./config";
 
 process.on(
   "unhandledRejection",
