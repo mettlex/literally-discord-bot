@@ -10,6 +10,7 @@ import { ExtendedTextChannel } from "../../extension";
 import { shuffleArray } from "../../utils/array";
 import sleep from "../../utils/sleep";
 import { handleAssassinate } from "./actions/assassinate";
+import { handleCoup } from "./actions/coup";
 import { handleForeignAid } from "./actions/foreign-aid";
 import { handleIncome } from "./actions/income";
 import { handleSteal } from "./actions/steal";
@@ -821,6 +822,71 @@ export const changeCoupTurn = async (message: Message) => {
           }
         },
       );
+
+      game.eventEmitter.once(
+        "action_coup",
+        async ({
+          channelId: eventChannelId,
+          player,
+        }: {
+          channelId: string;
+          player: CoupPlayer;
+        }) => {
+          if (eventChannelId === channelId) {
+            if (!game || player.coins < 3) {
+              resolve(undefined);
+              return;
+            }
+
+            try {
+              if (
+                !(messageWithActionButtons instanceof Array) &&
+                messageWithActionButtons.deletable
+              ) {
+                await messageWithActionButtons.delete();
+              }
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error(error);
+            }
+
+            if (activePlayers.length === 2) {
+              player.targetPlayerId = activePlayers.find(
+                (p) => p.id !== player.id,
+              )!.id;
+            } else {
+              const msg = await channel.send(
+                oneLine`**<@${player.id}>, mention a player
+                to coup against:**`,
+              );
+
+              await new Promise((resolve) => {
+                if (!game) {
+                  resolve(undefined);
+                  return;
+                }
+
+                game.eventEmitter.once("got_target_player", () => {
+                  resolve(true);
+                });
+              });
+
+              msg.delete().catch(() => {});
+            }
+
+            if (!player.targetPlayerId) {
+              resolve(undefined);
+              return;
+            }
+
+            game.players[currentPlayerIndex].decidedAction = "coup";
+
+            takenAction = "coup";
+
+            resolve(game);
+          }
+        },
+      );
     },
   );
 
@@ -869,6 +935,9 @@ export const changeCoupTurn = async (message: Message) => {
       channelId,
       activePlayers,
     });
+  } else if (takenAction === "coup") {
+    await handleCoup({ game, player, channel, activePlayers, channelId });
+  } else if (takenAction === "exchange") {
   }
 
   game.eventEmitter = game.eventEmitter.removeAllListeners();
