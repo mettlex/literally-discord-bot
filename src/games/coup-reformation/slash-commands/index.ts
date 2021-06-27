@@ -88,6 +88,23 @@ export const showInfluences = async (
     ];
   }
 
+  if (player.influencesToReturn && player.influencesToReturn > 0) {
+    components = [
+      {
+        type: ComponentType.ACTION_ROW,
+        components: player.influences
+          .filter((inf) => !inf.dismissed)
+          .map((inf, i) => ({
+            type: ComponentType.BUTTON,
+            style: ButtonStyle.SECONDARY,
+            label: `RETURN ${inf.name.toUpperCase()}`,
+            custom_id: `coup_return_influence_${i}`,
+            disabled: inf.returned,
+          })),
+      },
+    ];
+  }
+
   const influenceEmbedsWithImages: MessageEmbedOptions[] =
     player.influences.map((inf, i) => ({
       author: {

@@ -202,6 +202,111 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       channel.send(embed);
 
       return;
+    } else if (ctx.customID.startsWith("coup_return_influence_")) {
+      await ctx.acknowledge();
+
+      const game = getCurrentCoupGame(ctx.channelID);
+
+      if (!game) {
+        return;
+      }
+
+      const player = game.players.find((p) => p.id === ctx.user.id);
+
+      if (
+        !player ||
+        game.currentPlayer !== player.id ||
+        !player.influencesToReturn
+      ) {
+        return;
+      }
+
+      const i = parseInt(ctx.customID.replace("coup_return_influence_", ""));
+
+      const influence = player.influences[i];
+
+      if (influence.returned) {
+        await ctx.send(
+          oneLine`**${player.name}**, this influence has already been returned.
+          Select another influence.`,
+        );
+
+        return;
+      }
+
+      influence.returned = true;
+
+      if (player.influencesToReturn === 0 || player.exchanging === false) {
+        setCurrentCoupGame(ctx.channelID, game);
+
+        game.eventEmitter.emit("exchange_completed_in_coup");
+
+        const description = oneLine`
+          I completed the exchange and
+          returned 2 influences to the deck.
+        `;
+
+        const embed = new MessageEmbed()
+          .setColor(flatColors.red)
+          .setAuthor(player.name, player.avatarURL)
+          .setDescription(description);
+
+        const channel = (await client.channels.fetch(
+          ctx.channelID,
+        )) as TextChannel;
+
+        channel.send(embed);
+
+        return;
+      } else {
+        player.influencesToReturn--;
+
+        if (player.influencesToReturn === 0) {
+          player.exchanging = false;
+
+          game.eventEmitter.emit("exchange_completed_in_coup");
+
+          const description = oneLine`
+          I completed the exchange and
+          returned 2 influences to the deck.
+        `;
+
+          const embed = new MessageEmbed()
+            .setColor(flatColors.blue)
+            .setAuthor(player.name, player.avatarURL)
+            .setDescription(description);
+
+          const channel = (await client.channels.fetch(
+            ctx.channelID,
+          )) as TextChannel;
+
+          channel.send(embed);
+        } else {
+          await ctx.send(
+            `**${player.name}** returned 1 influence. 1 more left to return.`,
+            {
+              ephemeral: true,
+              components: [
+                {
+                  type: ComponentType.ACTION_ROW,
+                  components: [
+                    {
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.PRIMARY,
+                      label: "Return One Influence",
+                      custom_id: "coup_show_influences",
+                    },
+                  ],
+                },
+              ],
+            },
+          );
+        }
+
+        setCurrentCoupGame(ctx.channelID, game);
+
+        return;
+      }
     } else if (ctx.customID.startsWith(nextCustomIdPartial)) {
       const i = parseInt(ctx.customID.replace(nextCustomIdPartial, ""));
       changeCardEmbed(i).catch((e) => {

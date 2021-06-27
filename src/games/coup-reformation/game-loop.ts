@@ -11,6 +11,7 @@ import { shuffleArray } from "../../utils/array";
 import sleep from "../../utils/sleep";
 import { handleAssassinate } from "./actions/assassinate";
 import { handleCoup } from "./actions/coup";
+import { handleExchange } from "./actions/exchange";
 import { handleForeignAid } from "./actions/foreign-aid";
 import { handleIncome } from "./actions/income";
 import { handleSteal } from "./actions/steal";
@@ -412,6 +413,9 @@ export const changeCoupTurn = async (message: Message) => {
       },
     ],
   });
+
+  player.exchanging = false;
+  player.influencesToReturn = undefined;
 
   let takenAction: CoupActionNameInClassic | undefined;
 
@@ -887,6 +891,68 @@ export const changeCoupTurn = async (message: Message) => {
           }
         },
       );
+
+      game.eventEmitter.once(
+        "action_exchange",
+        ({ channelId: eventChannelId, player }) => {
+          if (eventChannelId === channelId) {
+            if (!game) {
+              resolve(undefined);
+              return;
+            }
+
+            const embed = new MessageEmbed()
+              .setColor(flatColors.yellow)
+              .setAuthor(player.name, player.avatarURL)
+              .setDescription(stripIndents`
+                I want to exchange influences using my ambassador.
+              
+                ${oneLine`
+                If you think I don't have an **ambassador**,
+                you can challenge me.
+                Otherwise, press allow button below.
+                `}
+              `);
+
+            const influence: Influence["name"] = "ambassador";
+
+            channel.sendWithComponents({
+              content: activePlayers
+                .filter((p) => p.id !== player.id)
+                .map((p) => `<@${p.id}>`)
+                .join(", "),
+              options: { embed },
+              components: [
+                {
+                  components: [
+                    {
+                      label: "Allow",
+                      custom_id: "allow_action_in_coup",
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.PRIMARY,
+                    },
+                    {
+                      type: ComponentType.BUTTON,
+                      style: ButtonStyle.DESTRUCTIVE,
+                      label: `Challenge`,
+                      custom_id: `challenge_${player.id}_${influence}_coup`,
+                    },
+                  ],
+                },
+              ],
+            });
+
+            game.players[currentPlayerIndex].decidedAction = "exchange";
+
+            game.players[currentPlayerIndex].votesRequiredForAction =
+              activePlayers.length - 2;
+
+            takenAction = "exchange";
+
+            resolve(game);
+          }
+        },
+      );
     },
   );
 
@@ -938,6 +1004,7 @@ export const changeCoupTurn = async (message: Message) => {
   } else if (takenAction === "coup") {
     await handleCoup({ game, player, channel, activePlayers, channelId });
   } else if (takenAction === "exchange") {
+    await handleExchange({ game, player, channel });
   }
 
   game.eventEmitter = game.eventEmitter.removeAllListeners();

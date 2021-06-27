@@ -20,7 +20,7 @@ export interface CoupPlayer {
   tag: User["tag"];
   name: string;
   allegiance?: "loyalist" | "reformist";
-  influences: [Influence, Influence] | [];
+  influences: Influence[];
   coins: number;
   avatarURL: string;
   decidedAction?: CoupActionNameInClassic;
@@ -29,6 +29,8 @@ export interface CoupPlayer {
   voteReceivedFromIds?: string[];
   blockingPlayerId?: string;
   targetPlayerId?: string;
+  exchanging?: boolean;
+  influencesToReturn?: number;
 }
 
 export const gameModes = ["classic", "reformation"] as const;
@@ -77,6 +79,7 @@ export interface InfluenceCard {
 
 export interface Influence extends InfluenceCard {
   dismissed: boolean;
+  returned?: boolean;
 }
 
 export type Deck = InfluenceCard[];
