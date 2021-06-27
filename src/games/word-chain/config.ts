@@ -2,8 +2,11 @@ import path from "path";
 import { readFileSync, writeFileSync } from "fs";
 import { GuildConfigCollection } from "./types";
 import "./data/guild-config.json";
+import { earlyAccessMode } from "../../config";
 
-export const prefixes = ["wc.", "wc/", "wc!", "wordchain.", "word-chain."];
+export const prefixes = ["wc.", "wc/", "wc!", "wordchain.", "word-chain."].map(
+  (p) => (earlyAccessMode() ? `_${p}` : p),
+);
 
 export const secondsToJoin = 60;
 export const mediumTurnSeconds = [30, 25, 20];

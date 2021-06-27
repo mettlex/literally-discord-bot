@@ -1,4 +1,8 @@
-export const prefixes = ["coup.", "coup/", "koup.", "koup/"];
+import { earlyAccessMode } from "../../config";
+
+export const prefixes = ["coup.", "coup/", "koup.", "koup/"].map((p) =>
+  earlyAccessMode() ? `_${p}` : p,
+);
 
 export const timeToJoinInSeconds = 60;
 

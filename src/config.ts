@@ -1,4 +1,12 @@
-export const prefixes = ["ly.", "ly/"];
+import checkEnv from "./utils/check-env";
+
+checkEnv();
+
+export const earlyAccessMode = () => process.env.EARLY_ACCESS === "true";
+
+export const prefixes = ["ly.", "ly/"].map((p) =>
+  earlyAccessMode() ? `_${p}` : p,
+);
 
 export const flatColors = {
   red: "#f62459",
