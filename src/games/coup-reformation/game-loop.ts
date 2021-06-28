@@ -433,6 +433,8 @@ export const changeCoupTurn = async (message: Message) => {
 
   player.exchanging = false;
   player.influencesToReturn = undefined;
+  player.voteReceivedFromIds = [];
+  player.votesRequiredForAction = 0;
 
   let takenAction: CoupActionNameInClassic | undefined;
 
