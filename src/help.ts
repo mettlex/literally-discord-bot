@@ -27,6 +27,8 @@ import "./extension";
 import { ExtendedDMChannel, ExtendedTextChannel } from "./extension";
 import { actions as jottoActions } from "./games/jotto";
 import { prefixes as jottoPrefixes } from "./games/jotto/config";
+import { actions as coupCommandActions } from "./games/coup-reformation";
+import { prefixes as coupPrefixes } from "./games/coup-reformation/config";
 
 const helpButtons: ComponentButton[] = [
   {
@@ -46,6 +48,12 @@ const helpButtons: ComponentButton[] = [
     label: "Jotto",
     style: ButtonStyle.SUCCESS,
     custom_id: "help_jotto",
+  },
+  {
+    type: 2,
+    label: "Coup! (Beta)",
+    style: ButtonStyle.SUCCESS,
+    custom_id: "help_coup",
   },
 ];
 
@@ -70,6 +78,9 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     } else if (ctx.customID === helpButtons[2].custom_id) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "jotto", client);
+    } else if (ctx.customID === helpButtons[3].custom_id) {
+      await ctx.send("Check the message below 👇");
+      sendHelpMessage(ctx.user.id, channel, "coup", client);
     }
   });
 
@@ -118,7 +129,12 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
   }, 3000);
 };
 
-const gameValues = ["word_chain", "two_truths_and_a_lie", "jotto"] as const;
+const gameValues = [
+  "word_chain",
+  "two_truths_and_a_lie",
+  "jotto",
+  "coup",
+] as const;
 
 const options: ApplicationCommandOption[] = [
   {
@@ -328,6 +344,28 @@ export const sendHelpMessage = (
     
     Available Prefixes:
     ${jottoPrefixes.map((p) => `\`${p}\``).join(", ")}
+    
+    `);
+  } else if (gameValue === "coup") {
+    embed.setTitle("Coup! The Board Game");
+
+    embed.setDescription(stripIndents`
+    
+
+    __Commands__:
+
+    ${coupCommandActions
+      .map((action) => {
+        return stripIndents`${action.commands
+          .map((c) => `\`${coupPrefixes[0]}${c}\``)
+          .join(", ")}
+          > ${action.description}
+        `;
+      })
+      .join("\n\n")}
+    
+    __Available Prefixes__:
+    ${coupPrefixes.map((p) => `\`${p}\``).join(", ")}
     
     `);
   } else {

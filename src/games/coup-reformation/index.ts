@@ -30,6 +30,11 @@ import sleep from "../../utils/sleep";
 
 export const actions: Action[] = [
   {
+    commands: ["h", "help"],
+    handler: sendCoupHelpMessage,
+    description: "Display help message (cheat sheet & video tutorial)",
+  },
+  {
     commands: ["fs", "force-start", "force start"],
     handler: async (message) => {
       if (message.author.bot || message.channel.type !== "text") {
@@ -73,11 +78,6 @@ export const actions: Action[] = [
     },
     description: oneLine`Start the game immediately ignoring
       the ${timeToJoinInSeconds} seconds time to join.`,
-  },
-  {
-    commands: ["h", "help"],
-    handler: sendCoupHelpMessage,
-    description: "Display help message",
   },
   {
     commands: ["c", "check"],
@@ -171,6 +171,10 @@ export const actions: Action[] = [
 
       message.channel.send("> Successfully stopped the current Coup game.");
     },
+    description: oneLine`
+      Stop the running Coup game
+      (requires __Manage Server__ permission)
+    `,
   },
   {
     commands: ["s", "start", "begin"],
