@@ -529,6 +529,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         player.voteReceivedFromIds.push(ctx.user.id);
 
         setCurrentCoupGame(ctx.channelID, game);
+
+        ctx.send(`${ctx.user.mention} has allowed.`).catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error(e);
+        });
       }
     } else if (ctx.customID === "block_foreign_aid_in_coup") {
       await ctx.acknowledge();
@@ -639,6 +644,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         blockingPlayer.voteReceivedFromIds.push(ctx.user.id);
 
         setCurrentCoupGame(ctx.channelID, game);
+
+        ctx.send(`${ctx.user.mention} has allowed.`).catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error(e);
+        });
       }
     } else if (/^challenge_\d+_\w+_?\w*_coup$/gi.test(ctx.customID)) {
       await ctx.acknowledge();
