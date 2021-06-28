@@ -185,7 +185,7 @@ export const handleAssassinate = async ({
         );
 
       await channel.sendWithComponents({
-        content: game.players
+        content: activePlayers
           .filter((p) => blockingPlayer && p.id !== blockingPlayer.id)
           .map((p) => `<@${p.id}>`)
           .join(", "),
