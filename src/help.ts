@@ -156,6 +156,10 @@ const options: ApplicationCommandOption[] = [
         name: "Jotto",
         value: gameValues[2],
       },
+      {
+        name: "Coup",
+        value: gameValues[3],
+      },
     ],
   },
 ];
