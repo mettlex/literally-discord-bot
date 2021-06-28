@@ -57,18 +57,23 @@ export const showInfluences = async (
   const game = getCurrentCoupGame(ctx.channelID);
 
   if (!game) {
-    return "No Coup game is running now.";
+    await ctx.send("No Coup game is running now.");
+    return;
   }
 
   const player = game?.players.find((p) => p.id === ctx.user.id);
 
   if (!player) {
-    return oneLine`You're not a player in the current Coup game.
-        Please wait for the next game.`;
+    await ctx.send(oneLine`
+      You're not a player in the current Coup game.
+      Please wait for the next game.
+    `);
+    return;
   }
 
   if (player.influences.length === 0) {
-    return "You don't have any influence left.";
+    await ctx.send("You don't have any influence left.");
+    return;
   }
 
   let components: ComponentActionRow[] | undefined;
