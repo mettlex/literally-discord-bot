@@ -35,6 +35,8 @@ export const setupVote = (client: Client) => {
         "Please vote every 12 hours to get special abilities Literally!";
     }
 
+    content += ` ${message.author}`;
+
     channel
       .sendWithComponents({
         content,
