@@ -109,10 +109,13 @@ const actions: Action[] = [
             emitter = eventEmitters[message.channel.id] = new EventEmitter();
           }
 
-          emitter.once("received_hug_type", (data: HugType) => {
-            emitter?.removeAllListeners();
-            resolve(data);
-          });
+          emitter.once(
+            `received_hug_type_${message.author.id}`,
+            (data: HugType) => {
+              emitter?.removeAllListeners();
+              resolve(data);
+            },
+          );
         });
 
         (chooseTypeMessage as Message).delete();
@@ -198,7 +201,7 @@ export const setupGif = (client: Client, creator: SlashCreator) => {
           ? "romantic hug"
           : "hug friend";
 
-      emitter.emit("received_hug_type", hugType);
+      emitter.emit(`received_hug_type_${ctx.user.id}`, hugType);
 
       ctx.acknowledge();
 
