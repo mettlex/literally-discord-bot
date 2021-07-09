@@ -18,6 +18,7 @@ import { setupCoupReformationGame } from "./games/coup-reformation";
 import { setupVote } from "./vote";
 import { postStats } from "./top.gg/api";
 import { earlyAccessMode } from "./config";
+import { setupGif } from "./social/gif";
 
 process.on(
   "unhandledRejection",
@@ -56,6 +57,7 @@ client.once("ready", async () => {
     console.error(message);
   });
 
+  setupGif(client, creator);
   setupCoupReformationGame(client, creator);
   setupWordChainGame(client, creator);
   setupTwoTruthsAndALieGame(client, creator);
