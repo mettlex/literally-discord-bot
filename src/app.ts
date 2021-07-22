@@ -19,6 +19,7 @@ import { setupVote } from "./vote";
 import { postStats } from "./top.gg/api";
 import { earlyAccessMode } from "./config";
 import { setupGif } from "./social/gif";
+import sleep from "./utils/sleep";
 
 process.on(
   "unhandledRejection",
@@ -69,16 +70,25 @@ client.once("ready", async () => {
 
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
-  client.user?.setActivity({
-    name: `${(earlyAccessMode() && "_") || ""}ly.help or /help`,
-    type: "PLAYING",
-  });
+  try {
+    await client.user?.setActivity({
+      name: `${(earlyAccessMode() && "_") || ""}ly.help or /help`,
+      type: "PLAYING",
+    });
+  } catch (error) {
+    logger.error(error);
+  }
 
   logger.info(`> discord bot is ready!`);
 
-  if (client.user?.id === "842397311916310539") {
-    const result = await postStats(client);
-    logger.info(`Posted stats to Top.gg: ${result?.serverCount} servers.`);
+  try {
+    if (client.user?.id === "842397311916310539") {
+      await sleep(30000);
+      const result = await postStats(client);
+      logger.info(`Posted stats to Top.gg: ${result?.serverCount} servers.`);
+    }
+  } catch (error) {
+    logger.error(error);
   }
 });
 
