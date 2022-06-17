@@ -1,8 +1,11 @@
 import { oneLine } from "common-tags";
-import { MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
+import {
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import { coupActionsInClassic } from "../data";
 import { CoupGame, CoupPlayer, Influence } from "../types";
 
@@ -16,7 +19,7 @@ export const handleCoup = async ({
 }: {
   game: CoupGame;
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
   activePlayers: CoupPlayer[];
   channelId: string;
 }) => {
@@ -50,21 +53,17 @@ export const handleCoup = async ({
         `,
       );
 
-    await channel.sendWithComponents({
+    const row = new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId("coup_show_influences")
+        .setStyle("PRIMARY")
+        .setLabel("Dismiss One Influence"),
+    );
+
+    await channel.send({
       content: `<@${targetPlayer.id}>`,
-      options: { embed },
-      components: [
-        {
-          components: [
-            {
-              type: ComponentType.BUTTON,
-              style: ButtonStyle.PRIMARY,
-              label: `Dismiss One Influence`,
-              custom_id: `coup_show_influences`,
-            },
-          ],
-        },
-      ],
+      options: { embeds: [embed] },
+      components: [row],
     });
 
     const data = await new Promise<{
@@ -120,6 +119,6 @@ export const handleCoup = async ({
       `,
       );
 
-    await channel.send(embed);
+    await channel.send({ embeds: [embed] });
   }
 };

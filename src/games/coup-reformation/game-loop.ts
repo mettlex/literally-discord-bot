@@ -1,12 +1,16 @@
 /* eslint-disable indent */
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
-import { Message, MessageEmbed, TextChannel } from "discord.js";
+import {
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import EventEmitter from "events";
-import { ButtonStyle, ComponentType } from "slash-create";
 import { getLogger } from "../../app";
 import { flatColors } from "../../config";
-import { ExtendedTextChannel } from "../../extension";
 import { shuffleArray } from "../../utils/array";
 import sleep from "../../utils/sleep";
 import { handleAssassinate } from "./actions/assassinate";
@@ -64,23 +68,19 @@ export const askToJoinCoupGame = async (message: Message) => {
     )
     .setColor(flatColors.yellow);
 
-  const channel = message.channel as ExtendedTextChannel;
+  const channel = message.channel as TextChannel;
 
-  const initialMessage = (await channel.sendWithComponents({
+  const row = new MessageActionRow().addComponents(
+    new MessageButton()
+      .setCustomId("join_coup")
+      .setStyle("PRIMARY")
+      .setLabel("Count me in!"),
+  );
+
+  const initialMessage = (await channel.send({
     content: "",
-    options: { embed },
-    components: [
-      {
-        components: [
-          {
-            type: ComponentType.BUTTON,
-            label: "Count me in!",
-            custom_id: "join_coup",
-            style: ButtonStyle.PRIMARY,
-          },
-        ],
-      },
-    ],
+    options: { embeds: [embed] },
+    components: [row],
   })) as Message;
 
   const startTime = new Date();
@@ -100,7 +100,7 @@ export const askToJoinCoupGame = async (message: Message) => {
       embed.fields[0].name = `Time up!`;
       embed.fields[0].value = `Let's see who joined below.`;
 
-      initialMessage.edit(embed);
+      initialMessage.edit({ embeds: [embed] });
 
       startCoupGame(initialMessage);
 
@@ -111,7 +111,7 @@ export const askToJoinCoupGame = async (message: Message) => {
 
     embed.fields[0].value = `${timeLeft} seconds`;
 
-    initialMessage.edit(embed);
+    initialMessage.edit({ embeds: [embed] });
   }, 3000);
 
   setInitialMessageAndEmbed({ message: initialMessage, embed, interval });
@@ -154,7 +154,7 @@ export const startCoupGame = async (message: Message) => {
     ];
   }
 
-  const channel = message.channel as ExtendedTextChannel;
+  const channel = message.channel as TextChannel;
 
   setCurrentCoupGame(channel.id, game);
 
@@ -174,21 +174,17 @@ export const startCoupGame = async (message: Message) => {
 
     .setFooter(`Check your influences by tapping the button below.`);
 
-  await channel.sendWithComponents({
+  const row = new MessageActionRow().addComponents(
+    new MessageButton()
+      .setCustomId("coup_show_influences")
+      .setStyle("SECONDARY")
+      .setLabel("My Influences 🤫"),
+  );
+
+  await channel.send({
     content: "",
-    options: { embed },
-    components: [
-      {
-        components: [
-          {
-            type: ComponentType.BUTTON,
-            style: ButtonStyle.SECONDARY,
-            label: `My Influences 🤫`,
-            custom_id: `coup_show_influences`,
-          },
-        ],
-      },
-    ],
+    options: { embeds: [embed] },
+    components: [row],
   });
 
   await sleep(5000);
@@ -197,7 +193,7 @@ export const startCoupGame = async (message: Message) => {
 };
 
 export const changeCoupTurn = async (message: Message) => {
-  const channel = message.channel as ExtendedTextChannel;
+  const channel = message.channel as TextChannel;
   const channelId = channel.id;
 
   let game = getCurrentCoupGame(channelId);
@@ -268,7 +264,7 @@ export const changeCoupTurn = async (message: Message) => {
       .setColor(flatColors.green)
       .setThumbnail(player.avatarURL);
 
-    await channel.send(embed);
+    await channel.send({ embeds: [embed] });
 
     logger.info(
       oneLine`> coup winner: ${player.tag} (${player.id})
@@ -305,7 +301,7 @@ export const changeCoupTurn = async (message: Message) => {
     if (currentInflencesText.length > 0) {
       influencesEmbed.setDescription(currentInflencesText);
 
-      await message.channel.send(influencesEmbed);
+      await message.channel.send({ embeds: [influencesEmbed] });
 
       await sleep(1000);
     }
@@ -331,104 +327,197 @@ export const changeCoupTurn = async (message: Message) => {
     actions = coupActionNamesInClassic;
   }
 
-  const messageWithActionButtons = await channel.sendWithComponents({
+  // {
+  //   components: [
+  //     {
+  //       type: ComponentType.BUTTON,
+  //       style: ButtonStyle.SECONDARY,
+  //       label: "Cheat Sheet",
+  //       custom_id: "coup_cs",
+  //     },
+  //     {
+  //       type: ComponentType.BUTTON,
+  //       // @ts-ignore
+  //       style: ButtonStyle.LINK,
+  //       label: "How To Play",
+  //       url: "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
+  //     },
+  //     {
+  //       type: ComponentType.BUTTON,
+  //       style: ButtonStyle.SECONDARY,
+  //       label: "My Influences 🤫",
+  //       custom_id: "coup_show_influences",
+  //     },
+  //   ],
+  // },
+  // {
+  //   components: actions.slice(0, 3).map((a) => ({
+  //     type: ComponentType.BUTTON,
+  //     style:
+  //       a === "coup" || a === "assassinate"
+  //         ? ButtonStyle.DESTRUCTIVE
+  //         : ButtonStyle.SECONDARY,
+  //     label: `${getLabelForCoupAction(a)} ${
+  //       a === "assassinate"
+  //         ? "🔪"
+  //         : a === "coup"
+  //         ? "💥"
+  //         : a === "steal"
+  //         ? "🔓"
+  //         : a === "exchange"
+  //         ? "♻️"
+  //         : a === "foreignAid"
+  //         ? "💸"
+  //         : a === "tax"
+  //         ? "🏦"
+  //         : a === "income"
+  //         ? "☝️"
+  //         : ""
+  //     }`,
+  //     custom_id: `${a}_${player!.id}`,
+  //     disabled:
+  //       player!.coins < 7 && a === "coup"
+  //         ? true
+  //         : player!.coins < 3 && a === "assassinate"
+  //         ? true
+  //         : player!.coins > 9 && a !== "coup"
+  //         ? true
+  //         : false,
+  //   })),
+  // },
+  // {
+  //   components: actions.slice(3).map((a) => ({
+  //     type: ComponentType.BUTTON,
+  //     style:
+  //       a === "coup" || a === "assassinate"
+  //         ? ButtonStyle.DESTRUCTIVE
+  //         : ButtonStyle.SECONDARY,
+  //     label: `${getLabelForCoupAction(a)} ${
+  //       a === "assassinate"
+  //         ? "🔪"
+  //         : a === "coup"
+  //         ? "💥"
+  //         : a === "steal"
+  //         ? "🔓"
+  //         : a === "exchange"
+  //         ? "♻️"
+  //         : a === "foreignAid"
+  //         ? "💸"
+  //         : a === "tax"
+  //         ? "🏦"
+  //         : a === "income"
+  //         ? "☝️"
+  //         : ""
+  //     }`,
+  //     custom_id: `${a}_${player!.id}`,
+  //     disabled:
+  //       player!.coins < 7 && a === "coup"
+  //         ? true
+  //         : player!.coins < 3 && a === "assassinate"
+  //         ? true
+  //         : player!.coins > 9 && a !== "coup"
+  //         ? true
+  //         : false,
+  //   })),
+  // },
+
+  const rows = [
+    new MessageActionRow().addComponents(
+      new MessageButton()
+        .setStyle("SECONDARY")
+        .setLabel("Cheat Sheet")
+        .setCustomId("coup_cs"),
+      new MessageButton()
+        .setStyle("LINK")
+        .setLabel("How To Play")
+        .setURL(
+          "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
+        ),
+      new MessageButton()
+        .setStyle("SECONDARY")
+        .setLabel("My Influences 🤫")
+        .setCustomId("coup_show_influences"),
+    ),
+    new MessageActionRow().addComponents(
+      ...actions.slice(0, 3).map((a) =>
+        new MessageButton()
+          .setStyle(
+            a === "coup" || a === "assassinate" ? "DANGER" : "SECONDARY",
+          )
+          .setLabel(
+            `${getLabelForCoupAction(a)} ${
+              a === "assassinate"
+                ? "🔪"
+                : a === "coup"
+                ? "💥"
+                : a === "steal"
+                ? "🔓"
+                : a === "exchange"
+                ? "♻️"
+                : a === "foreignAid"
+                ? "💸"
+                : a === "tax"
+                ? "🏦"
+                : a === "income"
+                ? "☝️"
+                : ""
+            }`,
+          )
+          .setCustomId(`${a}_${player!.id}`)
+          .setDisabled(
+            player!.coins < 7 && a === "coup"
+              ? true
+              : player!.coins < 3 && a === "assassinate"
+              ? true
+              : player!.coins > 9 && a !== "coup"
+              ? true
+              : false,
+          ),
+      ),
+    ),
+    new MessageActionRow().addComponents(
+      ...actions.slice(3).map((a) =>
+        new MessageButton()
+          .setStyle(
+            a === "coup" || a === "assassinate" ? "DANGER" : "SECONDARY",
+          )
+          .setLabel(
+            `${getLabelForCoupAction(a)} ${
+              a === "assassinate"
+                ? "🔪"
+                : a === "coup"
+                ? "💥"
+                : a === "steal"
+                ? "🔓"
+                : a === "exchange"
+                ? "♻️"
+                : a === "foreignAid"
+                ? "💸"
+                : a === "tax"
+                ? "🏦"
+                : a === "income"
+                ? "☝️"
+                : ""
+            }`,
+          )
+          .setCustomId(`${a}_${player!.id}`)
+          .setDisabled(
+            player!.coins < 7 && a === "coup"
+              ? true
+              : player!.coins < 3 && a === "assassinate"
+              ? true
+              : player!.coins > 9 && a !== "coup"
+              ? true
+              : false,
+          ),
+      ),
+    ),
+  ];
+
+  const messageWithActionButtons = await channel.send({
     content: `<@${player.id}>`,
-    options: { embed },
-    components: [
-      {
-        components: [
-          {
-            type: ComponentType.BUTTON,
-            style: ButtonStyle.SECONDARY,
-            label: "Cheat Sheet",
-            custom_id: "coup_cs",
-          },
-          {
-            type: ComponentType.BUTTON,
-            // @ts-ignore
-            style: ButtonStyle.LINK,
-            label: "How To Play",
-            url: "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
-          },
-          {
-            type: ComponentType.BUTTON,
-            style: ButtonStyle.SECONDARY,
-            label: "My Influences 🤫",
-            custom_id: "coup_show_influences",
-          },
-        ],
-      },
-      {
-        components: actions.slice(0, 3).map((a) => ({
-          type: ComponentType.BUTTON,
-          style:
-            a === "coup" || a === "assassinate"
-              ? ButtonStyle.DESTRUCTIVE
-              : ButtonStyle.SECONDARY,
-          label: `${getLabelForCoupAction(a)} ${
-            a === "assassinate"
-              ? "🔪"
-              : a === "coup"
-              ? "💥"
-              : a === "steal"
-              ? "🔓"
-              : a === "exchange"
-              ? "♻️"
-              : a === "foreignAid"
-              ? "💸"
-              : a === "tax"
-              ? "🏦"
-              : a === "income"
-              ? "☝️"
-              : ""
-          }`,
-          custom_id: `${a}_${player!.id}`,
-          disabled:
-            player!.coins < 7 && a === "coup"
-              ? true
-              : player!.coins < 3 && a === "assassinate"
-              ? true
-              : player!.coins > 9 && a !== "coup"
-              ? true
-              : false,
-        })),
-      },
-      {
-        components: actions.slice(3).map((a) => ({
-          type: ComponentType.BUTTON,
-          style:
-            a === "coup" || a === "assassinate"
-              ? ButtonStyle.DESTRUCTIVE
-              : ButtonStyle.SECONDARY,
-          label: `${getLabelForCoupAction(a)} ${
-            a === "assassinate"
-              ? "🔪"
-              : a === "coup"
-              ? "💥"
-              : a === "steal"
-              ? "🔓"
-              : a === "exchange"
-              ? "♻️"
-              : a === "foreignAid"
-              ? "💸"
-              : a === "tax"
-              ? "🏦"
-              : a === "income"
-              ? "☝️"
-              : ""
-          }`,
-          custom_id: `${a}_${player!.id}`,
-          disabled:
-            player!.coins < 7 && a === "coup"
-              ? true
-              : player!.coins < 3 && a === "assassinate"
-              ? true
-              : player!.coins > 9 && a !== "coup"
-              ? true
-              : false,
-        })),
-      },
-    ],
+    options: { embeds: [embed] },
+    components: [...rows],
   });
 
   player.exchanging = false;
@@ -485,36 +574,28 @@ export const changeCoupTurn = async (message: Message) => {
                 `}
               `);
 
-            channel.sendWithComponents({
+            const row = new MessageActionRow().addComponents(
+              new MessageButton()
+                .setStyle("PRIMARY")
+                .setLabel("Allow")
+                .setCustomId("allow_action_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Block Foreign Aid")
+                .setCustomId("block_foreign_aid_in_coup"),
+              new MessageButton()
+                .setStyle("SECONDARY")
+                .setLabel("My Influences 🤫")
+                .setCustomId("coup_show_influences"),
+            );
+
+            channel.send({
               content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
-              options: { embed },
-              components: [
-                {
-                  components: [
-                    {
-                      label: "Allow",
-                      custom_id: "allow_action_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.PRIMARY,
-                    },
-                    {
-                      label: "Block Foreign Aid",
-                      custom_id: "block_foreign_aid_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                    },
-                    {
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.SECONDARY,
-                      label: "My Influences 🤫",
-                      custom_id: "coup_show_influences",
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             });
 
             game.players[currentPlayerIndex].decidedAction = "foreignAid";
@@ -553,30 +634,24 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "duke";
 
-            channel.sendWithComponents({
+            const row = new MessageActionRow().addComponents(
+              new MessageButton()
+                .setStyle("PRIMARY")
+                .setLabel("Allow")
+                .setCustomId("allow_action_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Challenge")
+                .setCustomId(`challenge_${player.id}_${influence}_coup`),
+            );
+
+            channel.send({
               content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
-              options: { embed },
-              components: [
-                {
-                  components: [
-                    {
-                      label: "Allow",
-                      custom_id: "allow_action_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.PRIMARY,
-                    },
-                    {
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                      label: `Challenge`,
-                      custom_id: `challenge_${player.id}_${influence}_coup`,
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             });
 
             game.players[currentPlayerIndex].decidedAction = "tax";
@@ -674,36 +749,28 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "captain";
 
-            channel.sendWithComponents({
+            const row = new MessageActionRow().addComponents(
+              new MessageButton()
+                .setStyle("PRIMARY")
+                .setLabel("Allow")
+                .setCustomId("allow_action_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Block Stealing")
+                .setCustomId("block_stealing_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Challenge")
+                .setCustomId(`challenge_${player.id}_${influence}_coup`),
+            );
+
+            channel.send({
               content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
-              options: { embed },
-              components: [
-                {
-                  components: [
-                    {
-                      label: "Allow",
-                      custom_id: "allow_action_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.PRIMARY,
-                    },
-                    {
-                      label: "Block Stealing",
-                      custom_id: "block_stealing_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                    },
-                    {
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                      label: `Challenge`,
-                      custom_id: `challenge_${player.id}_${influence}_coup`,
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             });
 
             game.players[currentPlayerIndex].decidedAction = "steal";
@@ -802,36 +869,28 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "assassin";
 
-            channel.sendWithComponents({
+            const row = new MessageActionRow().addComponents(
+              new MessageButton()
+                .setStyle("PRIMARY")
+                .setLabel("Allow")
+                .setCustomId("allow_action_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Block Assassination")
+                .setCustomId("block_assassination_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Challenge")
+                .setCustomId(`challenge_${player.id}_${influence}_coup`),
+            );
+
+            channel.send({
               content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
-              options: { embed },
-              components: [
-                {
-                  components: [
-                    {
-                      label: "Allow",
-                      custom_id: "allow_action_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.PRIMARY,
-                    },
-                    {
-                      label: "Block Assassination",
-                      custom_id: "block_assassination_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                    },
-                    {
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                      label: `Challenge`,
-                      custom_id: `challenge_${player.id}_${influence}_coup`,
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             });
 
             game.players[currentPlayerIndex].decidedAction = "assassinate";
@@ -935,30 +994,24 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "ambassador";
 
-            channel.sendWithComponents({
+            const row = new MessageActionRow().addComponents(
+              new MessageButton()
+                .setStyle("PRIMARY")
+                .setLabel("Allow")
+                .setCustomId("allow_action_in_coup"),
+              new MessageButton()
+                .setStyle("DANGER")
+                .setLabel("Challenge")
+                .setCustomId(`challenge_${player.id}_${influence}_coup`),
+            );
+
+            channel.send({
               content: activePlayers
                 .filter((p) => p.id !== player.id)
                 .map((p) => `<@${p.id}>`)
                 .join(", "),
-              options: { embed },
-              components: [
-                {
-                  components: [
-                    {
-                      label: "Allow",
-                      custom_id: "allow_action_in_coup",
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.PRIMARY,
-                    },
-                    {
-                      type: ComponentType.BUTTON,
-                      style: ButtonStyle.DESTRUCTIVE,
-                      label: `Challenge`,
-                      custom_id: `challenge_${player.id}_${influence}_coup`,
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             });
 
             game.players[currentPlayerIndex].decidedAction = "exchange";
@@ -1063,7 +1116,7 @@ export const eliminatePlayer = async (
       ${eliminatedPlayer.name} is out of the game.`,
     );
 
-  channel.send({ content: `<@${eliminatedPlayer.id}>`, embed });
+  channel.send({ content: `<@${eliminatedPlayer.id}>`, embeds: [embed] });
 
   await sleep(2000);
 };
@@ -1076,7 +1129,7 @@ export const handleChallenge = async ({
   influenceName,
   influenceName2,
 }: {
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
   game: CoupGame;
   challengingPlayer: CoupPlayer;
   player: CoupPlayer;
@@ -1099,7 +1152,7 @@ export const handleChallenge = async ({
 
   await channel.send({
     content: `<@${player.id}>`,
-    embed,
+    embeds: [embed],
   });
 
   await sleep(2000);
@@ -1151,27 +1204,38 @@ export const handleChallenge = async ({
           `,
         );
 
-      await channel.sendWithComponents({
+      // {
+      //   components: [
+      //     {
+      //       type: ComponentType.BUTTON,
+      //       style: ButtonStyle.SECONDARY,
+      //       label: `My Influences 🤫`,
+      //       custom_id: `coup_show_influences`,
+      //     },
+      //     {
+      //       type: ComponentType.BUTTON,
+      //       style: ButtonStyle.PRIMARY,
+      //       label: `Dismiss One Influence`,
+      //       custom_id: `coup_show_influences`,
+      //     },
+      //   ],
+      // },
+
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setLabel("My Influences 🤫")
+          .setStyle("SECONDARY")
+          .setCustomId("coup_show_influences"),
+        new MessageButton()
+          .setLabel("Dismiss One Influence")
+          .setStyle("PRIMARY")
+          .setCustomId("coup_show_influences"),
+      );
+
+      await channel.send({
         content: `<@${challengingPlayer.id}> & <@${player.id}>`,
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.SECONDARY,
-                label: `My Influences 🤫`,
-                custom_id: `coup_show_influences`,
-              },
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-                label: `Dismiss One Influence`,
-                custom_id: `coup_show_influences`,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
 
       await new Promise((resolve) => {
@@ -1197,21 +1261,17 @@ export const handleChallenge = async ({
           `,
         );
 
-      await channel.sendWithComponents({
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setLabel("My Influences 🤫")
+          .setStyle("SECONDARY")
+          .setCustomId("coup_show_influences"),
+      );
+
+      await channel.send({
         content: `<@${player.id}>`,
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.SECONDARY,
-                label: `My Influences 🤫`,
-                custom_id: `coup_show_influences`,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
 
       await sleep(2000);
@@ -1240,21 +1300,17 @@ export const handleChallenge = async ({
           `,
         );
 
-      await channel.sendWithComponents({
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setLabel("Dismiss One Influence")
+          .setStyle("PRIMARY")
+          .setCustomId("coup_show_influences"),
+      );
+
+      await channel.send({
         content: `<@${player.id}>`,
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-                label: `Dismiss One Influence`,
-                custom_id: `coup_show_influences`,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
 
       await new Promise((resolve) => {

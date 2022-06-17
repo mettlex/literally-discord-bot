@@ -1,8 +1,11 @@
 import { oneLine } from "common-tags";
-import { MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
+import {
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import sleep from "../../../utils/sleep";
 import { coupActionsInClassic } from "../data";
 import { handleChallenge } from "../game-loop";
@@ -24,7 +27,7 @@ export const handleForeignAid = async ({
 }: {
   game: CoupGame;
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
   activePlayers: CoupPlayer[];
   channelId: string;
 }) => {
@@ -85,7 +88,7 @@ export const handleForeignAid = async ({
       `,
       );
 
-    await channel.send(embed);
+    await channel.send({ embeds: [embed] });
 
     await sleep(2000);
   }
@@ -109,30 +112,24 @@ export const handleForeignAid = async ({
         `,
       );
 
-    await channel.sendWithComponents({
+    const row = new MessageActionRow().addComponents([
+      new MessageButton()
+        .setStyle("PRIMARY")
+        .setLabel("Let it go")
+        .setCustomId(`let_go_in_coup`),
+      new MessageButton()
+        .setStyle("DANGER")
+        .setLabel("Challenge")
+        .setCustomId(`challenge_${blockingPlayer.id}_${influence}_coup`),
+    ]);
+
+    await channel.send({
       content: activePlayers
         .filter((p) => blockingPlayer && p.id !== blockingPlayer.id)
         .map((p) => `<@${p.id}>`)
         .join(", "),
-      options: { embed },
-      components: [
-        {
-          components: [
-            {
-              type: ComponentType.BUTTON,
-              style: ButtonStyle.PRIMARY,
-              label: `Let it go`,
-              custom_id: `let_go_in_coup`,
-            },
-            {
-              type: ComponentType.BUTTON,
-              style: ButtonStyle.DESTRUCTIVE,
-              label: `Challenge`,
-              custom_id: `challenge_${blockingPlayer.id}_${influence}_coup`,
-            },
-          ],
-        },
-      ],
+      options: { embeds: [embed] },
+      components: [row],
     });
 
     const answer = await new Promise<ChallengeOrNotData>((resolve) => {
@@ -191,7 +188,7 @@ export const handleForeignAid = async ({
       `,
           );
 
-        await channel.send(embed);
+        await channel.send({ embeds: [embed] });
 
         await sleep(2000);
       }

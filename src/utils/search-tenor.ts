@@ -20,7 +20,7 @@ export const searchGifOnTenor = async (
 
     return results;
   } catch (error) {
-    logger.error(error);
+    logger.error(error as Error);
     return undefined;
   }
 };

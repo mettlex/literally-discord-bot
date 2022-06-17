@@ -1,8 +1,12 @@
 import { oneLine } from "common-tags";
-import { MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
+import {
+  ColorResolvable,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import sleep from "../../../utils/sleep";
 import { coupActionsInClassic } from "../data";
 import { handleChallenge } from "../game-loop";
@@ -24,7 +28,7 @@ export const handleAssassinate = async ({
 }: {
   game: CoupGame;
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
   activePlayers: CoupPlayer[];
   channelId: string;
 }) => {
@@ -85,28 +89,24 @@ export const handleAssassinate = async ({
     if (activeInfluences.length === 2) {
       const embed = new MessageEmbed()
         .setTitle("Assassination Succeeded")
-        .setColor(flatColors.blue)
+        .setColor(flatColors.blue as ColorResolvable)
         .setDescription(
           oneLine`
             ${targetPlayer.name}, choose one of your influences to dismiss:
           `,
         );
 
-      await channel.sendWithComponents({
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setCustomId("coup_show_influences")
+          .setStyle("PRIMARY")
+          .setLabel("Dismiss One Influence"),
+      );
+
+      await channel.send({
         content: `<@${targetPlayer.id}>`,
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-                label: `Dismiss One Influence`,
-                custom_id: `coup_show_influences`,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
 
       const data = await new Promise<{
@@ -135,7 +135,7 @@ export const handleAssassinate = async ({
 
     if (dismissedInfluence) {
       const embed = new MessageEmbed()
-        .setColor(flatColors.blue)
+        .setColor(flatColors.blue as ColorResolvable)
         .setAuthor(player.name, player.avatarURL)
         .setDescription(
           oneLine`
@@ -164,7 +164,7 @@ export const handleAssassinate = async ({
         `,
         );
 
-      await channel.send(embed);
+      await channel.send({ embeds: [embed] });
     }
   };
 
@@ -175,7 +175,7 @@ export const handleAssassinate = async ({
       blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
 
       const embed = new MessageEmbed()
-        .setColor(flatColors.yellow)
+        .setColor(flatColors.yellow as ColorResolvable)
         .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
         .setDescription(
           oneLine`
@@ -184,30 +184,25 @@ export const handleAssassinate = async ({
         `,
         );
 
-      await channel.sendWithComponents({
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setCustomId("let_go_in_coup")
+          .setStyle("PRIMARY")
+          .setLabel("Let it go"),
+
+        new MessageButton()
+          .setCustomId(`challenge_${blockingPlayer.id}_${influence}_coup`)
+          .setStyle("DANGER")
+          .setLabel("Challenge"),
+      );
+
+      await channel.send({
         content: activePlayers
           .filter((p) => blockingPlayer && p.id !== blockingPlayer.id)
           .map((p) => `<@${p.id}>`)
           .join(", "),
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-                label: `Let it go`,
-                custom_id: `let_go_in_coup`,
-              },
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.DESTRUCTIVE,
-                label: `Challenge`,
-                custom_id: `challenge_${blockingPlayer.id}_${influence}_coup`,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
 
       const answer = await new Promise<ChallengeOrNotData>((resolve) => {

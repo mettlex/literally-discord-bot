@@ -34,7 +34,6 @@ const options: ApplicationCommandOption[] = [
     name: "secret_word",
     description: "Write your secret word",
     required: true,
-    default: false,
   },
 ];
 
@@ -115,7 +114,10 @@ export const makeJottoCommands = (guildIDs: string[]) => {
 
         const client = getDiscordJSClient();
 
-        const user = await client.users.fetch(ctx.user.id, false, true);
+        const user = await client.users.fetch(ctx.user.id, {
+          cache: false,
+          force: true,
+        });
 
         const newJottoGame: JottoData = {
           playersData: [
@@ -181,14 +183,14 @@ export const makeJottoCommands = (guildIDs: string[]) => {
     async run(ctx: CommandContext): Promise<string> {
       const client = getDiscordJSClient();
       const member = await (
-        await client.guilds.fetch(ctx.guildID || "", false)
+        await client.guilds.fetch(ctx.guildID || "")
       )?.members.fetch({ user: ctx.user.id, limit: 1, cache: false });
 
       if (!member) {
         return "Server/Member not found.";
       }
 
-      if (!member.hasPermission("MANAGE_GUILD")) {
+      if (!member.permissions.has("MANAGE_GUILD")) {
         return "Manage Server permission is needed to stop the game.";
       }
 
@@ -198,7 +200,7 @@ export const makeJottoCommands = (guildIDs: string[]) => {
         try {
           clearInterval(getTurnInverval(ctx.channelID)!);
         } catch (error) {
-          logger.error(error);
+          logger.error(error as Error);
         }
 
         setCurrentJottoGame(ctx.channelID, null);

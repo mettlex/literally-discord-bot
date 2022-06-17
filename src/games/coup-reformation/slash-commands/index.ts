@@ -1,5 +1,6 @@
 import { oneLine } from "common-tags";
 import {
+  AnyComponentButton,
   ButtonStyle,
   CommandContext,
   ComponentActionRow,
@@ -79,33 +80,39 @@ export const showInfluences = async (
   let components: ComponentActionRow[] | undefined;
 
   if (player.lostChallenge) {
+    const componentButtons: AnyComponentButton[] = player.influences.map(
+      (inf, i) => ({
+        type: ComponentType.BUTTON,
+        style: ButtonStyle.DESTRUCTIVE,
+        label: `DISMISS ${inf.name.toUpperCase()}`,
+        customId: `coup_dismiss_influence_${i}`,
+        disabled: inf.dismissed,
+      }),
+    );
+
     components = [
       {
         type: ComponentType.ACTION_ROW,
-        components: player.influences.map((inf, i) => ({
-          type: ComponentType.BUTTON,
-          style: ButtonStyle.DESTRUCTIVE,
-          label: `DISMISS ${inf.name.toUpperCase()}`,
-          custom_id: `coup_dismiss_influence_${i}`,
-          disabled: inf.dismissed,
-        })),
+        components: componentButtons,
       },
     ];
   }
 
   if (player.influencesToReturn && player.influencesToReturn > 0) {
+    const componentButtons: AnyComponentButton[] = player.influences
+      .filter((inf) => !inf.dismissed)
+      .map((inf, i) => ({
+        type: ComponentType.BUTTON,
+        style: ButtonStyle.SECONDARY,
+        label: `RETURN ${inf.name.toUpperCase()}`,
+        customId: `coup_return_influence_${i}`,
+        disabled: inf.returned,
+      }));
+
     components = [
       {
         type: ComponentType.ACTION_ROW,
-        components: player.influences
-          .filter((inf) => !inf.dismissed)
-          .map((inf, i) => ({
-            type: ComponentType.BUTTON,
-            style: ButtonStyle.SECONDARY,
-            label: `RETURN ${inf.name.toUpperCase()}`,
-            custom_id: `coup_return_influence_${i}`,
-            disabled: inf.returned,
-          })),
+        components: componentButtons,
       },
     ];
   }

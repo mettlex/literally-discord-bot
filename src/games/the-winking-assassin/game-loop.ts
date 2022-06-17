@@ -1,17 +1,16 @@
 /* eslint-disable indent */
 import { oneLine, stripIndents } from "common-tags";
-import { Message, MessageEmbed } from "discord.js";
-import pino from "pino";
 import {
-  ButtonStyle,
-  CommandContext,
-  ComponentButton,
-  ComponentContext,
-  ComponentType,
-} from "slash-create";
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
+import pino from "pino";
+import { CommandContext, ComponentContext } from "slash-create";
 import { getCurrentTWAGame, setCurrentTWAGame } from ".";
 import { getDiscordJSClient } from "../../app";
-import { ExtendedTextChannel } from "../../extension";
 import { flatColors } from "../../config";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
@@ -24,7 +23,7 @@ export const endTWAGame = (channelId: string) => {
 };
 
 export const askToJoinTheWinkingAssassinGame = async (
-  channel: ExtendedTextChannel,
+  channel: TextChannel,
   ctx: CommandContext,
 ) => {
   let timeLimitInMinutes = 5;
@@ -87,23 +86,17 @@ export const askToJoinTheWinkingAssassinGame = async (
     )
     .setFooter(`${maxTimeInSecondsToJoin} seconds left to join`);
 
-  const buttons: ComponentButton[] = [
-    {
-      type: ComponentType.BUTTON,
-      custom_id: "join_twa",
-      label: "okies, i'm up for it.",
-      style: ButtonStyle.PRIMARY,
-    },
-  ];
+  const row = new MessageActionRow().addComponents(
+    new MessageButton()
+      .setCustomId("join_twa")
+      .setStyle("PRIMARY")
+      .setLabel("okies, i'm up for it."),
+  );
 
-  const message = (await channel.sendWithComponents({
+  const message = (await channel.send({
     content: `**${ctx.user.mention} is asking you to join:**`,
-    options: { embed },
-    components: [
-      {
-        components: buttons,
-      },
-    ],
+    options: { embeds: [embed] },
+    components: [row],
   })) as Message;
 
   const maxTime = maxTimeInSecondsToJoin * 1000;
@@ -120,7 +113,7 @@ export const askToJoinTheWinkingAssassinGame = async (
     if (time % (3 * 1000) === 0) {
       embed.setFooter(`${remainingTimeInSeconds} seconds left to join`);
 
-      message.edit({ embed }).catch((e) => {
+      message.edit({ embeds: [embed] }).catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
       });
@@ -176,7 +169,7 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
   const client = getDiscordJSClient();
 
   const channel = client.channels.cache.get(ctx.channelID) as
-    | ExtendedTextChannel
+    | TextChannel
     | undefined;
 
   if (!channel) {

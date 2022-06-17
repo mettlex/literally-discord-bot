@@ -1,6 +1,13 @@
 /* eslint-disable indent */
-import { Message, Client, MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
+import {
+  Message,
+  Client,
+  MessageEmbed,
+  ColorResolvable,
+  MessageActionRow,
+  MessageButton,
+} from "discord.js";
+import { SlashCreator } from "slash-create";
 import { Action } from "../../games/types";
 import { setupGame } from "../../games/setup";
 import { flatColors, prefixes } from "../../config";
@@ -8,7 +15,6 @@ import { getLogger } from "../../app";
 import { searchGifOnTenor } from "../../utils/search-tenor";
 import { oneLine } from "common-tags";
 import { EventEmitter } from "events";
-import { ExtendedTextChannel } from "../../extension";
 
 const logger = getLogger();
 
@@ -17,19 +23,19 @@ const eventEmitters: { [channelId: string]: EventEmitter | undefined } = {};
 const hugTypesForButtons = [
   {
     label: "Bro Hug",
-    custom_id: "send_bro_hug",
+    customId: "send_bro_hug",
   },
   {
     label: "Sis Hug",
-    custom_id: "send_sis_hug",
+    customId: "send_sis_hug",
   },
   {
     label: "Friendly Hug",
-    custom_id: "send_friendly_hug",
+    customId: "send_friendly_hug",
   },
   {
     label: "Romantic Hug",
-    custom_id: "send_romantic_hug",
+    customId: "send_romantic_hug",
   },
 ] as const;
 
@@ -37,7 +43,7 @@ const actions: Action[] = [
   {
     commands: ["gif", "interact", "give"],
     handler: async (message, commands, messageContentWithoutPrefix) => {
-      if (message.channel.type !== "text") {
+      if (message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
@@ -61,7 +67,7 @@ const actions: Action[] = [
   {
     commands: ["hug"],
     handler: async (message, commands, messageContentWithoutPrefix) => {
-      if (message.channel.type !== "text") {
+      if (message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
@@ -87,19 +93,22 @@ const actions: Action[] = [
       }
 
       if (!hugType) {
-        const channel = message.channel as ExtendedTextChannel;
+        const channel = message.channel;
 
-        const chooseTypeMessage = await channel.sendWithComponents({
-          content: "Select the type of hug:",
-          components: [
-            {
-              components: hugTypesForButtons.map((hug) => ({
-                ...hug,
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-              })),
-            },
-          ],
+        const row = new MessageActionRow();
+
+        hugTypesForButtons.forEach((h) =>
+          row.addComponents(
+            new MessageButton()
+              .setCustomId(h.customId)
+              .setLabel(h.label)
+              .setStyle("PRIMARY"),
+          ),
+        );
+
+        const chooseTypeMessage = await channel.send({
+          content: `${message.author}, select the type of hug:`,
+          components: [row],
         });
 
         hugType = await new Promise((resolve) => {
@@ -165,8 +174,9 @@ export const performInteraction = async ({
 
     const url: string = response.results[randomIndex].media[0].gif.url;
 
-    const embed = new MessageEmbed().setColor(flatColors.blue).setImage(url)
-      .setDescription(oneLine`
+    const embed = new MessageEmbed()
+      .setColor(flatColors.blue as ColorResolvable)
+      .setImage(url).setDescription(oneLine`
       ${message.author} gives${
       (mentions.length > 0 &&
         `${mentions.map((u) => ` <@${u.id}>`).join(",")}`) ||
@@ -174,17 +184,17 @@ export const performInteraction = async ({
     } ${specificText}.
     `);
 
-    message.channel.send(embed);
+    message.channel.send({ embeds: [embed] });
   } catch (error) {
-    logger.error(error);
+    logger.error(error as Error);
   }
 };
 
 export const setupGif = (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", (ctx) => {
-    if (hugTypesForButtons.find((hug) => hug.custom_id === ctx.customID)) {
+    if (hugTypesForButtons.find((hug) => hug.customId === ctx.customID)) {
       const customID =
-        ctx.customID as typeof hugTypesForButtons[number]["custom_id"];
+        ctx.customID as typeof hugTypesForButtons[number]["customId"];
 
       let emitter = eventEmitters[ctx.channelID];
 

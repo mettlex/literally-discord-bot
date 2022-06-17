@@ -31,7 +31,7 @@ export const actions: Action[] = [
   {
     commands: ["fs", "force-start", "force start"],
     handler: async (message) => {
-      if (!message.member?.hasPermission("MANAGE_GUILD")) {
+      if (!message.member?.permissions.has("MANAGE_GUILD")) {
         return;
       }
 
@@ -44,7 +44,7 @@ export const actions: Action[] = [
         embed.setFooter(`0 seconds remaining.`);
 
         try {
-          await initialMessage.edit(embed);
+          await initialMessage.edit({ embeds: [embed] });
           clearInterval(interval);
         } catch (error) {
           // eslint-disable-next-line no-console

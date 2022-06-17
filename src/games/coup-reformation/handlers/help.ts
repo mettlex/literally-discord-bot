@@ -1,30 +1,24 @@
-import { Message } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
-import { ExtendedTextChannel, ExtendedDMChannel } from "../../../extension";
+import { Message, MessageActionRow, MessageButton } from "discord.js";
 
 export const sendCoupHelpMessage = (message: Message) => {
-  const channel = message.channel as ExtendedTextChannel | ExtendedDMChannel;
+  const channel = message.channel;
 
-  channel.sendWithComponents({
+  const row = new MessageActionRow().addComponents(
+    new MessageButton()
+      .setCustomId("coup_cs")
+      .setStyle("SECONDARY")
+      .setLabel("Show Cheat Sheet"),
+    new MessageButton()
+      .setCustomId("coup_how_to_play")
+      .setStyle("LINK")
+      .setLabel("How To Play")
+      .setURL(
+        "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
+      ),
+  );
+
+  channel.send({
     content: "Please press on a button below:",
-    components: [
-      {
-        components: [
-          {
-            type: ComponentType.BUTTON,
-            style: ButtonStyle.SECONDARY,
-            label: "Show Cheat Sheet",
-            custom_id: "coup_cs",
-          },
-          {
-            type: ComponentType.BUTTON,
-            // @ts-ignore
-            style: ButtonStyle.LINK,
-            label: "How To Play",
-            url: "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
-          },
-        ],
-      },
-    ],
+    components: [row],
   });
 };

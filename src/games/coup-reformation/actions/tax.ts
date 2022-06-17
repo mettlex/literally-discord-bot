@@ -1,7 +1,6 @@
 import { oneLine } from "common-tags";
-import { MessageEmbed } from "discord.js";
+import { MessageEmbed, TextChannel } from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import sleep from "../../../utils/sleep";
 import { coupActionsInClassic } from "../data";
 import { handleChallenge } from "../game-loop";
@@ -16,7 +15,7 @@ export const handleTax = async ({
 }: {
   game: CoupGame;
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
   channelId: string;
 }) => {
   const answer = await new Promise<ChallengeOrNotData>((resolve) => {
@@ -70,7 +69,7 @@ export const handleTax = async ({
       `,
       );
 
-    await channel.send(embed);
+    await channel.send({ embeds: [embed] });
 
     await sleep(2000);
   } else if (challenging && challengingPlayer && influenceName) {
@@ -113,7 +112,7 @@ export const handleTax = async ({
       `,
         );
 
-      await channel.send(embed);
+      await channel.send({ embeds: [embed] });
 
       await sleep(2000);
     }

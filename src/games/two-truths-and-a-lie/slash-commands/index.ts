@@ -25,21 +25,18 @@ const options: ApplicationCommandOption[] = [
     name: "1st_truth",
     description: "Write the first truth",
     required: true,
-    default: false,
   },
   {
     type: CommandOptionType.STRING,
     name: "2nd_truth",
     description: "Write the second truth",
     required: true,
-    default: false,
   },
   {
     type: CommandOptionType.STRING,
     name: "a_lie",
     description: "Write a lie",
     required: true,
-    default: false,
   },
 ];
 
@@ -126,7 +123,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     .addField(timefieldLabel, `${maxTimeInSeconds} seconds`)
     .setFooter("Which one is a lie?");
 
-  const message = await channel.send(embed).catch((e) => {
+  const message = await channel.send({ embeds: [embed] }).catch((e) => {
     // eslint-disable-next-line no-console
     console.error(e);
   });
@@ -162,7 +159,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
       field && (field.value = `${timeLeft} seconds`);
 
-      message.edit(embed);
+      message.edit({ embeds: [embed] });
     } else {
       try {
         interval2Cleared = true;
@@ -176,16 +173,17 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
   const getSingleReaction = () =>
     message
-      .awaitReactions(
-        (reaction: MessageReaction, user: User) => {
+      .awaitReactions({
+        filter: (reaction: MessageReaction, user: User) => {
           return (
             !user.bot &&
             ((user.id !== ctx.user.id && reaction.emoji.name !== stopEmoji) ||
               (user.id === ctx.user.id && reaction.emoji.name === stopEmoji))
           );
         },
-        { time: timeLeft * 1000, max: 1 },
-      )
+        time: timeLeft * 1000,
+        max: 1,
+      })
       .then((c) => c.first())
       .catch((e) => {
         // eslint-disable-next-line no-console
@@ -218,10 +216,14 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       console.error(e);
     });
 
-    message.delete({ timeout: 15000 }).catch((e) => {
-      // eslint-disable-next-line no-console
-      console.error(e);
-    });
+    const tid = setTimeout(() => {
+      message.delete().catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      });
+
+      clearTimeout(tid);
+    }, 15000);
 
     !interval2Cleared && clearInterval(interval2);
   } catch (error) {
@@ -238,15 +240,15 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   );
 
   const winners = lieReactions
-    .map((r) => r.users.cache.array())
+    .map((r) => r.users.cache.first())
     .flat()
-    .filter((u) => !u.bot && u.id !== ctx.user.id)
-    .map((u) => u.id);
+    .filter((u) => u && !u.bot && u.id !== ctx.user.id)
+    .map((u) => u && u.id);
 
   if (winners && winners.length > 0 && truthReactionsArray) {
     for (const winner of winners) {
       for (const truthReactions of truthReactionsArray) {
-        if (truthReactions.users.cache.get(winner)) {
+        if (winner && truthReactions.users.cache.get(winner)) {
           winners.splice(winners.indexOf(winner), 1);
         }
       }
@@ -267,7 +269,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
         `,
       );
 
-    channel.send(embed).catch((e) => {
+    channel.send({ embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -294,7 +296,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
         `,
       );
 
-    channel.send(embed).catch((e) => {
+    channel.send({ embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });

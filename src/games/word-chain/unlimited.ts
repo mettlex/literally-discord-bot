@@ -82,7 +82,7 @@ const findThePinnedMessage = async (message: Message) => {
     return;
   }
 
-  const pinnedMessages = pinnedMessageCollection.array();
+  const pinnedMessages = pinnedMessageCollection.values();
 
   for (const pinnedMessage of pinnedMessages) {
     if (pinnedMessage.author.id !== message.client.user?.id) {
@@ -289,7 +289,7 @@ const setDataInThePinnedMessage = async (
       inline: true,
     };
 
-    pinnedMessage.edit({ embed }).catch((e) => {
+    pinnedMessage.edit({ embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -297,7 +297,7 @@ const setDataInThePinnedMessage = async (
 };
 
 export const startUnlimitedMode = async (message: Message) => {
-  const canStart = message.member?.hasPermission("MANAGE_GUILD");
+  const canStart = message.member?.permissions.has("MANAGE_GUILD");
 
   if (!canStart) {
     message.reply(
@@ -343,10 +343,12 @@ export const startUnlimitedMode = async (message: Message) => {
     .addField(fieldNameForLongestWord, "N/A", true)
     .addField(fieldNameForLongestWordAuthor, "N/A", true);
 
-  const sentMessage = await message.channel.send(embed).catch((e) => {
-    // eslint-disable-next-line no-console
-    console.error(e);
-  });
+  const sentMessage = await message.channel
+    .send({ embeds: [embed] })
+    .catch((e) => {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    });
 
   if (!sentMessage) {
     return;
@@ -359,7 +361,7 @@ export const startUnlimitedMode = async (message: Message) => {
 };
 
 export const stopUnlimitedMode = async (message: Message) => {
-  const canStop = message.member?.hasPermission("MANAGE_GUILD");
+  const canStop = message.member?.permissions.has("MANAGE_GUILD");
 
   if (!canStop) {
     message.reply(
@@ -391,7 +393,7 @@ export const stopUnlimitedMode = async (message: Message) => {
 export const handleMessageForUnlimitedMode = async (message: Message) => {
   if (
     message.author.bot ||
-    message.channel.type !== "text" ||
+    message.channel.type !== "GUILD_TEXT" ||
     /[^a-z\-]/gi.test(message.content) ||
     message.reference ||
     message.mentions.everyone ||
@@ -435,20 +437,26 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     if (lastCorrectMessageAuthorId === message.author.id) {
       message
         .reply({
-          embed: new MessageEmbed()
-            .setColor(flatColors.red)
-            .setTitle("One by One Rule")
-            .setDescription(
-              stripIndents`Wait for another player to send a correct word. 
+          embeds: [
+            new MessageEmbed()
+              .setColor(flatColors.red)
+              .setTitle("One by One Rule")
+              .setDescription(
+                stripIndents`Wait for another player to send a correct word. 
           After that, you can send another word.`,
-            )
-            .setFooter("Wait for your turn please."),
+              )
+              .setFooter("Wait for your turn please."),
+          ],
           content: `please check:`,
         })
         .then((repliedMessage) => {
-          repliedMessage.delete({ timeout: 15000 }).catch((e) => {
-            logger.error;
-          });
+          const tid = setTimeout(() => {
+            repliedMessage.delete().catch((e) => {
+              logger.error;
+            });
+
+            clearTimeout(tid);
+          }, 15000);
         })
         .catch((e) => {
           // eslint-disable-next-line no-console
@@ -461,17 +469,23 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     if (activeWordChains[channelId]!.usedWords?.includes(word.toLowerCase())) {
       message
         .reply({
-          embed: new MessageEmbed()
-            .setColor(flatColors.red)
-            .setTitle("Not that word again!")
-            .setDescription(`This **"${word}"** word has been used before.`)
-            .setFooter("Kindly send a new word."),
+          embeds: [
+            new MessageEmbed()
+              .setColor(flatColors.red)
+              .setTitle("Not that word again!")
+              .setDescription(`This **"${word}"** word has been used before.`)
+              .setFooter("Kindly send a new word."),
+          ],
           content: `please...`,
         })
         .then((repliedMessage) => {
-          repliedMessage.delete({ timeout: 15000 }).catch((e) => {
-            logger.error;
-          });
+          const tid = setTimeout(() => {
+            repliedMessage.delete().catch((e) => {
+              logger.error;
+            });
+
+            clearTimeout(tid);
+          }, 15000);
         })
         .catch((e) => {
           // eslint-disable-next-line no-console
@@ -591,16 +605,22 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
     message
       .reply({
-        embed: new MessageEmbed()
-          .setColor(flatColors.red)
-          .setTitle("Incorrect Word!")
-          .setDescription(reasonText),
+        embeds: [
+          new MessageEmbed()
+            .setColor(flatColors.red)
+            .setTitle("Incorrect Word!")
+            .setDescription(reasonText),
+        ],
         content: `please check:`,
       })
       .then((repliedMessage) => {
-        repliedMessage.delete({ timeout: 30000 }).catch((e) => {
-          logger.error;
-        });
+        const tid = setTimeout(() => {
+          repliedMessage.delete().catch((e) => {
+            logger.error;
+          });
+
+          clearTimeout(tid);
+        }, 15000);
       })
       .catch((e) => {
         // eslint-disable-next-line no-console

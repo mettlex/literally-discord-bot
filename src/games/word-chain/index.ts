@@ -87,7 +87,7 @@ export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
 
       const channel = client.channels.cache.get(ctx.channelID) as TextChannel;
 
-      if (channel.type !== "text") {
+      if (channel.type !== "GUILD_TEXT") {
         return;
       }
 

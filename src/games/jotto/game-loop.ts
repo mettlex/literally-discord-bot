@@ -141,7 +141,7 @@ export const changeJottoTurn = async (
 
     embed.setDescription(embed.description + scoresText);
 
-    message.channel.send(embed);
+    message.channel.send({ embeds: [embed] });
 
     logger.info(`Game ended: ${new Date()}`);
 
@@ -286,7 +286,7 @@ export const changeJottoTurn = async (
     .send({
       content: oneLine`<@${currentPlayer.user.id}>,
       you have ${currentPlayer.attemptsLeft} attempts left.`,
-      embed,
+      embeds: [embed],
     })
     .catch((e) => {
       // eslint-disable-next-line no-console
@@ -327,7 +327,7 @@ export const changeJottoTurn = async (
       embed.setFooter(getCriteriaMessageFooter(0));
 
       await criteriaMessage
-        .edit({ content: criteriaMessage.content, embed })
+        .edit({ content: criteriaMessage.content, embeds: [embed] })
         .catch((e) => {
           // eslint-disable-next-line no-console
           console.error(e);
@@ -342,7 +342,7 @@ export const changeJottoTurn = async (
     embed.setFooter(getCriteriaMessageFooter(timeRemainingInSeconds));
 
     await criteriaMessage
-      .edit({ content: criteriaMessage.content, embed })
+      .edit({ content: criteriaMessage.content, embeds: [embed] })
       .catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
@@ -363,17 +363,16 @@ export const changeJottoTurn = async (
   setTurnInverval(channelId, interval);
 
   const collection = await message.channel
-    .awaitMessages(
-      (m: Message) =>
+    .awaitMessages({
+      filter: (m: Message) =>
         m.author.id === currentPlayer.user.id &&
         !m.content.includes(" ") &&
         !m.reference &&
         !/[^A-Z]/gi.test(m.content),
-      {
-        time: (turnSecondsUsed + 1) * 1000,
-        max: 1,
-      },
-    )
+
+      time: (turnSecondsUsed + 1) * 1000,
+      max: 1,
+    })
     .catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
@@ -388,7 +387,7 @@ export const changeJottoTurn = async (
         setTurnInverval(channelId, undefined);
         clearInterval(interval);
       } catch (error) {
-        logger.error(error);
+        logger.error(error as Error);
       }
 
       return;
@@ -399,14 +398,14 @@ export const changeJottoTurn = async (
     embed.setFooter(getCriteriaMessageFooter(0));
 
     await criteriaMessage
-      .edit({ content: criteriaMessage.content, embed })
+      .edit({ content: criteriaMessage.content, embeds: [embed] })
       .catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
       });
     clearInterval(interval);
   } catch (error) {
-    logger.error(error);
+    logger.error(error as Error);
   }
 
   const attemptsLeft = game.playersData[currentPlayerIndex].attemptsLeft - 1;
@@ -623,7 +622,7 @@ export const askToJoinJottoGame = async (
 
   embed.setFooter(`${timeToJoinInSeconds} seconds remaining`);
 
-  const message = await channel.send(embed);
+  const message = await channel.send({ embeds: [embed] });
 
   const tickInSeconds = 5;
 
@@ -658,7 +657,7 @@ export const askToJoinJottoGame = async (
 
       embed.setFooter(`0 seconds remaining.`);
 
-      message.edit(embed).catch((e) => {
+      message.edit({ embeds: [embed] }).catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
       });
@@ -670,7 +669,7 @@ export const askToJoinJottoGame = async (
     if (t !== 0) {
       embed.setFooter(`${timeToJoinInSeconds - t} seconds remaining.`);
 
-      message.edit(embed).catch((e) => {
+      message.edit({ embeds: [embed] }).catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
       });

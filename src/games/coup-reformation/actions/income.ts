@@ -1,8 +1,7 @@
 /* eslint-disable indent */
 import { oneLine } from "common-tags";
-import { MessageEmbed } from "discord.js";
+import { MessageEmbed, TextChannel } from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import sleep from "../../../utils/sleep";
 import { CoupPlayer } from "../types";
 
@@ -11,7 +10,7 @@ export const handleIncome = async ({
   channel,
 }: {
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
 }) => {
   const embed = new MessageEmbed()
     .setColor(flatColors.blue)
@@ -42,7 +41,7 @@ export const handleIncome = async ({
     `,
     );
 
-  channel.send(embed);
+  channel.send({ embeds: [embed] });
 
   await sleep(2000);
 };

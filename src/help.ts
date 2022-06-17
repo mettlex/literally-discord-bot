@@ -1,12 +1,18 @@
 /* eslint-disable indent */
-import { Client, DMChannel, MessageEmbed, TextChannel } from "discord.js";
+import {
+  Client,
+  ColorResolvable,
+  DMChannel,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import {
   ApplicationCommandOption,
-  ButtonStyle,
   CommandContext,
   CommandOptionType,
   CommandStringOption,
-  ComponentButton,
   GuildInteractionRequestData,
   SlashCommand,
   SlashCreator,
@@ -23,39 +29,33 @@ import {
   slashCommandOptions as slashCommandOptionsForTwoTruthsAndALie,
 } from "./games/two-truths-and-a-lie/slash-commands";
 import { prefixes as lyPrefixes } from "./config";
-import "./extension";
-import { ExtendedDMChannel, ExtendedTextChannel } from "./extension";
 import { actions as jottoActions } from "./games/jotto";
 import { prefixes as jottoPrefixes } from "./games/jotto/config";
 import { actions as coupCommandActions } from "./games/coup-reformation";
 import { prefixes as coupPrefixes } from "./games/coup-reformation/config";
 
-const helpButtons: ComponentButton[] = [
+const helpButtons = [
   {
     type: 2,
     label: "Word-Chain",
-    style: ButtonStyle.SUCCESS,
-    custom_id: "help_word_chain",
+    customId: "help_word_chain",
   },
   {
     type: 2,
     label: "Two Truths & A Lie",
-    style: ButtonStyle.SUCCESS,
-    custom_id: "help_two_truths_and_a_lie",
+    customId: "help_two_truths_and_a_lie",
   },
   {
     type: 2,
     label: "Jotto",
-    style: ButtonStyle.SUCCESS,
-    custom_id: "help_jotto",
+    customId: "help_jotto",
   },
   {
     type: 2,
     label: "Coup! (Beta)",
-    style: ButtonStyle.SUCCESS,
-    custom_id: "help_coup",
+    customId: "help_coup",
   },
-];
+] as const;
 
 const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
   creator.registerCommand(makeHelpSlashCommand(guildIDs));
@@ -69,16 +69,16 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
         ?.channels.cache.get(ctx.channelID) as TextChannel) ||
       (client.channels.cache.get(ctx.channelID) as DMChannel);
 
-    if (ctx.customID === helpButtons[0].custom_id) {
+    if (ctx.customID === helpButtons[0].customId) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "word_chain", client);
-    } else if (ctx.customID === helpButtons[1].custom_id) {
+    } else if (ctx.customID === helpButtons[1].customId) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "two_truths_and_a_lie", client);
-    } else if (ctx.customID === helpButtons[2].custom_id) {
+    } else if (ctx.customID === helpButtons[2].customId) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "jotto", client);
-    } else if (ctx.customID === helpButtons[3].custom_id) {
+    } else if (ctx.customID === helpButtons[3].customId) {
       await ctx.send("Check the message below 👇");
       sendHelpMessage(ctx.user.id, channel, "coup", client);
     }
@@ -93,21 +93,23 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
       return;
     }
 
-    const channel = message.channel as ExtendedTextChannel | ExtendedDMChannel;
+    const channel = message.channel;
 
-    channel
-      .sendWithComponents({
-        content: "**Please press a button below for instructions.**",
-        components: [
-          {
-            components: helpButtons,
-          },
-        ],
-      })
-      .catch((e) => {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      });
+    const row = new MessageActionRow();
+
+    helpButtons.forEach((h) =>
+      row.addComponents(
+        new MessageButton()
+          .setCustomId(h.customId)
+          .setLabel(h.label)
+          .setStyle("SUCCESS"),
+      ),
+    );
+
+    channel.send({
+      content: "**Please press a button below for instructions.**",
+      components: [row],
+    });
   });
 
   let guildIds = getGuildIds();
@@ -142,7 +144,6 @@ const options: ApplicationCommandOption[] = [
     name: "game",
     description: "Select the game name from the options.",
     required: true,
-    default: false,
     choices: [
       {
         name: "Word-Chain",
@@ -203,7 +204,7 @@ const makeHelpSlashCommand = (guildIDs: string[]) =>
         .get(interactionData.guild_id)
         ?.channels.cache.find((c) => c.id === ctx.channelID);
 
-      if (!channel || channel.type !== "text") {
+      if (!channel || channel.type !== "GUILD_TEXT") {
         return;
       }
 
@@ -236,7 +237,7 @@ export const sendHelpMessage = (
   gameValue: typeof gameValues[number],
   client: Client,
 ) => {
-  const embed = new MessageEmbed().setColor(flatColors.blue);
+  const embed = new MessageEmbed().setColor(flatColors.blue as ColorResolvable);
 
   if (gameValue === "word_chain") {
     embed
@@ -376,8 +377,10 @@ export const sendHelpMessage = (
     return;
   }
 
-  channel.send({ embed, content: `<@${userId}>, here.` }).catch((e) => {
-    // eslint-disable-next-line no-console
-    console.error(e);
-  });
+  channel
+    .send({ embeds: [embed], content: `<@${userId}>, here.` })
+    .catch((e) => {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    });
 };

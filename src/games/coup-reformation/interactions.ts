@@ -1,10 +1,16 @@
 import { oneLine } from "common-tags";
-import { Client, MessageEmbed, TextChannel } from "discord.js";
+import {
+  Client,
+  ColorResolvable,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import EventEmitter from "events";
 import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
 import { flatColors } from "../../config";
 import { getLiterallyUserModel } from "../../database";
-import { ExtendedMessage, ExtendedTextChannel } from "../../extension";
 import { hasVoted } from "../../top.gg/api";
 import {
   coupActionNamesInClassic,
@@ -22,14 +28,12 @@ import {
 } from "./types";
 
 const removeButtonsFromMessage = async (
-  channel: ExtendedTextChannel,
+  channel: TextChannel,
   messageId: string,
-  color: string = flatColors.red,
+  color: ColorResolvable = flatColors.red,
 ) => {
   try {
-    const message = (await channel.messages.fetch(
-      messageId,
-    )) as ExtendedMessage;
+    const message = await channel.messages.fetch(messageId);
 
     const oldEmbed = message.embeds[0];
 
@@ -63,9 +67,9 @@ const removeButtonsFromMessage = async (
       embed.setImage(oldEmbed.image?.url);
     }
 
-    message.editWithComponents({
+    message.edit({
       content: message.content,
-      options: { embed },
+      options: { embeds: [embed] },
       components: [],
     });
   } catch (error) {
@@ -95,11 +99,9 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
     const changeCardEmbed = async (i: number) => {
       const channel = (await client.channels.fetch(
         ctx.channelID,
-      )) as ExtendedTextChannel;
+      )) as TextChannel;
 
-      const message = (await channel.messages.fetch(
-        ctx.message.id,
-      )) as ExtendedMessage;
+      const message = channel && (await channel.messages.fetch(ctx.message.id));
 
       const keys = Object.keys(influenceCardImagesClassic).sort();
 
@@ -110,29 +112,23 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         .setDescription(getDescriptionFromCardName(name))
         .setImage(influenceCardImagesClassic[name][0]);
 
-      message.editWithComponents({
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setLabel("Previous")
+          .setCustomId(`previous_influence_card_${i - 1}`)
+          .setDisabled(i === 0)
+          .setStyle("PRIMARY"),
+        new MessageButton()
+          .setLabel("Next")
+          .setCustomId(`next_influence_card_${i + 1}`)
+          .setDisabled(i === keys.length - 1)
+          .setStyle("PRIMARY"),
+      );
+
+      message.edit({
         content: "",
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                label: "Previous",
-                custom_id: `previous_influence_card_${i - 1}`,
-                disabled: i === 0,
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-              },
-              {
-                label: "Next",
-                custom_id: `next_influence_card_${i + 1}`,
-                disabled: i === keys.length - 1,
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
     };
 
@@ -199,7 +195,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         ctx.channelID,
       )) as TextChannel;
 
-      channel.send(embed);
+      channel.send({ embeds: [embed] });
 
       return;
     } else if (ctx.customID.startsWith("coup_return_influence_")) {
@@ -257,7 +253,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           ctx.channelID,
         )) as TextChannel;
 
-        channel.send(embed);
+        channel.send({ embeds: [embed] });
       } else {
         await ctx.send(
           `**${player.name}** returned 1 influence. 1 more left to return.`,
@@ -271,7 +267,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
                     type: ComponentType.BUTTON,
                     style: ButtonStyle.PRIMARY,
                     label: "Return One Influence",
-                    custom_id: "coup_show_influences",
+                    customId: "coup_show_influences",
                   },
                 ],
               },
@@ -333,6 +329,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
                       // @ts-ignore
                       style: ButtonStyle.LINK,
                       url: "https://top.gg/bot/842397311916310539/vote",
+                      customId: "vote_for_literally",
                     },
                   ],
                 },
@@ -367,6 +364,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
                       // @ts-ignore
                       style: ButtonStyle.LINK,
                       url: "https://top.gg/bot/842397311916310539/vote",
+                      customId: "vote_for_literally",
                     },
                   ],
                 },
@@ -479,9 +477,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       return;
     }
 
-    const channel = (await client.channels.fetch(
-      ctx.channelID,
-    )) as ExtendedTextChannel;
+    const channel = await client.channels.fetch(ctx.channelID);
 
     if (ctx.customID === "allow_action_in_coup") {
       await ctx.acknowledge();
@@ -520,7 +516,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         if (player.votesRequiredForAction <= 0) {
           player.voteReceivedFromIds = [];
           game.eventEmitter.emit("all_players_allowed_action");
-          removeButtonsFromMessage(channel, ctx.message.id, flatColors.green);
+          removeButtonsFromMessage(
+            channel as TextChannel,
+            ctx.message.id,
+            flatColors.green,
+          );
           return;
         }
 
@@ -584,7 +584,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         influence,
       });
 
-      removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
+      removeButtonsFromMessage(
+        channel as TextChannel,
+        ctx.message.id,
+        flatColors.red,
+      );
     } else if (ctx.customID === "let_go_in_coup") {
       await ctx.acknowledge();
 
@@ -635,7 +639,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           blockingPlayer.voteReceivedFromIds = [];
           const answer: ChallengeOrNotData = { challenging: false };
           game.eventEmitter.emit("challenged_or_not", answer);
-          removeButtonsFromMessage(channel, ctx.message.id, flatColors.green);
+          removeButtonsFromMessage(
+            channel as TextChannel,
+            ctx.message.id,
+            flatColors.green,
+          );
           return;
         }
 
@@ -736,7 +744,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         game.eventEmitter.emit("challenged_or_not", answer);
       }
 
-      removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
+      removeButtonsFromMessage(
+        channel as TextChannel,
+        ctx.message.id,
+        flatColors.red,
+      );
     } else if (ctx.customID === "block_stealing_in_coup") {
       await ctx.acknowledge();
 
@@ -785,7 +797,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         influences,
       });
 
-      removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
+      removeButtonsFromMessage(
+        channel as TextChannel,
+        ctx.message.id,
+        flatColors.red,
+      );
     } else if (ctx.customID === "block_assassination_in_coup") {
       await ctx.acknowledge();
 
@@ -834,7 +850,11 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         influence,
       });
 
-      removeButtonsFromMessage(channel, ctx.message.id, flatColors.red);
+      removeButtonsFromMessage(
+        channel as TextChannel,
+        ctx.message.id,
+        flatColors.red,
+      );
     }
   });
 };

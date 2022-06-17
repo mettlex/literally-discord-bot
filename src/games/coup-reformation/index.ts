@@ -1,6 +1,13 @@
 import { oneLine } from "common-tags";
-import { Client, Message, MessageEmbed, TextChannel } from "discord.js";
-import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
+import {
+  Client,
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
+import { SlashCreator } from "slash-create";
 import { setupGame } from "../setup";
 import { Action } from "../types";
 import { prefixes, timeToJoinInSeconds } from "./config";
@@ -14,7 +21,6 @@ import {
   setCurrentCoupGame,
 } from "./data";
 import { sendCoupHelpMessage } from "./handlers/help";
-import { ExtendedTextChannel } from "../../extension";
 import { getGuildIds } from "../../app";
 import {
   makeCoupCommands,
@@ -37,11 +43,11 @@ export const actions: Action[] = [
   {
     commands: ["fs", "force-start", "force start"],
     handler: async (message) => {
-      if (message.author.bot || message.channel.type !== "text") {
+      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
-      if (!message.member?.hasPermission("MANAGE_GUILD")) {
+      if (!message.member?.permissions.has("MANAGE_GUILD")) {
         return;
       }
 
@@ -55,7 +61,7 @@ export const actions: Action[] = [
         embed.fields[0].value = `Let's see who joined below.`;
 
         try {
-          await initialMessage.edit(embed);
+          await initialMessage.edit({ embeds: [embed] });
           clearInterval(interval);
         } catch (error) {
           // eslint-disable-next-line no-console
@@ -82,11 +88,11 @@ export const actions: Action[] = [
   {
     commands: ["c", "check"],
     handler: (message) => {
-      if (message.author.bot || message.channel.type !== "text") {
+      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
-      const channel = message.channel as ExtendedTextChannel;
+      const channel = message.channel as TextChannel;
 
       channel
         .send({
@@ -103,7 +109,7 @@ export const actions: Action[] = [
   {
     commands: ["allcards", "all cards"],
     handler: async (message) => {
-      if (message.author.bot || message.channel.type !== "text") {
+      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
@@ -116,31 +122,25 @@ export const actions: Action[] = [
         .setDescription(getDescriptionFromCardName(name))
         .setImage(influenceCardImagesClassic[name][0]);
 
-      const channel = message.channel as ExtendedTextChannel;
+      const channel = message.channel as TextChannel;
 
-      channel.sendWithComponents({
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setLabel("Previous")
+          .setCustomId("previous_influence_card_1")
+          .setDisabled(true)
+          .setStyle("PRIMARY"),
+        new MessageButton()
+          .setLabel("Next")
+          .setCustomId("next_influence_card_1")
+          .setDisabled(false)
+          .setStyle("PRIMARY"),
+      );
+
+      channel.send({
         content: "",
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                label: "Previous",
-                custom_id: "previous_influence_card_1",
-                disabled: true,
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-              },
-              {
-                label: "Next",
-                custom_id: "next_influence_card_1",
-                disabled: false,
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
     },
     description: "Show all available influence cards.",
@@ -148,11 +148,11 @@ export const actions: Action[] = [
   {
     commands: ["stop"],
     handler: (message) => {
-      if (message.author.bot || message.channel.type !== "text") {
+      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
-      if (!message.member?.hasPermission("MANAGE_GUILD")) {
+      if (!message.member?.permissions.has("MANAGE_GUILD")) {
         message.reply(
           oneLine`Only a member with Manage Server permission
           can force-stop the game.`,
@@ -179,7 +179,7 @@ export const actions: Action[] = [
   {
     commands: ["s", "start", "begin"],
     handler: async (message) => {
-      if (message.author.bot || message.channel.type !== "text") {
+      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
         return;
       }
 
@@ -205,27 +205,22 @@ export const actions: Action[] = [
             ).setDescription(oneLine`It takes only a minute
             to vote for Literally on Top.gg website. Just do it!`);
 
-          const channel = message.channel as ExtendedTextChannel;
+          const channel = message.channel as TextChannel;
+
+          const row = new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel("Vote for Literally")
+              .setCustomId("vote_for_literally")
+              .setStyle("LINK")
+              .setURL("https://top.gg/bot/842397311916310539/vote"),
+          );
 
           channel
-            .sendWithComponents({
+            .send({
               content: oneLine`**${message.author}, please vote on Top.gg
               and then start the game.**`,
-              options: { embed },
-              components: [
-                {
-                  type: ComponentType.ACTION_ROW,
-                  components: [
-                    {
-                      label: "Vote for Literally",
-                      type: ComponentType.BUTTON,
-                      // @ts-ignore
-                      style: ButtonStyle.LINK,
-                      url: "https://top.gg/bot/842397311916310539/vote",
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             })
             .catch((e) => {
               // eslint-disable-next-line no-console
@@ -246,26 +241,21 @@ export const actions: Action[] = [
             ).setDescription(oneLine`It takes only a minute
             to vote for Literally on Top.gg website. Just do it!`);
 
-          const channel = message.channel as ExtendedTextChannel;
+          const channel = message.channel as TextChannel;
+
+          const row = new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel("Vote for Literally")
+              .setCustomId("vote_for_literally")
+              .setStyle("LINK")
+              .setURL("https://top.gg/bot/842397311916310539/vote"),
+          );
 
           await channel
-            .sendWithComponents({
+            .send({
               content: oneLine`${message.author}`,
-              options: { embed },
-              components: [
-                {
-                  type: ComponentType.ACTION_ROW,
-                  components: [
-                    {
-                      label: "Vote for Literally",
-                      type: ComponentType.BUTTON,
-                      // @ts-ignore
-                      style: ButtonStyle.LINK,
-                      url: "https://top.gg/bot/842397311916310539/vote",
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             })
             .catch((e) => {
               // eslint-disable-next-line no-console
@@ -360,27 +350,22 @@ export const actions: Action[] = [
             ).setDescription(oneLine`It takes only a minute
             to vote for Literally on Top.gg website. Just do it!`);
 
-          const channel = message.channel as ExtendedTextChannel;
+          const channel = message.channel as TextChannel;
+
+          const row = new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel("Vote for Literally")
+              .setCustomId("vote_for_literally")
+              .setStyle("LINK")
+              .setURL("https://top.gg/bot/842397311916310539/vote"),
+          );
 
           channel
-            .sendWithComponents({
+            .send({
               content: oneLine`**${message.author}, please vote on Top.gg
               and then join the game.**`,
-              options: { embed },
-              components: [
-                {
-                  type: ComponentType.ACTION_ROW,
-                  components: [
-                    {
-                      label: "Vote for Literally",
-                      type: ComponentType.BUTTON,
-                      // @ts-ignore
-                      style: ButtonStyle.LINK,
-                      url: "https://top.gg/bot/842397311916310539/vote",
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             })
             .catch((e) => {
               // eslint-disable-next-line no-console
@@ -401,26 +386,21 @@ export const actions: Action[] = [
             ).setDescription(oneLine`It takes only a minute
             to vote for Literally on Top.gg website. Just do it!`);
 
-          const channel = message.channel as ExtendedTextChannel;
+          const channel = message.channel as TextChannel;
+
+          const row = new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel("Vote for Literally")
+              .setCustomId("vote_for_literally")
+              .setStyle("LINK")
+              .setURL("https://top.gg/bot/842397311916310539/vote"),
+          );
 
           await channel
-            .sendWithComponents({
+            .send({
               content: oneLine`${message.author}`,
-              options: { embed },
-              components: [
-                {
-                  type: ComponentType.ACTION_ROW,
-                  components: [
-                    {
-                      label: "Vote for Literally",
-                      type: ComponentType.BUTTON,
-                      // @ts-ignore
-                      style: ButtonStyle.LINK,
-                      url: "https://top.gg/bot/842397311916310539/vote",
-                    },
-                  ],
-                },
-              ],
+              options: { embeds: [embed] },
+              components: [row],
             })
             .catch((e) => {
               // eslint-disable-next-line no-console

@@ -1,4 +1,5 @@
 import { oneLine, stripIndents } from "common-tags";
+import { TextChannel } from "discord.js";
 import {
   ApplicationCommandOption,
   CommandContext,
@@ -9,7 +10,6 @@ import {
 } from "slash-create";
 import { getCurrentTWAGame, setCurrentTWAGame } from "..";
 import { getDiscordJSClient } from "../../../app";
-import { ExtendedTextChannel } from "../../../extension";
 import { askToJoinTheWinkingAssassinGame, endTWAGame } from "../game-loop";
 
 const options: ApplicationCommandOption[] = [
@@ -104,10 +104,10 @@ const processStartCommand = async (ctx: CommandContext) => {
   const client = getDiscordJSClient();
 
   const channel = client.channels.cache.get(ctx.channelID) as
-    | ExtendedTextChannel
+    | TextChannel
     | undefined;
 
-  if (!channel || channel.type !== "text") {
+  if (!channel || channel.type !== "GUILD_TEXT") {
     // eslint-disable-next-line max-len
     return "There is an error getting the channel. Please report it to the developer.";
   }

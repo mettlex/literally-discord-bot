@@ -43,7 +43,7 @@ export const checkSpell = async (word: string): Promise<boolean> => {
       return true;
     }
   } catch (error) {
-    logger.error(error);
+    logger.error(error as Error);
   }
 
   return false;

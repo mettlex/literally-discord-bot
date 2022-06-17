@@ -1,3 +1,4 @@
+import { ColorResolvable } from "discord.js";
 import checkEnv from "./utils/check-env";
 
 checkEnv();
@@ -8,7 +9,9 @@ export const prefixes = ["ly.", "ly/"].map((p) =>
   earlyAccessMode() ? `_${p}` : p,
 );
 
-export const flatColors = {
+export const flatColors: {
+  [key: string]: ColorResolvable;
+} = {
   red: "#f62459",
   green: "#00b16a",
   blue: "#19b5fe",

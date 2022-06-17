@@ -1,14 +1,8 @@
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInMilliseconds, differenceInSeconds } from "date-fns";
-import { Message, MessageEmbed, User } from "discord.js";
-import { readFileSync } from "fs";
-import path from "path";
+import { Message, MessageEmbed } from "discord.js";
 import pino from "pino";
-import { Client as UNBClient } from "unb-api";
 import { getAllActiveGames, getCurrentGame } from ".";
-import { getAppRootDir } from "../../app";
-import { addToCashBalance, checkPermission, getGuild } from "../../economy/unb";
-import { UNBServerConfig } from "../../economy/unb/types";
 import {
   mediumTurnSeconds,
   easyTurnSeconds,
@@ -17,71 +11,8 @@ import {
 } from "./config";
 import { flatColors } from "../../config";
 import { checkSpell } from "./spell-checker";
-import "../../economy/unb/server-config.json";
 
 const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
-
-const rewardCoins = async (user: User, message: Message) => {
-  if (!message.guild) {
-    return;
-  }
-
-  // eslint-disable-next-line max-len
-  const config: UNBServerConfig = JSON.parse(
-    readFileSync(
-      path.resolve(getAppRootDir(), "economy/unb/server-config.json"),
-      {
-        encoding: "utf-8",
-      },
-    ),
-  );
-
-  if (!config) {
-    return;
-  }
-
-  const amount = config[message.guild.id]?.wcWinReward?.cash;
-
-  if (!amount) {
-    return;
-  }
-
-  const unbclient = new UNBClient(process.env.UNBELIEVABOAT_API_TOKEN || "");
-
-  const permission = checkPermission(unbclient, message.guild.id);
-
-  if (!permission) {
-    return;
-  }
-
-  const unbUser = await addToCashBalance(
-    unbclient,
-    message.guild.id,
-    user.id,
-    amount,
-  );
-
-  if (!unbUser) {
-    return;
-  }
-
-  const unbGuild = await getGuild(unbclient, message.guild.id);
-
-  if (!unbGuild) {
-    return;
-  }
-
-  message.reply(
-    new MessageEmbed()
-      .setColor(flatColors.green)
-      .setTitle("Reward!")
-      .setDescription(
-        `${user} has received ${
-          unbGuild.currencySymbol
-        }${amount.toLocaleString()} as a reward!`,
-      ),
-  );
-};
 
 export const changeTurn = async (message: Message, timeLeft?: number) => {
   const channelId = message.channel.id;
@@ -127,8 +58,6 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       embed.setThumbnail(
         winner.avatarURL({ dynamic: true }) || winner.defaultAvatarURL,
       );
-
-      rewardCoins(winner, message);
     }
 
     if (currentGame.longestWord) {
@@ -138,7 +67,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       );
     }
 
-    message.channel.send({ embed }).catch((e) => {
+    message.channel.send({ embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -190,7 +119,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     let criteriaMessage = await message.channel
       .send({
-        embed: embed1,
+        embeds: [embed1],
         content: `<@${currentGame.currentUser}>, you have ${livesText} left.`,
       })
       .catch((e) => {
@@ -250,7 +179,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           const oldMessage = criteriaMessage;
 
           criteriaMessage = await message.channel
-            .send({ embed, content: criteriaMessage.content })
+            .send({ embeds: [embed], content: criteriaMessage.content })
             .catch((e) => {
               // eslint-disable-next-line no-console
               console.error(e);
@@ -263,7 +192,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       }
 
       criteriaMessage
-        .edit({ embed, content: criteriaMessage.content })
+        .edit({ embeds: [embed], content: criteriaMessage.content })
         .catch((e) => {
           // eslint-disable-next-line no-console
           console.error(e);
@@ -280,7 +209,8 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
   const waitingStartTime = new Date();
 
-  const messageCollection = await message.channel.awaitMessages(filter, {
+  const messageCollection = await message.channel.awaitMessages({
+    filter,
     time,
     max: 1,
   });
@@ -288,7 +218,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   try {
     interval && clearInterval(interval);
   } catch (error) {
-    logger.error(error);
+    logger.error(error as Error);
   }
 
   const currentPlayerMessage = messageCollection.first();
@@ -333,7 +263,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     logger.info(currentGame);
 
-    message.channel.send(embed2).catch((e) => {
+    message.channel.send({ embeds: [embed2] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -374,7 +304,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     embed2.addField("Next Player", `<@${currentGame.currentUser}>`);
 
-    message.channel.send(embed2).catch((e) => {
+    message.channel.send({ embeds: [embed2] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -465,7 +395,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       .setColor(flatColors.red);
 
     let criteriaMessageWithError = await message.channel
-      .send({ embed: embed3, content: `<@${currentGame.currentUser}>` })
+      .send({ embeds: [embed3], content: `<@${currentGame.currentUser}>` })
       .catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
@@ -523,7 +453,10 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           const oldMessage = criteriaMessageWithError;
 
           criteriaMessageWithError = await message.channel
-            .send({ embed, content: criteriaMessageWithError.content })
+            .send({
+              embeds: [embed],
+              content: criteriaMessageWithError.content,
+            })
             .catch((e) => {
               // eslint-disable-next-line no-console
               console.error(e);
@@ -536,7 +469,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       }
 
       criteriaMessageWithError
-        .edit({ embed, content: criteriaMessageWithError.content })
+        .edit({ embeds: [embed], content: criteriaMessageWithError.content })
         .catch((e) => {
           // eslint-disable-next-line no-console
           console.error(e);
@@ -616,16 +549,18 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
           ],
         };
 
-        message.channel.send(
-          new MessageEmbed()
-            .setColor(flatColors.yellow)
-            .setTitle(`New Banned Letter: ${leastUsedLetter.toUpperCase()}`)
-            .setDescription(
-              oneLine`So far one of the least used letters is
+        message.channel.send({
+          embeds: [
+            new MessageEmbed()
+              .setColor(flatColors.yellow)
+              .setTitle(`New Banned Letter: ${leastUsedLetter.toUpperCase()}`)
+              .setDescription(
+                oneLine`So far one of the least used letters is
               **${leastUsedLetter.toUpperCase()}**
               so you can't use it anymore.`,
-            ),
-        );
+              ),
+          ],
+        });
       }
 
       activeGames[channelId]!.shouldAddBannedLetter =

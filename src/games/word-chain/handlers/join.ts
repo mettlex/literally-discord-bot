@@ -1,10 +1,17 @@
 import { addSeconds, differenceInSeconds } from "date-fns";
-import { Client, Message, MessageEmbed } from "discord.js";
+import {
+  Client,
+  ColorResolvable,
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import { prefixes, secondsToJoin } from "../config";
 import { flatColors } from "../../../config";
 import { actions, getAllActiveGames } from "..";
-import { ButtonStyle, ComponentContext } from "slash-create";
-import { ExtendedTextChannel } from "../../../extension";
+import { ComponentContext } from "slash-create";
 
 export const join = (message: Message) => {
   const joinAction = actions.find((a) => a.commands.includes("join"))!;
@@ -16,9 +23,9 @@ export const join = (message: Message) => {
   if (!activeGames[channelId]?.joinable) {
     const embed = new MessageEmbed()
       .setDescription(`The game is not joinable. ${message.author}`)
-      .setColor(flatColors.red);
+      .setColor(flatColors.red as ColorResolvable);
 
-    message.reply(embed).catch((e) => {
+    message.reply({ embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -55,26 +62,22 @@ export const join = (message: Message) => {
           new Date(),
         )} seconds`,
       )
-      .setColor(flatColors.green);
+      .setColor(flatColors.green as ColorResolvable);
 
-    const channel = message.channel as ExtendedTextChannel;
+    const channel = message.channel;
+
+    const row = new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId("join_word_chain")
+        .setStyle("PRIMARY")
+        .setLabel("Lemme join too!"),
+    );
 
     channel
-      .sendWithComponents({
+      .send({
         content: "",
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: 2,
-                label: "Lemme join too!",
-                custom_id: "join_word_chain",
-                style: ButtonStyle.PRIMARY,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       })
       .catch((e) => {
         // eslint-disable-next-line no-console
@@ -93,7 +96,7 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
 
   const channelId = ctx.channelID;
 
-  const channel = client.channels.cache.get(channelId) as ExtendedTextChannel;
+  const channel = client.channels.cache.get(channelId) as TextChannel;
 
   const player = ctx.user;
 
@@ -104,12 +107,14 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
 
     const embed = new MessageEmbed()
       .setDescription(`The game is not joinable. ${player.mention}`)
-      .setColor(flatColors.red);
+      .setColor(flatColors.red as ColorResolvable);
 
-    channel.send({ embed, content: `${player.mention}` }).catch((e) => {
-      // eslint-disable-next-line no-console
-      console.error(e);
-    });
+    channel
+      .send({ embeds: [embed], content: `${player.mention}` })
+      .catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      });
 
     return;
   }
@@ -146,24 +151,20 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
           new Date(),
         )} seconds`,
       )
-      .setColor(flatColors.green);
+      .setColor(flatColors.green as ColorResolvable);
+
+    const row = new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId("join_word_chain")
+        .setStyle("PRIMARY")
+        .setLabel("Lemme join too!"),
+    );
 
     channel
-      .sendWithComponents({
+      .send({
         content: "",
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: 2,
-                label: "Lemme join too!",
-                custom_id: "join_word_chain",
-                style: ButtonStyle.PRIMARY,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       })
       .catch((e) => {
         // eslint-disable-next-line no-console

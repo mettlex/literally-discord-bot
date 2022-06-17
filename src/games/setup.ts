@@ -10,12 +10,12 @@ export const setupGame = (
   actions: Action[],
   messageHandlers?: ((message: Message) => void)[],
 ) => {
-  client.on("message", (message) => {
+  client.on("messageCreate", (message) => {
     if (message.author.bot) {
       return;
     }
 
-    if (message.channel.type !== "text") {
+    if (message.channel.type !== "GUILD_TEXT") {
       return;
     }
 

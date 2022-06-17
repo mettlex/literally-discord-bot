@@ -1,11 +1,9 @@
-import { Client } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
+import { Client, MessageActionRow, MessageButton } from "discord.js";
 import { prefixes as lyPrefixes } from "./config";
-import { ExtendedDMChannel, ExtendedTextChannel } from "./extension";
 import { hasVoted } from "./top.gg/api";
 
 export const setupVote = (client: Client) => {
-  client.on("message", async (message) => {
+  client.on("messageCreate", async (message) => {
     if (
       message.author.bot ||
       !lyPrefixes.find((p) => message.content.toLowerCase().startsWith(p)) ||
@@ -24,7 +22,7 @@ export const setupVote = (client: Client) => {
       return;
     }
 
-    const channel = message.channel as ExtendedTextChannel | ExtendedDMChannel;
+    const channel = message.channel;
 
     let content = "";
 
@@ -38,20 +36,15 @@ export const setupVote = (client: Client) => {
     content += ` ${message.author}`;
 
     channel
-      .sendWithComponents({
+      .send({
         content,
         components: [
-          {
-            components: [
-              {
-                label: "Vote for Literally",
-                type: ComponentType.BUTTON,
-                // @ts-ignore
-                style: ButtonStyle.LINK,
-                url: "https://top.gg/bot/842397311916310539/vote",
-              },
-            ],
-          },
+          new MessageActionRow().addComponents(
+            new MessageButton()
+              .setLabel("Vote for Literally")
+              .setStyle("LINK")
+              .setURL("https://top.gg/bot/842397311916310539/vote"),
+          ),
         ],
       })
       .catch((e) => {

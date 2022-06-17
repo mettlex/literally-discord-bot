@@ -1,16 +1,16 @@
-import { Message, MessageEmbed } from "discord.js";
+import { ColorResolvable, Message, MessageEmbed } from "discord.js";
 import { getAllActiveGames, getCurrentGame } from "..";
 import { flatColors } from "../../../config";
 
 const haltHanlder = (message: Message) => {
-  if (!message.member?.hasPermission("MANAGE_GUILD")) {
+  if (!message.member?.permissions.has("MANAGE_GUILD")) {
     const embed = new MessageEmbed();
 
     embed
       .setDescription("Only server managers can halt a running game.")
-      .setColor(flatColors.red);
+      .setColor(flatColors.red as ColorResolvable);
 
-    message.channel.send({ embed, content: `${message.author}` });
+    message.channel.send({ embeds: [embed], content: `${message.author}` });
 
     return;
   }
@@ -22,9 +22,11 @@ const haltHanlder = (message: Message) => {
   if (!currentGame) {
     const embed = new MessageEmbed();
 
-    embed.setDescription("There is no running game.").setColor(flatColors.red);
+    embed
+      .setDescription("There is no running game.")
+      .setColor(flatColors.red as ColorResolvable);
 
-    message.channel.send({ embed, content: `${message.author}` });
+    message.channel.send({ embeds: [embed], content: `${message.author}` });
 
     return;
   }
@@ -38,9 +40,9 @@ const haltHanlder = (message: Message) => {
   embed
     .setTitle("Word-Chain Game Stopped!")
     .setDescription(`The running game has been stopped by ${message.author}.`)
-    .setColor(flatColors.green);
+    .setColor(flatColors.green as ColorResolvable);
 
-  message.channel.send({ embed }).catch((e) => {
+  message.channel.send({ embeds: [embed] }).catch((e) => {
     // eslint-disable-next-line no-console
     console.error(e);
   });

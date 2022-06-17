@@ -1,8 +1,12 @@
 import { stripIndents } from "common-tags";
-import { Message, MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentButton, ComponentType } from "slash-create";
+import {
+  ColorResolvable,
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+} from "discord.js";
 import { actions, getAllActiveGames } from "..";
-import { ExtendedTextChannel } from "../../../extension";
 import { shuffleArray } from "../../../utils/array";
 import { prefixes, secondsToJoin } from "../config";
 import { flatColors } from "../../../config";
@@ -39,27 +43,29 @@ const startHandler = (message: Message) => {
       "Banned Letters");
 
   if (!mode) {
-    const channel = message.channel as ExtendedTextChannel;
+    const channel = message.channel;
 
-    const buttons: ComponentButton[] = Array.from(new Set(Object.values(args)))
-      .filter((b) => typeof b !== "undefined")
-      .map((b) => ({
-        type: ComponentType.BUTTON,
-        style: ButtonStyle.PRIMARY,
-        custom_id: `wc_start_${
-          Object.entries(args).find(([_key, value]) => value === b)![0]
-        }_${message.id}`,
-        label: b!,
-      }));
+    const buttons = Array.from(new Set(Object.values(args)))
+      .map(
+        (b) =>
+          b &&
+          new MessageButton()
+            .setStyle("PRIMARY")
+            .setCustomId(
+              `wc_start_${
+                Object.entries(args).find(([_key, value]) => value === b)![0]
+              }_${message.id}`,
+            )
+            .setLabel(b),
+      )
+      .filter((b) => b) as MessageButton[];
+
+    const row = new MessageActionRow().addComponents(buttons);
 
     channel
-      .sendWithComponents({
+      .send({
         content: "**Select a game mode**",
-        components: [
-          {
-            components: buttons,
-          },
-        ],
+        components: [row],
       })
       .catch((e) => {
         // eslint-disable-next-line no-console
@@ -138,9 +144,9 @@ const startHandler = (message: Message) => {
           .setDescription(
             "No one else joined the game within the time limit. :(",
           )
-          .setColor(flatColors.red);
+          .setColor(flatColors.red as ColorResolvable);
 
-        message.channel.send({ embed: embed1 }).catch((e) => {
+        message.channel.send({ embeds: [embed1] }).catch((e) => {
           // eslint-disable-next-line no-console
           console.error(e);
         });
@@ -161,9 +167,9 @@ const startHandler = (message: Message) => {
           "Turn Order",
           `${currentGame.userIds.map((uid) => `<@${uid}>`).join(", ")}`,
         )
-        .setColor(flatColors.green);
+        .setColor(flatColors.green as ColorResolvable);
 
-      message.channel.send({ embed: embed1 }).catch((e) => {
+      message.channel.send({ embeds: [embed1] }).catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
       });
@@ -201,26 +207,24 @@ const startHandler = (message: Message) => {
       }\` here in this channel or tap on the button below to join.`,
     )
     .addField("Time Left", `${secondsToJoin} seconds`)
-    .setColor(flatColors.yellow);
+    .setColor(flatColors.yellow as ColorResolvable);
 
-  const channel = message.channel as ExtendedTextChannel;
+  const channel = message.channel;
+
+  const row = new MessageActionRow();
+
+  row.addComponents(
+    new MessageButton()
+      .setStyle("PRIMARY")
+      .setLabel("Yes! Join Game!")
+      .setCustomId("join_word_chain"),
+  );
 
   channel
-    .sendWithComponents({
+    .send({
       content: "",
-      options: { embed },
-      components: [
-        {
-          components: [
-            {
-              type: 2,
-              label: "Yes! Join Game!",
-              custom_id: "join_word_chain",
-              style: ButtonStyle.PRIMARY,
-            },
-          ],
-        },
-      ],
+      options: { embeds: [embed] },
+      components: [row],
     })
     .catch((e) => {
       // eslint-disable-next-line no-console

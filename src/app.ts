@@ -4,14 +4,12 @@ import pino from "pino";
 const notInProduction = process.env.NODE_ENV !== "production";
 const logger = pino({ prettyPrint: notInProduction });
 export const getLogger = () => logger;
-import { Client } from "discord.js";
-import "./extension";
+import { Client, ClientOptions, Intents } from "discord.js";
 import { setupWordChainGame } from "./games/word-chain";
 import checkEnv from "./utils/check-env";
 import { setupTwoTruthsAndALieGame } from "./games/two-truths-and-a-lie";
 import { GatewayServer, SlashCreator } from "slash-create";
 import { setupHelpMenu } from "./help";
-import { setupEconomy } from "./economy/setup";
 import { setupTheWinkingAssassinGame } from "./games/the-winking-assassin";
 import { setupJottoGame } from "./games/jotto";
 import { setupCoupReformationGame } from "./games/coup-reformation";
@@ -33,7 +31,11 @@ if (!checkEnv()) {
   process.exit(1);
 }
 
-const client = new Client();
+const options: ClientOptions = {
+  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+};
+
+const client = new Client(options);
 
 client.once("ready", async () => {
   const creator = new SlashCreator({
@@ -43,7 +45,6 @@ client.once("ready", async () => {
   });
 
   creator.withServer(
-    // @ts-ignore
     new GatewayServer((handler) => client.ws.on("INTERACTION_CREATE", handler)),
   );
 
@@ -63,7 +64,6 @@ client.once("ready", async () => {
   setupWordChainGame(client, creator);
   setupTwoTruthsAndALieGame(client, creator);
   setupHelpMenu(client, creator);
-  setupEconomy(client, creator);
   setupTheWinkingAssassinGame(client, creator);
   setupJottoGame(client, creator);
   setupVote(client);
@@ -71,12 +71,12 @@ client.once("ready", async () => {
   creator.syncCommands({ syncGuilds: true, deleteCommands: true });
 
   try {
-    await client.user?.setActivity({
+    client.user?.setActivity({
       name: `${(earlyAccessMode() && "_") || ""}ly.help or /help`,
       type: "PLAYING",
     });
   } catch (error) {
-    logger.error(error);
+    logger.error(error as object);
   }
 
   logger.info(`> discord bot is ready!`);
@@ -88,7 +88,7 @@ client.once("ready", async () => {
       logger.info(`Posted stats to Top.gg: ${result?.serverCount} servers.`);
     }
   } catch (error) {
-    logger.error(error);
+    logger.error(error as object);
   }
 });
 

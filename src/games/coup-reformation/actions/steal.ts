@@ -1,8 +1,11 @@
 import { oneLine, oneLineTrim } from "common-tags";
-import { MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
+import {
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import sleep from "../../../utils/sleep";
 import { coupActionsInClassic } from "../data";
 import { handleChallenge } from "../game-loop";
@@ -18,7 +21,7 @@ export const handleSteal = async ({
 }: {
   game: CoupGame;
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
   activePlayers: CoupPlayer[];
   channelId: string;
 }) => {
@@ -83,32 +86,47 @@ export const handleSteal = async ({
         `,
         );
 
-      await channel.sendWithComponents({
+      // {
+      //   components: [
+      //     {
+      //       type: ComponentType.BUTTON,
+      //       style: ButtonStyle.PRIMARY,
+      //       label: `Let it go`,
+      //       custom_id: `let_go_in_coup`,
+      //     },
+      //     {
+      //       type: ComponentType.BUTTON,
+      //       style: ButtonStyle.DESTRUCTIVE,
+      //       label: `Challenge`,
+      //       custom_id: oneLineTrim`challenge_
+      //       ${blockingPlayer.id}_${influences[0]}_${influences[1]}
+      //       _coup`,
+      //     },
+      //   ],
+      // },
+
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setCustomId("let_go_in_coup")
+          .setStyle("PRIMARY")
+          .setLabel("Let it go"),
+        new MessageButton()
+          .setCustomId(
+            oneLineTrim`challenge_
+            ${blockingPlayer.id}_${influences[0]}_${influences[1]}
+            _coup`,
+          )
+          .setStyle("DANGER")
+          .setLabel("Challenge"),
+      );
+
+      await channel.send({
         content: activePlayers
           .filter((p) => blockingPlayer && p.id !== blockingPlayer.id)
           .map((p) => `<@${p.id}>`)
           .join(", "),
-        options: { embed },
-        components: [
-          {
-            components: [
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.PRIMARY,
-                label: `Let it go`,
-                custom_id: `let_go_in_coup`,
-              },
-              {
-                type: ComponentType.BUTTON,
-                style: ButtonStyle.DESTRUCTIVE,
-                label: `Challenge`,
-                custom_id: oneLineTrim`challenge_
-                ${blockingPlayer.id}_${influences[0]}_${influences[1]}
-                _coup`,
-              },
-            ],
-          },
-        ],
+        options: { embeds: [embed] },
+        components: [row],
       });
 
       const answer = await new Promise<ChallengeOrNotData>((resolve) => {
@@ -177,7 +195,7 @@ export const handleSteal = async ({
             `,
             );
 
-          await channel.send(embed);
+          await channel.send({ embeds: [embed] });
 
           await sleep(2000);
         }
@@ -218,7 +236,7 @@ export const handleSteal = async ({
         `,
         );
 
-      await channel.send(embed);
+      await channel.send({ embeds: [embed] });
 
       await sleep(2000);
     }
@@ -267,7 +285,7 @@ export const handleSteal = async ({
       `,
         );
 
-      await channel.send(embed);
+      await channel.send({ embeds: [embed] });
 
       await sleep(2000);
     }

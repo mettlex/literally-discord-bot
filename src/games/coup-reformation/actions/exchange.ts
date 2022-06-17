@@ -1,8 +1,11 @@
 import { oneLine } from "common-tags";
-import { MessageEmbed } from "discord.js";
-import { ButtonStyle, ComponentType } from "slash-create";
+import {
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  TextChannel,
+} from "discord.js";
 import { flatColors } from "../../../config";
-import { ExtendedTextChannel } from "../../../extension";
 import { shuffleArray } from "../../../utils/array";
 import { handleChallenge } from "../game-loop";
 import { ChallengeOrNotData, CoupGame, CoupPlayer, Influence } from "../types";
@@ -15,7 +18,7 @@ export const handleExchange = async ({
 }: {
   game: CoupGame;
   player: CoupPlayer;
-  channel: ExtendedTextChannel;
+  channel: TextChannel;
 }) => {
   const answer = await new Promise<ChallengeOrNotData>((resolve) => {
     if (!game) {
@@ -55,21 +58,17 @@ export const handleExchange = async ({
         `,
       );
 
-    await channel.sendWithComponents({
+    const row = new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId("coup_show_influences")
+        .setStyle("PRIMARY")
+        .setLabel("Return Two Influences"),
+    );
+
+    await channel.send({
       content: `<@${player.id}>`,
-      options: { embed },
-      components: [
-        {
-          components: [
-            {
-              type: ComponentType.BUTTON,
-              style: ButtonStyle.PRIMARY,
-              label: "Return Two Influences",
-              custom_id: "coup_show_influences",
-            },
-          ],
-        },
-      ],
+      options: { embeds: [embed] },
+      components: [row],
     });
 
     await new Promise((resolve) => {
