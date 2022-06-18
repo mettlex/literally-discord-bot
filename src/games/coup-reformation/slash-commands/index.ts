@@ -85,7 +85,7 @@ export const showInfluences = async (
         type: ComponentType.BUTTON,
         style: ButtonStyle.DESTRUCTIVE,
         label: `DISMISS ${inf.name.toUpperCase()}`,
-        customId: `coup_dismiss_influence_${i}`,
+        custom_id: `coup_dismiss_influence_${i}`,
         disabled: inf.dismissed,
       }),
     );
@@ -105,7 +105,7 @@ export const showInfluences = async (
         type: ComponentType.BUTTON,
         style: ButtonStyle.SECONDARY,
         label: `RETURN ${inf.name.toUpperCase()}`,
-        customId: `coup_return_influence_${i}`,
+        custom_id: `coup_return_influence_${i}`,
         disabled: inf.returned,
       }));
 

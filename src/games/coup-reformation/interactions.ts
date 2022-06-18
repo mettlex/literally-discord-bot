@@ -8,7 +8,12 @@ import {
   TextChannel,
 } from "discord.js";
 import EventEmitter from "events";
-import { ButtonStyle, ComponentType, SlashCreator } from "slash-create";
+import {
+  AnyComponentButton,
+  ButtonStyle,
+  ComponentType,
+  SlashCreator,
+} from "slash-create";
 import { flatColors } from "../../config";
 import { getLiterallyUserModel } from "../../database";
 import { hasVoted } from "../../top.gg/api";
@@ -255,6 +260,13 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
         channel.send({ embeds: [embed] });
       } else {
+        const component: AnyComponentButton = {
+          type: ComponentType.BUTTON,
+          style: ButtonStyle.PRIMARY,
+          label: "Return One Influence",
+          custom_id: "coup_show_influences",
+        };
+
         await ctx.send(
           `**${player.name}** returned 1 influence. 1 more left to return.`,
           {
@@ -262,14 +274,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
             components: [
               {
                 type: ComponentType.ACTION_ROW,
-                components: [
-                  {
-                    type: ComponentType.BUTTON,
-                    style: ButtonStyle.PRIMARY,
-                    label: "Return One Influence",
-                    customId: "coup_show_influences",
-                  },
-                ],
+                components: [component],
               },
             ],
           },
@@ -329,7 +334,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
                       // @ts-ignore
                       style: ButtonStyle.LINK,
                       url: "https://top.gg/bot/842397311916310539/vote",
-                      customId: "vote_for_literally",
+                      custom_id: "vote_for_literally",
                     },
                   ],
                 },
@@ -364,7 +369,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
                       // @ts-ignore
                       style: ButtonStyle.LINK,
                       url: "https://top.gg/bot/842397311916310539/vote",
-                      customId: "vote_for_literally",
+                      custom_id: "vote_for_literally",
                     },
                   ],
                 },
