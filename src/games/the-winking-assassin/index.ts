@@ -1,6 +1,6 @@
 import { Client } from "discord.js";
 import { SlashCreator } from "slash-create";
-import { getGuildIds } from "../../app";
+import { getGuildIds } from "../../utils/shards";
 import { startTWAGame } from "./game-loop";
 import { makeTheWinkingAssassinCommands } from "./slash-commands";
 import { ActiveTWAGames, TheWinkingAssassinGame } from "./types";
@@ -22,16 +22,16 @@ const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
   creator.registerCommands(makeTheWinkingAssassinCommands(guildIDs));
 };
 
-export const setupTheWinkingAssassinGame = (
-  _client: Client,
+export const setupTheWinkingAssassinGame = async (
+  client: Client,
   creator: SlashCreator,
 ) => {
-  let guildIDs = getGuildIds();
+  let guildIDs = await getGuildIds(client);
 
   registerCommnads(creator, guildIDs);
 
-  setInterval(() => {
-    const newGuildIds = getGuildIds();
+  setInterval(async () => {
+    const newGuildIds = await getGuildIds(client);
 
     const foundNewGuildIds = newGuildIds.filter((id) => !guildIDs.includes(id));
 

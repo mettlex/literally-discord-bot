@@ -62,7 +62,7 @@ export const handleForeignAid = async ({
 
     const embed = new MessageEmbed()
       .setColor(flatColors.blue)
-      .setAuthor(player.name, player.avatarURL)
+      .setAuthor({ name: player.name, iconURL: player.avatarURL })
       .setDescription(
         oneLine`
         I took **2** coins as foreign aid
@@ -105,7 +105,10 @@ export const handleForeignAid = async ({
 
     const embed = new MessageEmbed()
       .setColor(flatColors.yellow)
-      .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
+      .setAuthor({
+        name: blockingPlayer.name,
+        iconURL: blockingPlayer.avatarURL,
+      })
       .setDescription(
         oneLine`
           I block ${player.name}'s foreign aid with my **${influence}**.
@@ -162,7 +165,7 @@ export const handleForeignAid = async ({
 
         const embed = new MessageEmbed()
           .setColor(flatColors.blue)
-          .setAuthor(player.name, player.avatarURL)
+          .setAuthor({ name: player.name, iconURL: player.avatarURL })
           .setDescription(
             oneLine`
         I took **2** coins as foreign aid

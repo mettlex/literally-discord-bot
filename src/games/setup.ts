@@ -66,7 +66,7 @@ export const setupGame = (
 
   if (messageHandlers instanceof Array) {
     for (const handler of messageHandlers) {
-      client.on("message", handler);
+      client.on("messageCreate", handler);
     }
   }
 };

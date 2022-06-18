@@ -78,7 +78,10 @@ export const handleSteal = async ({
 
       const embed = new MessageEmbed()
         .setColor(flatColors.yellow)
-        .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
+        .setAuthor({
+          name: blockingPlayer.name,
+          iconURL: blockingPlayer.avatarURL,
+        })
         .setDescription(
           oneLine`
           I block ${player.name}'s stealing
@@ -166,7 +169,7 @@ export const handleSteal = async ({
 
           const embed = new MessageEmbed()
             .setColor(flatColors.blue)
-            .setAuthor(player.name, player.avatarURL)
+            .setAuthor({ name: player.name, iconURL: player.avatarURL })
             .setDescription(
               oneLine`
               I stole **${stolenCoins}** coins from ${targetPlayer.name}
@@ -210,7 +213,7 @@ export const handleSteal = async ({
 
       const embed = new MessageEmbed()
         .setColor(flatColors.blue)
-        .setAuthor(player.name, player.avatarURL)
+        .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(
           oneLine`
           I stole **${stolenCoins}** coins from ${targetPlayer.name}
@@ -259,7 +262,7 @@ export const handleSteal = async ({
 
       const embed = new MessageEmbed()
         .setColor(flatColors.blue)
-        .setAuthor(player.name, player.avatarURL)
+        .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(
           oneLine`
         I stole **${stolenCoins}** coins from ${targetPlayer.name}

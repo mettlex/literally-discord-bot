@@ -136,7 +136,7 @@ export const handleAssassinate = async ({
     if (dismissedInfluence) {
       const embed = new MessageEmbed()
         .setColor(flatColors.blue as ColorResolvable)
-        .setAuthor(player.name, player.avatarURL)
+        .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(
           oneLine`
           I paid **3** coins to assassinate ${targetPlayer.name}'s ${
@@ -176,7 +176,10 @@ export const handleAssassinate = async ({
 
       const embed = new MessageEmbed()
         .setColor(flatColors.yellow as ColorResolvable)
-        .setAuthor(blockingPlayer.name, blockingPlayer.avatarURL)
+        .setAuthor({
+          name: blockingPlayer.name,
+          iconURL: blockingPlayer.avatarURL,
+        })
         .setDescription(
           oneLine`
           I block ${player.name}'s assassination

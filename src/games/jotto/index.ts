@@ -3,7 +3,6 @@ import path from "path";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { Client, Message, TextChannel } from "discord.js";
 import { SlashCreator } from "slash-create";
-import { getGuildIds } from "../../app";
 import { ActiveJottoGames, JottoData } from "./types";
 import { setupGame } from "../setup";
 import { Action } from "../types";
@@ -17,6 +16,7 @@ import {
 import { flatColors } from "../../config";
 import { oneLine } from "common-tags";
 import { sendHelpMessage } from "../../help";
+import { getGuildIds } from "../../utils/shards";
 
 export const sendJottoHelpMessage = (message: Message) => {
   sendHelpMessage(
@@ -41,7 +41,9 @@ export const actions: Action[] = [
         const { message: initialMessage, embed, interval } = initialData;
 
         embed.setColor(flatColors.blue);
-        embed.setFooter(`0 seconds remaining.`);
+        embed.setFooter({
+          text: `0 seconds remaining.`,
+        });
 
         try {
           await initialMessage.edit({ embeds: [embed] });
@@ -137,13 +139,13 @@ const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
   creator.registerCommands(makeJottoCommands(guildIDs));
 };
 
-export const setupJottoGame = (client: Client, creator: SlashCreator) => {
-  let guildIDs = getGuildIds();
+export const setupJottoGame = async (client: Client, creator: SlashCreator) => {
+  let guildIDs = await getGuildIds(client);
 
   registerCommnads(creator, guildIDs);
 
-  setInterval(() => {
-    const newGuildIds = getGuildIds();
+  setInterval(async () => {
+    const newGuildIds = await getGuildIds(client);
 
     const foundNewGuildIds = newGuildIds.filter((id) => !guildIDs.includes(id));
 

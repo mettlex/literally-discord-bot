@@ -21,7 +21,6 @@ import {
   setCurrentCoupGame,
 } from "./data";
 import { sendCoupHelpMessage } from "./handlers/help";
-import { getGuildIds } from "../../app";
 import {
   makeCoupCommands,
   slashCommandOptionsForCheckCards,
@@ -33,6 +32,7 @@ import { handleInteractions } from "./interactions";
 import { hasVoted } from "../../top.gg/api";
 import { getLiterallyUserModel } from "../../database";
 import sleep from "../../utils/sleep";
+import { getGuildIds } from "../../utils/shards";
 
 export const actions: Action[] = [
   {
@@ -461,12 +461,12 @@ export const setupCoupReformationGame = async (
 ) => {
   setupGame(client, prefixes, [...actions]);
 
-  let guildIDs = getGuildIds();
+  let guildIDs = await getGuildIds(client);
 
   registerCommnads(creator, guildIDs);
 
-  setInterval(() => {
-    const newGuildIds = getGuildIds();
+  setInterval(async () => {
+    const newGuildIds = await getGuildIds(client);
 
     const foundNewGuildIds = newGuildIds.filter((id) => !guildIDs.includes(id));
 
@@ -479,7 +479,7 @@ export const setupCoupReformationGame = async (
     }
   }, 3000);
 
-  client.on("message", (message) => {
+  client.on("messageCreate", (message) => {
     const firstMentionedUser = message.mentions.users.first();
 
     if (message.author.bot || !firstMentionedUser) {

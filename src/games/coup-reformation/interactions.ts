@@ -40,11 +40,11 @@ const removeButtonsFromMessage = async (
     const embed = new MessageEmbed().setColor(color);
 
     if (oldEmbed.author?.name) {
-      embed.setAuthor(
-        oldEmbed.author.name,
-        oldEmbed.author.iconURL,
-        oldEmbed.author.url,
-      );
+      embed.setAuthor({
+        name: oldEmbed.author.name,
+        iconURL: oldEmbed.author.iconURL,
+        url: oldEmbed.author.url,
+      });
     }
 
     if (oldEmbed.description) {
@@ -187,7 +187,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
       const embed = new MessageEmbed()
         .setColor(flatColors.red)
-        .setAuthor(player.name, player.avatarURL)
+        .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setThumbnail(influence.imageURL)
         .setDescription(description);
 
@@ -246,7 +246,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
         const embed = new MessageEmbed()
           .setColor(flatColors.blue)
-          .setAuthor(player.name, player.avatarURL)
+          .setAuthor({ name: player.name, iconURL: player.avatarURL })
           .setDescription(description);
 
         const channel = (await client.channels.fetch(

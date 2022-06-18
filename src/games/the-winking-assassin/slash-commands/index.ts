@@ -103,9 +103,13 @@ const processStartCommand = async (ctx: CommandContext) => {
 
   const client = getDiscordJSClient();
 
-  const channel = client.channels.cache.get(ctx.channelID) as
-    | TextChannel
-    | undefined;
+  // const channel = client.channels.cache.get(ctx.channelID) as
+  //   | TextChannel
+  //   | undefined;
+
+  const channel = (await client.channels.fetch(ctx.channelID, {
+    cache: false,
+  })) as TextChannel | undefined;
 
   if (!channel || channel.type !== "GUILD_TEXT") {
     // eslint-disable-next-line max-len
@@ -206,17 +210,28 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
       const client = getDiscordJSClient();
 
-      const member = client.guilds.cache
-        .get(ctx.guildID || "")!
-        .members.cache.get(userId)!;
+      // const member = client.guilds.cache
+      //   .get(ctx.guildID || "")!
+      //   .members.cache.get(userId)!;
+
+      const member = await (
+        await client.guilds.fetch(ctx.guildID || "")
+      ).members.fetch({ user: userId, cache: false });
 
       if (!lastAction) {
         actionText = oneLine`looking at no one.
         You're now staring at **${member.nickname || member.user.username}**.`;
       } else if (lastAction.includes("witnessed")) {
-        const lookedAt = client.guilds.cache
-          .get(ctx.guildID || "")!
-          .members.cache.get(lastAction.replace(/[^0-9]/g, ""))!;
+        // const lookedAt = client.guilds.cache
+        //   .get(ctx.guildID || "")!
+        //   .members.cache.get(lastAction.replace(/[^0-9]/g, ""))!;
+
+        const lookedAt = await (
+          await client.guilds.fetch(ctx.guildID || "")
+        ).members.fetch({
+          user: lastAction.replace(/[^0-9]/g, ""),
+          cache: false,
+        });
 
         actionText = `looking at **${
           lookedAt.nickname || lookedAt.user.username
@@ -337,9 +352,13 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
       const client = getDiscordJSClient();
 
-      const member = client.guilds.cache
-        .get(ctx.guildID || "")!
-        .members.cache.get(userId)!;
+      // const member = client.guilds.cache
+      //   .get(ctx.guildID || "")!
+      //   .members.cache.get(userId)!;
+
+      const member = await (
+        await client.guilds.fetch(ctx.guildID || "")
+      ).members.fetch({ user: userId, cache: false });
 
       const victimsLastAction = game.playerActions[userId].splice(-1)[0];
 
@@ -416,9 +435,13 @@ export const makeTheWinkingAssassinCommands = (guildIDs: string[]) => {
 
       const client = getDiscordJSClient();
 
-      const member = client.guilds.cache
-        .get(ctx.guildID || "")!
-        .members.cache.get(userId)!;
+      // const member = client.guilds.cache
+      //   .get(ctx.guildID || "")!
+      //   .members.cache.get(userId)!;
+
+      const member = await (
+        await client.guilds.fetch(ctx.guildID || "")
+      ).members.fetch({ user: userId, cache: false });
 
       if (!game.assassinIds.includes(userId)) {
         game.alivePlayerIds.splice(game.alivePlayerIds.indexOf(ctx.user.id), 1);

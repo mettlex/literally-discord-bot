@@ -37,6 +37,8 @@ const options: ClientOptions = {
 
 const client = new Client(options);
 
+export const getDiscordJSClient = () => client;
+
 client.once("ready", async () => {
   const creator = new SlashCreator({
     applicationID: process.env.APP_ID || "",
@@ -93,6 +95,3 @@ client.once("ready", async () => {
 });
 
 client.login(process.env.TOKEN);
-
-export const getGuildIds = () => client.guilds.cache.map((g) => g.id);
-export const getDiscordJSClient = () => client;

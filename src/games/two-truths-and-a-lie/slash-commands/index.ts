@@ -60,9 +60,13 @@ export const makeTwoTruthsAndALieCommand = (guildIDs: string[]) => {
 
       const client = getDiscordJSClient();
 
-      const channel = client.channels.cache.get(ctx.channelID) as
-        | TextChannel
-        | undefined;
+      // const channel = client.channels.cache.get(ctx.channelID) as
+      //   | TextChannel
+      //   | undefined;
+
+      const channel = (await client.channels.fetch(ctx.channelID, {
+        cache: false,
+      })) as TextChannel | undefined;
 
       if (!channel) {
         // eslint-disable-next-line max-len
@@ -121,7 +125,9 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     `,
     )
     .addField(timefieldLabel, `${maxTimeInSeconds} seconds`)
-    .setFooter("Which one is a lie?");
+    .setFooter({
+      text: "Which one is a lie?",
+    });
 
   const message = await channel.send({ embeds: [embed] }).catch((e) => {
     // eslint-disable-next-line no-console
@@ -200,8 +206,16 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       continue;
     }
 
+    // if (
+    //   reaction.emoji.name === stopEmoji &&
+    //   reaction.users.cache.find((u) => u.id === ctx.user.id)
+    // ) {
+    //   break;
+    // }
+
     if (
       reaction.emoji.name === stopEmoji &&
+      // must use cache ig
       reaction.users.cache.find((u) => u.id === ctx.user.id)
     ) {
       break;

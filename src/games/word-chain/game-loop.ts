@@ -42,7 +42,11 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     const winnerUserId = currentGame.userIds[0];
 
-    const winner = message.client.users.cache.get(winnerUserId);
+    // const winner = message.client.users.cache.get(winnerUserId);
+
+    const winner = await message.client.users.fetch(winnerUserId, {
+      cache: false,
+    });
 
     const embed = new MessageEmbed()
       .setTitle("Congrats! We have a winner!")

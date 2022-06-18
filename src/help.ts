@@ -17,7 +17,7 @@ import {
   SlashCommand,
   SlashCreator,
 } from "slash-create";
-import { getDiscordJSClient, getGuildIds } from "./app";
+import { getDiscordJSClient } from "./app";
 import packageInfo from "../package.json";
 import sleep from "./utils/sleep";
 import { prefixes as wordchainPrefixes } from "./games/word-chain/config";
@@ -33,6 +33,7 @@ import { actions as jottoActions } from "./games/jotto";
 import { prefixes as jottoPrefixes } from "./games/jotto/config";
 import { actions as coupCommandActions } from "./games/coup-reformation";
 import { prefixes as coupPrefixes } from "./games/coup-reformation/config";
+import { getGuildIds } from "./utils/shards";
 
 const helpButtons = [
   {
@@ -61,13 +62,11 @@ const registerCommnads = (creator: SlashCreator, guildIDs: string[]) => {
   creator.registerCommand(makeHelpSlashCommand(guildIDs));
 };
 
-export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
+export const setupHelpMenu = async (client: Client, creator: SlashCreator) => {
   creator.on("componentInteraction", async (ctx) => {
-    const channel =
-      (client.guilds.cache
-        .get(ctx.guildID || "")
-        ?.channels.cache.get(ctx.channelID) as TextChannel) ||
-      (client.channels.cache.get(ctx.channelID) as DMChannel);
+    const channel = (await client.channels.fetch(ctx.channelID)) as
+      | TextChannel
+      | DMChannel;
 
     if (ctx.customID === helpButtons[0].customId) {
       await ctx.send("Check the message below 👇");
@@ -84,7 +83,7 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     }
   });
 
-  client.on("message", (message) => {
+  client.on("messageCreate", (message) => {
     if (
       message.author.bot ||
       !lyPrefixes.find((p) => message.content.toLowerCase().startsWith(p)) ||
@@ -112,12 +111,12 @@ export const setupHelpMenu = (client: Client, creator: SlashCreator) => {
     });
   });
 
-  let guildIds = getGuildIds();
+  let guildIds = await getGuildIds(client);
 
   registerCommnads(creator, guildIds);
 
-  setInterval(() => {
-    const newGuildIds = client.guilds.cache.map((g) => g.id);
+  setInterval(async () => {
+    const newGuildIds = await getGuildIds(client);
 
     const foundNewGuildIds = newGuildIds.filter((id) => !guildIds.includes(id));
 
@@ -165,7 +164,7 @@ const options: ApplicationCommandOption[] = [
   },
 ];
 
-const makeHelpSlashCommand = (guildIDs: string[]) =>
+export const makeHelpSlashCommand = (guildIDs: string[]) =>
   class HelpSlashCommand extends SlashCommand {
     constructor(creator: SlashCreator) {
       super(creator, {
@@ -200,20 +199,19 @@ const makeHelpSlashCommand = (guildIDs: string[]) =>
 
       const client = getDiscordJSClient();
 
-      const channel = client.guilds.cache
-        .get(interactionData.guild_id)
-        ?.channels.cache.find((c) => c.id === ctx.channelID);
+      // const channel = client.guilds.cache
+      //   .get(interactionData.guild_id)
+      //   ?.channels.cache.find((c) => c.id === ctx.channelID);
+
+      const channel = await client.channels.fetch(ctx.channelID, {
+        cache: false,
+      });
 
       if (!channel || channel.type !== "GUILD_TEXT") {
         return;
       }
 
-      await sendHelpMessage(
-        ctx.user.id,
-        channel as TextChannel,
-        gameValue,
-        client,
-      );
+      sendHelpMessage(ctx.user.id, channel as TextChannel, gameValue, client);
 
       const tmpMessage = await ctx
         .send("Check the help menu below 👇")

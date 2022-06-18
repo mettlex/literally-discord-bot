@@ -280,7 +280,9 @@ export const changeJottoTurn = async (
 
   embed.addField("Discovered Letters", revealedLetters, true);
 
-  embed.setFooter(getCriteriaMessageFooter(timeRemainingInSeconds));
+  embed.setFooter({
+    text: getCriteriaMessageFooter(timeRemainingInSeconds),
+  });
 
   const criteriaMessage = await message.channel
     .send({
@@ -324,7 +326,9 @@ export const changeJottoTurn = async (
     }
 
     if (timeRemainingInSeconds < 0) {
-      embed.setFooter(getCriteriaMessageFooter(0));
+      embed.setFooter({
+        text: getCriteriaMessageFooter(0),
+      });
 
       await criteriaMessage
         .edit({ content: criteriaMessage.content, embeds: [embed] })
@@ -339,7 +343,9 @@ export const changeJottoTurn = async (
 
     timeRemainingInSeconds = timeRemainingInSeconds - tick;
 
-    embed.setFooter(getCriteriaMessageFooter(timeRemainingInSeconds));
+    embed.setFooter({
+      text: getCriteriaMessageFooter(timeRemainingInSeconds),
+    });
 
     await criteriaMessage
       .edit({ content: criteriaMessage.content, embeds: [embed] })
@@ -395,7 +401,9 @@ export const changeJottoTurn = async (
   }
 
   try {
-    embed.setFooter(getCriteriaMessageFooter(0));
+    embed.setFooter({
+      text: getCriteriaMessageFooter(0),
+    });
 
     await criteriaMessage
       .edit({ content: criteriaMessage.content, embeds: [embed] })
@@ -620,7 +628,9 @@ export const askToJoinJottoGame = async (
     }-letter secret word to join.
   `);
 
-  embed.setFooter(`${timeToJoinInSeconds} seconds remaining`);
+  embed.setFooter({
+    text: `${timeToJoinInSeconds} seconds remaining`,
+  });
 
   const message = await channel.send({ embeds: [embed] });
 
@@ -655,7 +665,9 @@ export const askToJoinJottoGame = async (
         startJottoGame(message);
       }
 
-      embed.setFooter(`0 seconds remaining.`);
+      embed.setFooter({
+        text: `0 seconds remaining.`,
+      });
 
       message.edit({ embeds: [embed] }).catch((e) => {
         // eslint-disable-next-line no-console
@@ -667,7 +679,9 @@ export const askToJoinJottoGame = async (
     }
 
     if (t !== 0) {
-      embed.setFooter(`${timeToJoinInSeconds - t} seconds remaining.`);
+      embed.setFooter({
+        text: `${timeToJoinInSeconds - t} seconds remaining.`,
+      });
 
       message.edit({ embeds: [embed] }).catch((e) => {
         // eslint-disable-next-line no-console

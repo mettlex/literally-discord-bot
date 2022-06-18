@@ -85,13 +85,18 @@ export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
 
       const messageId = ctx.customID.split("_").slice(-1)[0];
 
-      const channel = client.channels.cache.get(ctx.channelID) as TextChannel;
+      // const channel = client.channels.cache.get(ctx.channelID)
+      // as TextChannel;
 
-      if (channel.type !== "GUILD_TEXT") {
+      const channel = (await client.channels.fetch(ctx.channelID, {
+        cache: false,
+      })) as TextChannel | undefined;
+
+      if (!channel || channel.type !== "GUILD_TEXT") {
         return;
       }
 
-      const message = channel.messages.cache.get(messageId);
+      const message = await channel.messages.fetch(messageId, { cache: false });
 
       if (!message || message.author.id !== ctx.user.id) {
         return;

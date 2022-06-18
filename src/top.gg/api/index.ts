@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { getAppRootDir } from "../../app";
 import { Client } from "discord.js";
+import { getServerCount } from "../../utils/shards";
 
 if (!process.env.TOPGG_API_TOKEN) {
   const envFilePath = path.resolve(getAppRootDir(), "..", ".env");
@@ -34,7 +35,7 @@ export const hasVoted = async (userId: string): Promise<boolean | null> => {
 export const postStats = async (client: Client) => {
   try {
     const result = await api.postStats({
-      serverCount: client.guilds.cache.size,
+      serverCount: await getServerCount(client),
     });
     return result;
   } catch (error) {

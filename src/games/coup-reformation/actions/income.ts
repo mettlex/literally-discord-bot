@@ -14,7 +14,7 @@ export const handleIncome = async ({
 }) => {
   const embed = new MessageEmbed()
     .setColor(flatColors.blue)
-    .setAuthor(player.name, player.avatarURL)
+    .setAuthor({ name: player.name, iconURL: player.avatarURL })
     .setDescription(
       oneLine`
         I took **1** coin as income and I have **${player.coins}** coin${

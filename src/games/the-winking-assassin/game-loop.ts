@@ -84,7 +84,9 @@ export const askToJoinTheWinkingAssassinGame = async (
         oneLine`Time to find the assassin is
         **${timeLimitInMinutes}** minutes after the game starts.`,
     )
-    .setFooter(`${maxTimeInSecondsToJoin} seconds left to join`);
+    .setFooter({
+      text: `${maxTimeInSecondsToJoin} seconds left to join`,
+    });
 
   const row = new MessageActionRow().addComponents(
     new MessageButton()
@@ -111,7 +113,9 @@ export const askToJoinTheWinkingAssassinGame = async (
     const remainingTimeInSeconds = Math.floor(remainingTime / 1000);
 
     if (time % (3 * 1000) === 0) {
-      embed.setFooter(`${remainingTimeInSeconds} seconds left to join`);
+      embed.setFooter({
+        text: `${remainingTimeInSeconds} seconds left to join`,
+      });
 
       message.edit({ embeds: [embed] }).catch((e) => {
         // eslint-disable-next-line no-console
@@ -168,9 +172,13 @@ export const startTWAGame = async (ctx: ComponentContext | CommandContext) => {
 
   const client = getDiscordJSClient();
 
-  const channel = client.channels.cache.get(ctx.channelID) as
-    | TextChannel
-    | undefined;
+  // const channel = client.channels.cache.get(ctx.channelID) as
+  //   | TextChannel
+  //   | undefined;
+
+  const channel = (await client.channels.fetch(ctx.channelID, {
+    cache: false,
+  })) as TextChannel | undefined;
 
   if (!channel) {
     return;

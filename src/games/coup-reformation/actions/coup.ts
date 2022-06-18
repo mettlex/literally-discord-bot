@@ -91,7 +91,7 @@ export const handleCoup = async ({
   if (dismissedInfluence) {
     const embed = new MessageEmbed()
       .setColor(flatColors.blue)
-      .setAuthor(player.name, player.avatarURL)
+      .setAuthor({ name: player.name, iconURL: player.avatarURL })
       .setDescription(
         oneLine`
         I paid **7** coins to coup against ${targetPlayer.name}'s ${

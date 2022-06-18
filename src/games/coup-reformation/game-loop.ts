@@ -58,11 +58,11 @@ export const askToJoinCoupGame = async (message: Message) => {
   `,
     )
     .addField("Time left to join", `${timeToJoinInSeconds} seconds`, false)
-    .setFooter(
-      `${
+    .setFooter({
+      text: `${
         message.member?.nickname || message.author.username
       } is asking you to join`,
-    )
+    })
     .setThumbnail(
       "https://cdn.discordapp.com/attachments/848495134874271764/854318440654831636/roles.png",
     )
@@ -172,7 +172,9 @@ export const startCoupGame = async (message: Message) => {
     .addField("Influences in Deck", `${game.deck.length}`, true)
     .addField("Total Players", `${game.players.length}`, true)
 
-    .setFooter(`Check your influences by tapping the button below.`);
+    .setFooter({
+      text: `Check your influences by tapping the button below.`,
+    });
 
   const row = new MessageActionRow().addComponents(
     new MessageButton()
@@ -319,7 +321,10 @@ export const changeCoupTurn = async (message: Message) => {
     )
     .setDescription(`${player.name}, it's your turn. Choose an action below.`)
     .setColor(flatColors.blue)
-    .setFooter(oneLine`${player.name}, take an action now!`, player.avatarURL);
+    .setFooter({
+      text: oneLine`${player.name}, take an action now!`,
+      iconURL: player.avatarURL,
+    });
 
   let actions: CoupActionNameInClassic[] = [];
 
@@ -563,7 +568,7 @@ export const changeCoupTurn = async (message: Message) => {
 
             const embed = new MessageEmbed()
               .setColor(flatColors.yellow)
-              .setAuthor(player.name, player.avatarURL)
+              .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
                 I want to take foreign aid. **2** coins please!
               
@@ -621,7 +626,7 @@ export const changeCoupTurn = async (message: Message) => {
 
             const embed = new MessageEmbed()
               .setColor(flatColors.yellow)
-              .setAuthor(player.name, player.avatarURL)
+              .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
                 I want to take tax using my duke. **3** coins please!
               
@@ -732,7 +737,7 @@ export const changeCoupTurn = async (message: Message) => {
 
             const embed = new MessageEmbed()
               .setColor(flatColors.yellow)
-              .setAuthor(player.name, player.avatarURL)
+              .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
                 I want to steal **2** coins from <@${
                   targetPlayer.id
@@ -852,7 +857,7 @@ export const changeCoupTurn = async (message: Message) => {
 
             const embed = new MessageEmbed()
               .setColor(flatColors.yellow)
-              .setAuthor(player.name, player.avatarURL)
+              .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
                 I want to pay **3** coins to assasinate one of <@${
                   targetPlayer.id
@@ -981,7 +986,7 @@ export const changeCoupTurn = async (message: Message) => {
 
             const embed = new MessageEmbed()
               .setColor(flatColors.yellow)
-              .setAuthor(player.name, player.avatarURL)
+              .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
                 I want to exchange influences using my ambassador.
               
@@ -1107,7 +1112,10 @@ export const eliminatePlayer = async (
   setCurrentCoupGame(channel.id, game);
 
   const embed = new MessageEmbed()
-    .setAuthor(`Player Eliminated`, eliminatedPlayer.avatarURL)
+    .setAuthor({
+      name: `Player Eliminated`,
+      iconURL: eliminatedPlayer.avatarURL,
+    })
     .setColor(flatColors.red)
     .setDescription(
       oneLine`${eliminatedPlayer.name}'s
@@ -1140,7 +1148,10 @@ export const handleChallenge = async ({
 
   const embed = new MessageEmbed()
     .setColor(flatColors.yellow)
-    .setAuthor(challengingPlayer.name, challengingPlayer.avatarURL)
+    .setAuthor({
+      name: challengingPlayer.name,
+      iconURL: challengingPlayer.avatarURL,
+    })
     .setDescription(
       oneLine`
             I challenge!

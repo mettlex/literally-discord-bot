@@ -169,8 +169,9 @@ const getDataFromThePinnedMessage = async (
     const connectedChainWords = parseInt(connectedWordsField.value);
     const lastCorrectMessageId = lastCorrectMessageIdField.value;
     const longestWord = longestWordField.value;
-    const longestWordAuthor = message.client.users.cache.get(
+    const longestWordAuthor = await message.client.users.fetch(
       longestWordAuthorField.value.replace(/[^0-9]/g, ""),
+      { cache: false },
     )!;
 
     return {
@@ -336,7 +337,9 @@ export const startUnlimitedMode = async (message: Message) => {
         // eslint-disable-next-line max-len
         `\n\nSend \`${prefixes[0]}${stopUnlimitedAction.commands[0]}\` to stop unlimited mode.`,
     )
-    .setFooter("[keep this message pinned to persist]")
+    .setFooter({
+      text: "[keep this message pinned to persist]",
+    })
     .addField(fieldNameForTotalWords, "0", true)
     .addField(fieldNameForConnectedWords, "0", true)
     .addField(fieldNameForLastCorrectMessageId, "N/A", true)
@@ -445,7 +448,9 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
                 stripIndents`Wait for another player to send a correct word. 
           After that, you can send another word.`,
               )
-              .setFooter("Wait for your turn please."),
+              .setFooter({
+                text: "Wait for your turn please.",
+              }),
           ],
           content: `please check:`,
         })
@@ -474,7 +479,9 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
               .setColor(flatColors.red)
               .setTitle("Not that word again!")
               .setDescription(`This **"${word}"** word has been used before.`)
-              .setFooter("Kindly send a new word."),
+              .setFooter({
+                text: "Kindly send a new word.",
+              }),
           ],
           content: `please...`,
         })
