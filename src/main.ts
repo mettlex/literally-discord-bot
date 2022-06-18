@@ -16,6 +16,7 @@ if (!process.env.TOKEN) {
 }
 
 const manager = new ShardingManager(`${__dirname}/app.js`, {
+  totalShards: parseInt(process.env.SHARD_COUNT || "1"),
   token: process.env.TOKEN,
 });
 
