@@ -13,7 +13,7 @@ const activeWordChains: ActiveUnlimitedWordChains = {};
 
 const fieldNameForTotalWords = "Total Correct Words";
 const fieldNameForConnectedWords = "Connected Words";
-const fieldNameForLastCorrectMessageId = "Last Correct Message ID";
+const fieldNameForLastCorrectMessageId = "Last Correct Message";
 const fieldNameForLongestWord = "Longest Word";
 const fieldNameForLongestWordAuthor = "Longest Word Author";
 
@@ -274,7 +274,12 @@ const setDataInThePinnedMessage = async (
 
     embed.fields[lastCorrectMessageIdFieldIndex] = {
       name: lastCorrectMessageIdField.name,
-      value: `${lastCorrectMessageId}`,
+      value:
+        (
+          await message.channel.messages
+            .fetch(lastCorrectMessageId, { cache: false })
+            .catch((_e) => undefined)
+        )?.content || lastCorrectMessageId,
       inline: true,
     };
 
