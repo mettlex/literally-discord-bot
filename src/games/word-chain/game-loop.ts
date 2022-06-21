@@ -355,7 +355,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       // eslint-disable-next-line max-len
       reason += `It doesn't have minimum of ${currentGame.currentWordMinLength} letters.`;
     } else if (condition3) {
-      reason += `The word isn't recognized by Hunspell & Wikitionary.`;
+      reason += `The word isn't recognized by Wikitionary.`;
     } else if (condition4) {
       reason += `The word was already used before.`;
     } else if (condition5) {

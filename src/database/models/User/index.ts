@@ -25,7 +25,7 @@ literallyUserSchema.static(
   async (
     user: Parameters<LiterallyUserModel["findOrCreate"]>[0],
   ): ReturnType<LiterallyUserModel["findOrCreate"]> => {
-    const LiterallyUser = await getLiterallyUserModel();
+    const LiterallyUser = getLiterallyUserModel();
 
     let foundUser = await LiterallyUser.findOne({ id: user.id }).catch((e) => {
       // eslint-disable-next-line no-console

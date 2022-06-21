@@ -185,7 +185,7 @@ export const actions: Action[] = [
 
       const voted = await hasVoted(message.author.id);
 
-      const LiterallyUser = await getLiterallyUserModel();
+      const LiterallyUser = getLiterallyUserModel();
 
       const literallyUser = await LiterallyUser.findOrCreate({
         id: message.author.id,
@@ -330,7 +330,7 @@ export const actions: Action[] = [
 
       const voted = await hasVoted(message.author.id);
 
-      const LiterallyUser = await getLiterallyUserModel();
+      const LiterallyUser = getLiterallyUserModel();
 
       const literallyUser = await LiterallyUser.findOrCreate({
         id: message.author.id,

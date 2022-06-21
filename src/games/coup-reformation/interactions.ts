@@ -299,7 +299,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
     } else if (ctx.customID === "join_coup") {
       const voted = await hasVoted(ctx.user.id);
 
-      const LiterallyUser = await getLiterallyUserModel();
+      const LiterallyUser = getLiterallyUserModel();
 
       const literallyUser = await LiterallyUser.findOrCreate({
         id: ctx.user.id,

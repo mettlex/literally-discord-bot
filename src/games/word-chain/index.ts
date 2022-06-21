@@ -62,7 +62,7 @@ export const actions = [
     handler: check,
     args: checkArgs,
     description: stripIndents`
-    Check your spelling using Hunspell checker
+    Check your spelling using the spell-checker
     `,
   },
   {

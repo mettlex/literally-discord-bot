@@ -28,6 +28,9 @@ if (!process.env.MONGODB_CONNECTION_URI) {
 let db: mongoose.Connection;
 let LiterallyUser: LiterallyUserModel;
 
+export const getDbConnection = () => db;
+export const getLiterallyUserModel = () => LiterallyUser;
+
 if (process.env.MONGODB_CONNECTION_URI) {
   mongoose
     .connect(process.env.MONGODB_CONNECTION_URI || "", {
@@ -55,6 +58,3 @@ if (process.env.MONGODB_CONNECTION_URI) {
     );
   });
 }
-
-export const getDbConnection = () => db;
-export const getLiterallyUserModel = () => LiterallyUser;

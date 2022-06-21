@@ -443,6 +443,11 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
   if (!isFirstWord) {
     if (lastCorrectMessageAuthorId === message.author.id) {
+      message.react("❌").catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      });
+
       message
         .reply({
           embeds: [
@@ -608,7 +613,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
     let reasonText =
       // eslint-disable-next-line max-len
-      `**"${word}"** is either a wrong spelling or unrecognized by Hunspell & Wikitionary`;
+      `**"${word}"** is either a wrong spelling or unrecognized by Wikitionary`;
 
     if (reason === "first_letter") {
       // eslint-disable-next-line max-len
