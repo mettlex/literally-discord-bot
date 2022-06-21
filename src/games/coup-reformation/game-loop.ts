@@ -78,6 +78,7 @@ export const askToJoinCoupGame = async (message: Message) => {
   );
 
   const initialMessage = (await channel.send({
+    content: "​",
     embeds: [embed],
     components: [row],
   })) as Message;
@@ -183,6 +184,7 @@ export const startCoupGame = async (message: Message) => {
   );
 
   await channel.send({
+    content: "​",
     embeds: [embed],
     components: [row],
   });
@@ -264,7 +266,7 @@ export const changeCoupTurn = async (message: Message) => {
       .setColor(flatColors.green)
       .setThumbnail(player.avatarURL);
 
-    await channel.send({ embeds: [embed] });
+    await channel.send({ content: "​", embeds: [embed] });
 
     logger.info(
       oneLine`> coup winner: ${player.tag} (${player.id})
@@ -301,7 +303,7 @@ export const changeCoupTurn = async (message: Message) => {
     if (currentInflencesText.length > 0) {
       influencesEmbed.setDescription(currentInflencesText);
 
-      await message.channel.send({ embeds: [influencesEmbed] });
+      await message.channel.send({ content: "​", embeds: [influencesEmbed] });
 
       await sleep(1000);
     }

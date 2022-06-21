@@ -42,7 +42,7 @@ const haltHanlder = (message: Message) => {
     .setDescription(`The running game has been stopped by ${message.author}.`)
     .setColor(flatColors.green as ColorResolvable);
 
-  message.channel.send({ embeds: [embed] }).catch((e) => {
+  message.channel.send({ content: "​", embeds: [embed] }).catch((e) => {
     // eslint-disable-next-line no-console
     console.error(e);
   });

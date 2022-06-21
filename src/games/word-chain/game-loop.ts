@@ -71,7 +71,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       );
     }
 
-    message.channel.send({ embeds: [embed] }).catch((e) => {
+    message.channel.send({ content: "​", embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -267,7 +267,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     logger.info(currentGame);
 
-    message.channel.send({ embeds: [embed2] }).catch((e) => {
+    message.channel.send({ content: "​", embeds: [embed2] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -308,7 +308,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     embed2.addField("Next Player", `<@${currentGame.currentUser}>`);
 
-    message.channel.send({ embeds: [embed2] }).catch((e) => {
+    message.channel.send({ content: "​", embeds: [embed2] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -554,6 +554,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         };
 
         message.channel.send({
+          content: "​",
           embeds: [
             new MessageEmbed()
               .setColor(flatColors.yellow)

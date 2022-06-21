@@ -146,7 +146,7 @@ const startHandler = (message: Message) => {
           )
           .setColor(flatColors.red as ColorResolvable);
 
-        message.channel.send({ embeds: [embed1] }).catch((e) => {
+        message.channel.send({ content: "​", embeds: [embed1] }).catch((e) => {
           // eslint-disable-next-line no-console
           console.error(e);
         });
@@ -169,7 +169,7 @@ const startHandler = (message: Message) => {
         )
         .setColor(flatColors.green as ColorResolvable);
 
-      message.channel.send({ embeds: [embed1] }).catch((e) => {
+      message.channel.send({ content: "​", embeds: [embed1] }).catch((e) => {
         // eslint-disable-next-line no-console
         console.error(e);
       });
@@ -222,6 +222,7 @@ const startHandler = (message: Message) => {
 
   channel
     .send({
+      content: "​",
       embeds: [embed],
       components: [row],
     })

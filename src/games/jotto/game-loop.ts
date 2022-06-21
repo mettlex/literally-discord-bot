@@ -141,7 +141,7 @@ export const changeJottoTurn = async (
 
     embed.setDescription(embed.description + scoresText);
 
-    message.channel.send({ embeds: [embed] });
+    message.channel.send({ content: "​", embeds: [embed] });
 
     logger.info(`Game ended: ${new Date()}`);
 
@@ -632,7 +632,7 @@ export const askToJoinJottoGame = async (
     text: `${timeToJoinInSeconds} seconds remaining`,
   });
 
-  const message = await channel.send({ embeds: [embed] });
+  const message = await channel.send({ content: "​", embeds: [embed] });
 
   const tickInSeconds = 5;
 

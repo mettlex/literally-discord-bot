@@ -352,7 +352,7 @@ export const startUnlimitedMode = async (message: Message) => {
     .addField(fieldNameForLongestWordAuthor, "N/A", true);
 
   const sentMessage = await message.channel
-    .send({ embeds: [embed] })
+    .send({ content: "​", embeds: [embed] })
     .catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);

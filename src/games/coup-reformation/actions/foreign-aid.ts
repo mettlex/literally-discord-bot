@@ -88,7 +88,7 @@ export const handleForeignAid = async ({
       `,
       );
 
-    await channel.send({ embeds: [embed] });
+    await channel.send({ content: "​", embeds: [embed] });
 
     await sleep(2000);
   }
@@ -191,7 +191,7 @@ export const handleForeignAid = async ({
       `,
           );
 
-        await channel.send({ embeds: [embed] });
+        await channel.send({ content: "​", embeds: [embed] });
 
         await sleep(2000);
       }

@@ -138,6 +138,7 @@ export const actions: Action[] = [
       );
 
       channel.send({
+        content: "​",
         embeds: [embed],
         components: [row],
       });

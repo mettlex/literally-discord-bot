@@ -184,7 +184,7 @@ export const performInteraction = async ({
     } ${specificText}.
     `);
 
-    message.channel.send({ embeds: [embed] });
+    message.channel.send({ content: "​", embeds: [embed] });
   } catch (error) {
     logger.error(error as Error);
   }

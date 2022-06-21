@@ -164,7 +164,7 @@ export const handleAssassinate = async ({
         `,
         );
 
-      await channel.send({ embeds: [embed] });
+      await channel.send({ content: "​", embeds: [embed] });
     }
   };
 

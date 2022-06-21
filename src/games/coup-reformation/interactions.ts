@@ -138,6 +138,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
     if (ctx.customID === "coup_cs") {
       await ctx.send({
+        content: "​",
         ephemeral: true,
         embeds: [
           {
@@ -199,7 +200,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
         ctx.channelID,
       )) as TextChannel;
 
-      channel.send({ embeds: [embed] });
+      channel.send({ content: "​", embeds: [embed] });
 
       return;
     } else if (ctx.customID.startsWith("coup_return_influence_")) {
@@ -257,7 +258,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           ctx.channelID,
         )) as TextChannel;
 
-        channel.send({ embeds: [embed] });
+        channel.send({ content: "​", embeds: [embed] });
       } else {
         const component: AnyComponentButton = {
           type: ComponentType.BUTTON,

@@ -129,10 +129,12 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
       text: "Which one is a lie?",
     });
 
-  const message = await channel.send({ embeds: [embed] }).catch((e) => {
-    // eslint-disable-next-line no-console
-    console.error(e);
-  });
+  const message = await channel
+    .send({ content: "​", embeds: [embed] })
+    .catch((e) => {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    });
 
   if (!message) {
     return;
@@ -283,7 +285,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
         `,
       );
 
-    channel.send({ embeds: [embed] }).catch((e) => {
+    channel.send({ content: "​", embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -310,7 +312,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
         `,
       );
 
-    channel.send({ embeds: [embed] }).catch((e) => {
+    channel.send({ content: "​", embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });

@@ -41,7 +41,7 @@ export const handleIncome = async ({
     `,
     );
 
-  channel.send({ embeds: [embed] });
+  channel.send({ content: "​", embeds: [embed] });
 
   await sleep(2000);
 };

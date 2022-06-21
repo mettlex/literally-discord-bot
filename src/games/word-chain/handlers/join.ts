@@ -25,7 +25,7 @@ export const join = (message: Message) => {
       .setDescription(`The game is not joinable. ${message.author}`)
       .setColor(flatColors.red as ColorResolvable);
 
-    message.reply({ embeds: [embed] }).catch((e) => {
+    message.reply({ content: "​", embeds: [embed] }).catch((e) => {
       // eslint-disable-next-line no-console
       console.error(e);
     });
@@ -75,6 +75,7 @@ export const join = (message: Message) => {
 
     channel
       .send({
+        content: "​",
         embeds: [embed],
         components: [row],
       })
@@ -161,6 +162,7 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
 
     channel
       .send({
+        content: "​",
         embeds: [embed],
         components: [row],
       })

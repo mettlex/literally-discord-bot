@@ -69,7 +69,7 @@ export const handleTax = async ({
       `,
       );
 
-    await channel.send({ embeds: [embed] });
+    await channel.send({ content: "​", embeds: [embed] });
 
     await sleep(2000);
   } else if (challenging && challengingPlayer && influenceName) {
@@ -112,7 +112,7 @@ export const handleTax = async ({
       `,
         );
 
-      await channel.send({ embeds: [embed] });
+      await channel.send({ content: "​", embeds: [embed] });
 
       await sleep(2000);
     }
