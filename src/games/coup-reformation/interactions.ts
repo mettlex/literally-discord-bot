@@ -131,8 +131,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       );
 
       message.edit({
-        content: "",
-        options: { embeds: [embed] },
+        embeds: [embed],
         components: [row],
       });
     };

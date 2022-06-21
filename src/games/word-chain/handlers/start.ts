@@ -222,8 +222,7 @@ const startHandler = (message: Message) => {
 
   channel
     .send({
-      content: "",
-      options: { embeds: [embed] },
+      embeds: [embed],
       components: [row],
     })
     .catch((e) => {

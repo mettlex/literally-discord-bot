@@ -78,8 +78,7 @@ export const askToJoinCoupGame = async (message: Message) => {
   );
 
   const initialMessage = (await channel.send({
-    content: "",
-    options: { embeds: [embed] },
+    embeds: [embed],
     components: [row],
   })) as Message;
 
@@ -184,8 +183,7 @@ export const startCoupGame = async (message: Message) => {
   );
 
   await channel.send({
-    content: "",
-    options: { embeds: [embed] },
+    embeds: [embed],
     components: [row],
   });
 
