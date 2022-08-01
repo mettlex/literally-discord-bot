@@ -15,7 +15,7 @@ const spellCheckedWordCache: SpellCheckedWordCache = existsSync(FILE_PATH)
   ? JSON.parse(readFileSync(FILE_PATH, { encoding: "utf8" }))
   : {};
 
-const getSpellCheckedWord = (word: string) => {
+const getSpellCheckedWordFromCache = (word: string) => {
   if (spellCheckedWordCache[word] === true) {
     return true;
   } else if (spellCheckedWordCache[word] === false) {
@@ -45,15 +45,9 @@ const setSpellCheckedWord = (word: string, result: boolean) => {
   });
 };
 
-export const checkSpell = async (word: string): Promise<boolean> => {
-  word = word.toLowerCase();
-
-  if (getSpellCheckedWord(word) === true) {
-    return true;
-  } else if (getSpellCheckedWord(word) === false) {
-    return false;
-  }
-
+export const getResultFromOldWiktionaryAPI = async (
+  word: string,
+): Promise<boolean> => {
   const url = `https://en.wiktionary.org/w/api.php?action=opensearch&format=json&formatversion=2&search=${encodeURIComponent(
     word.toLowerCase(),
   )}&namespace=0&limit=2`;
@@ -82,10 +76,16 @@ export const checkSpell = async (word: string): Promise<boolean> => {
         .map((w) => w.toLowerCase())
         .includes(word.toLowerCase())
     ) {
-      setSpellCheckedWord(word, true);
+      const tid = setTimeout(() => {
+        try {
+          setSpellCheckedWord(word, true);
+          clearTimeout(tid);
+        } catch (error) {
+          console.error(error);
+        }
+      }, 300);
       return true;
     } else {
-      setSpellCheckedWord(word, false);
       return false;
     }
   } catch (error) {
@@ -94,3 +94,90 @@ export const checkSpell = async (word: string): Promise<boolean> => {
 
   return false;
 };
+
+export const getResultFromNewWiktionaryAPI = async (
+  word: string,
+): Promise<boolean> => {
+  const url = `https://en.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(
+    word,
+  )}&format=json`;
+
+  const response = await got(url)
+    .then((r) => r.body)
+    .catch((e) => {
+      // eslint-disable-next-line no-console
+      console.error(e);
+      return null;
+    });
+
+  if (!response) {
+    return false;
+  }
+
+  try {
+    const result: NewWiktionaryAPIResponse = JSON.parse(response);
+
+    if (!result || !result.query || !result.query.pages) {
+      return false;
+    }
+
+    const isMissing = result.query.pages["-1"];
+
+    if (!isMissing) {
+      const pageId = parseInt(Object.keys(result.query.pages)[0]);
+
+      if (!isNaN(pageId) && pageId > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    logger.error(error as Error);
+  }
+
+  return false;
+};
+
+export const checkSpell = async (word: string): Promise<boolean> => {
+  word = word.toLowerCase();
+
+  if (getSpellCheckedWordFromCache(word) === true) {
+    return true;
+  }
+
+  if ((await getResultFromNewWiktionaryAPI(word)) === true) {
+    return true;
+  }
+
+  const result = await getResultFromOldWiktionaryAPI(word);
+
+  return result;
+};
+
+export interface NewWiktionaryAPIResponse {
+  batchcomplete?: string;
+  query?: Query;
+}
+
+interface Query {
+  pages?: Pages;
+}
+
+type Pages =
+  | { "-1": MissingPage }
+  | {
+      [key: string]: Page;
+    };
+
+interface Page {
+  pageid?: number;
+  ns?: number;
+  title?: string;
+}
+
+interface MissingPage {
+  ns?: number;
+  title?: string;
+  missing?: string;
+}
