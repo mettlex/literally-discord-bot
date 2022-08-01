@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import got from "got";
 import pino from "pino";
@@ -55,7 +56,6 @@ export const getResultFromOldWiktionaryAPI = async (
   const response = await got(url)
     .then((r) => r.body)
     .catch((e) => {
-      // eslint-disable-next-line no-console
       console.error(e);
       return null;
     });
@@ -105,7 +105,6 @@ export const getResultFromNewWiktionaryAPI = async (
   const response = await got(url)
     .then((r) => r.body)
     .catch((e) => {
-      // eslint-disable-next-line no-console
       console.error(e);
       return null;
     });
