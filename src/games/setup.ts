@@ -19,6 +19,16 @@ export const setupGame = (
       return;
     }
 
+    if (message.content.includes(client.user!.id)) {
+      message.content = message.content
+        .replace(`<@${message.client.user?.id}>`, "")
+        .trim();
+    }
+
+    if (message.content.trim().length === 0) {
+      return;
+    }
+
     if (
       !prefixes.find((prefix) =>
         message.content.toLowerCase().startsWith(prefix.toLowerCase()),

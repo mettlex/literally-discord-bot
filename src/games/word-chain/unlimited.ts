@@ -402,11 +402,12 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
   if (
     message.author.bot ||
     message.channel.type !== "GUILD_TEXT" ||
-    /[^a-z\-]/gi.test(message.content) ||
-    message.reference ||
-    message.mentions.everyone ||
-    message.mentions.users.size > 0
+    message.mentions.everyone
   ) {
+    return;
+  }
+
+  if (/[^a-z\-]/gi.test(message.content.trim())) {
     return;
   }
 
