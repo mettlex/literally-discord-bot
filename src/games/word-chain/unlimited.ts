@@ -411,7 +411,10 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     return;
   }
 
-  const content = message.content.toLowerCase();
+  const content = message.content
+    .replace(/<@\d+>/g, "")
+    .trim()
+    .toLowerCase();
 
   for (const prefix of prefixes) {
     if (content.startsWith(prefix)) {
@@ -431,7 +434,11 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     activeWordChains[channelId] = data;
   }
 
-  const word = message.content.toLowerCase().split(" ").slice(-1)[0];
+  const word = content.split(" ").slice(-1)[0];
+
+  if (/[^a-z\-]/g.test(word)) {
+    return;
+  }
 
   const { lastCorrectMessageId, lastCorrectMessageAuthorId } =
     activeWordChains[channelId]!;

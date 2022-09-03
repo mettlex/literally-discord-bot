@@ -20,9 +20,7 @@ export const setupGame = (
     }
 
     if (message.content.includes(client.user!.id)) {
-      message.content = message.content
-        .replace(`<@${message.client.user?.id}>`, "")
-        .trim();
+      message.content = message.content.replace(/<@\d+>/g, "").trim();
     }
 
     if (message.content.trim().length === 0) {

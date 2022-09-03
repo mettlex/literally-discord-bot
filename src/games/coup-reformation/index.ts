@@ -486,6 +486,14 @@ export const setupCoupReformationGame = async (
       return;
     }
 
+    if (message.content.includes(client.user!.id)) {
+      message.content = message.content.replace(/<@\d+>/g, "").trim();
+    }
+
+    if (message.content.trim().length === 0) {
+      return;
+    }
+
     const game = getCurrentCoupGame(message.channel.id);
 
     if (!game) {
