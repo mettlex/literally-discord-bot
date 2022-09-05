@@ -291,7 +291,7 @@ const setDataInThePinnedMessage = async (
 
     embed.fields[longestWordAuthorFieldIndex] = {
       name: longestWordAuthorField.name,
-      value: `${longestWordAuthor}`,
+      value: longestWordAuthor ? `${longestWordAuthor?.username}` : "",
       inline: true,
     };
 
