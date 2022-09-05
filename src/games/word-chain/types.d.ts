@@ -1,5 +1,3 @@
-import { User } from "discord.js";
-
 export type WordChainGameMode =
   | "Noob"
   | "Casual"
@@ -42,7 +40,7 @@ export interface UnlimitedWordChainGame {
   lastCorrectMessageAuthorId?: string;
   usedWords?: string[];
   longestWord: string;
-  longestWordAuthor: User | null;
+  longestWordAuthor: string | null;
 }
 
 export interface GuildConfigCollection {

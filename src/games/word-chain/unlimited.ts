@@ -169,10 +169,7 @@ const getDataFromThePinnedMessage = async (
     const connectedChainWords = parseInt(connectedWordsField.value);
     const lastCorrectMessageId = lastCorrectMessageIdField.value;
     const longestWord = longestWordField.value;
-    const longestWordAuthor = await message.client.users.fetch(
-      longestWordAuthorField.value.replace(/[^0-9]/g, ""),
-      { cache: false },
-    )!;
+    const longestWordAuthor = longestWordAuthorField.value;
 
     return {
       totalCorrectWords,
@@ -291,7 +288,7 @@ const setDataInThePinnedMessage = async (
 
     embed.fields[longestWordAuthorFieldIndex] = {
       name: longestWordAuthorField.name,
-      value: longestWordAuthor ? `${longestWordAuthor?.username}` : "",
+      value: `${longestWordAuthor || ""}`,
       inline: true,
     };
 
@@ -407,14 +404,21 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     return;
   }
 
-  if (/[^a-z\-]/gi.test(message.content.trim())) {
-    return;
+  // solve issues for verified bots
+  if (message.client.user?.id === "842397311916310539") {
+    if (!message.mentions.users.has(message.client.user.id)) {
+      return;
+    }
   }
 
   const content = message.content
     .replace(/<@\d+>/g, "")
     .trim()
     .toLowerCase();
+
+  if (/[^a-z\-]/g.test(content)) {
+    return;
+  }
 
   for (const prefix of prefixes) {
     if (content.startsWith(prefix)) {
@@ -451,11 +455,6 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
   if (!isFirstWord) {
     if (lastCorrectMessageAuthorId === message.author.id) {
-      message.react("❌").catch((e) => {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      });
-
       message
         .reply({
           embeds: [
@@ -572,7 +571,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       activeWordChains[channelId] = {
         ...activeWordChains[channelId]!,
         longestWord: word,
-        longestWordAuthor: message.author,
+        longestWordAuthor: message.author.username,
       };
     }
 
