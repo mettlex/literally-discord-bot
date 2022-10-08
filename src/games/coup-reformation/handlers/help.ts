@@ -9,7 +9,6 @@ export const sendCoupHelpMessage = (message: Message) => {
       .setStyle("SECONDARY")
       .setLabel("Show Cheat Sheet"),
     new MessageButton()
-      .setCustomId("coup_how_to_play")
       .setStyle("LINK")
       .setLabel("How To Play")
       .setURL(

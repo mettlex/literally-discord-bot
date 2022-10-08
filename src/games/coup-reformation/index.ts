@@ -210,7 +210,6 @@ export const actions: Action[] = [
           const row = new MessageActionRow().addComponents(
             new MessageButton()
               .setLabel("Vote for Literally")
-              .setCustomId("vote_for_literally")
               .setStyle("LINK")
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
@@ -246,7 +245,6 @@ export const actions: Action[] = [
           const row = new MessageActionRow().addComponents(
             new MessageButton()
               .setLabel("Vote for Literally")
-              .setCustomId("vote_for_literally")
               .setStyle("LINK")
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
@@ -355,7 +353,6 @@ export const actions: Action[] = [
           const row = new MessageActionRow().addComponents(
             new MessageButton()
               .setLabel("Vote for Literally")
-              .setCustomId("vote_for_literally")
               .setStyle("LINK")
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
@@ -391,7 +388,6 @@ export const actions: Action[] = [
           const row = new MessageActionRow().addComponents(
             new MessageButton()
               .setLabel("Vote for Literally")
-              .setCustomId("vote_for_literally")
               .setStyle("LINK")
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
