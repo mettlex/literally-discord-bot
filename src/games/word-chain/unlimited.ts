@@ -437,6 +437,10 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     return;
   }
 
+  if (message.content.trim() === "" || content === "" || word === "") {
+    return;
+  }
+
   const { lastCorrectMessageId, lastCorrectMessageAuthorId } =
     activeWordChains[channelId]!;
 
