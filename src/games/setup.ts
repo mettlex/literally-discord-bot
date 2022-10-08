@@ -19,13 +19,6 @@ export const setupGame = (
       return;
     }
 
-    // solve issues for verified bots
-    if (message.client.user?.id === "842397311916310539") {
-      if (!message.mentions.users.has(message.client.user.id)) {
-        return;
-      }
-    }
-
     if (message.content.includes(client.user!.id)) {
       const pattern = new RegExp(`<@${client.user!.id}>`, "g");
       message.content = message.content.replace(pattern, "").trim();
