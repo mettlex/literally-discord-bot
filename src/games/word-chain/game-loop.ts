@@ -296,7 +296,7 @@ export const changeTurnForPlayerVsAi = async (
   }
 
   if (currentGame.currentUser === message.client.user!.id) {
-    await sleep(40000);
+    await sleep(2000);
 
     const response = await fetchDatamuseResult({
       StartLetter: {
