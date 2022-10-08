@@ -476,7 +476,9 @@ export const setupCoupReformationGame = async (
   }, 3000);
 
   client.on("messageCreate", (message) => {
-    const firstMentionedUser = message.mentions.users.first();
+    const firstMentionedUser = message.mentions.users
+      .filter((user) => !user.bot)
+      .first();
 
     if (message.author.bot || !firstMentionedUser) {
       return;

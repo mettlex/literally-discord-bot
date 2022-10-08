@@ -160,7 +160,10 @@ export const performInteraction = async ({
   specificText: string;
 }) => {
   try {
-    const mentions = message.mentions.users.map((u) => u).slice(0, 5);
+    const mentions = message.mentions.users
+      .map((u) => u)
+      .filter((user) => !user.bot)
+      .slice(0, 5);
 
     const response = await searchGifOnTenor(searchTerm);
 

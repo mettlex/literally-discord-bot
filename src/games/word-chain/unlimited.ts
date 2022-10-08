@@ -404,13 +404,6 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     return;
   }
 
-  // solve issues for verified bots
-  if (message.client.user?.id === "842397311916310539") {
-    if (!message.mentions.users.has(message.client.user.id)) {
-      return;
-    }
-  }
-
   const content = message.content
     .replace(/<@\d+>/g, "")
     .trim()

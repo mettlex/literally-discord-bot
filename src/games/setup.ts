@@ -19,8 +19,19 @@ export const setupGame = (
       return;
     }
 
+    // solve issues for verified bots
+    if (message.client.user?.id === "842397311916310539") {
+      if (!message.mentions.users.has(message.client.user.id)) {
+        return;
+      }
+    }
+
     if (message.content.includes(client.user!.id)) {
-      message.content = message.content.replace(/<@\d+>/g, "").trim();
+      const pattern = new RegExp(`<@${client.user!.id}>`, "g");
+      message.content = message.content.replace(pattern, "").trim();
+      message.mentions.users = message.mentions.users.filter(
+        (user) => user.id !== client.user!.id,
+      );
     }
 
     if (message.content.trim().length === 0) {
