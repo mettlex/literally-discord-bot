@@ -10,7 +10,7 @@ import { actions, getAllActiveGames } from "..";
 import { shuffleArray } from "../../../utils/array";
 import { prefixes, secondsToJoin } from "../config";
 import { flatColors } from "../../../config";
-import { changeTurn } from "../game-loop";
+import { changeTurn, changeTurnForPlayerVsAi } from "../game-loop";
 import { WordChainGameMode } from "../types";
 
 export const args: {
@@ -21,6 +21,7 @@ export const args: {
   challenge: "Challenge",
   ["banned letters"]: "Banned Letters",
   bl: "Banned Letters",
+  ["Me vs Bot"]: "Me vs Bot",
 };
 
 const startHandler = (message: Message) => {
@@ -40,7 +41,8 @@ const startHandler = (message: Message) => {
   const mode =
     args[lastWord.toLowerCase()] ||
     (message.content.toLowerCase().endsWith("banned letters") &&
-      "Banned Letters");
+      "Banned Letters") ||
+    (message.content.toLowerCase().endsWith("me vs bot") && "Me vs Bot");
 
   if (!mode) {
     const channel = message.channel;
@@ -85,8 +87,11 @@ const startHandler = (message: Message) => {
 
   activeGames[channelId] = {
     gameStartedAt: new Date(),
-    joinable: true,
-    userIds: [message.author.id],
+    joinable: mode !== "Me vs Bot",
+    userIds: (mode === "Me vs Bot" && [
+      message.author.id,
+      message.client.user!.id,
+    ]) || [message.author.id],
     longestWord: "",
     longestWordUserId: "",
     currentUser: message.author.id,
@@ -100,12 +105,27 @@ const startHandler = (message: Message) => {
     reduce: false,
     mode,
     maxLives,
-    playerLives: {
+    playerLives: (mode === "Me vs Bot" && {
+      [message.author.id]: maxLives,
+      [message.client.user!.id]: maxLives,
+    }) || {
       [message.author.id]: maxLives,
     },
     bannedLetters: [],
     shouldAddBannedLetter: false,
+    score: (mode === "Me vs Bot" && {
+      [message.author.id]: 0,
+      [message.client.user!.id]: 0,
+    }) || {
+      [message.author.id]: 0,
+    },
   };
+
+  if (mode === "Me vs Bot") {
+    changeTurnForPlayerVsAi(message);
+
+    return;
+  }
 
   if (mode === "Banned Letters") {
     const codeForA = "a".charCodeAt(0);
