@@ -35,7 +35,9 @@ export const hasVoted = async (userId: string): Promise<boolean | null> => {
 export const postStats = async (client: Client) => {
   try {
     const result = await api.postStats({
-      serverCount: await getServerCount(client),
+      serverCount: client.shard
+        ? await getServerCount(client)
+        : client.guilds.cache.size,
     });
     return result;
   } catch (error) {
