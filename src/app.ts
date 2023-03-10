@@ -70,7 +70,11 @@ client.once("ready", async () => {
   setupJottoGame(client, creator);
   setupVote(client);
 
-  creator.syncCommands({ syncGuilds: true, deleteCommands: true });
+  creator.syncCommands({
+    syncGuilds: true,
+    deleteCommands: false,
+    skipGuildErrors: true,
+  });
 
   try {
     client.user?.setActivity({
