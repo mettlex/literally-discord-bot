@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 import { stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
-import { MessageEmbed, MessageReaction, TextChannel, User } from "discord.js";
+import { EmbedBuilder, MessageReaction, TextChannel, User } from "discord.js";
 import pino from "pino";
 import {
   SlashCreator,
@@ -15,9 +15,7 @@ import { getDiscordJSClient } from "../../../app";
 import { shuffleArray } from "../../../utils/array";
 import { flatColors } from "../../../config";
 
-const notInProduction = process.env.NODE_ENV !== "production";
-
-const logger = pino({ prettyPrint: notInProduction });
+const logger = pino();
 
 const options: ApplicationCommandOption[] = [
   {
@@ -110,7 +108,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   const timefieldLabel = "Time To React";
   const maxTimeInSeconds = 60;
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(flatColors.blue)
     .setTitle("Two Truths & A Lie")
     .setDescription(
@@ -124,7 +122,10 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     ${emojis[2]} ${choices[2]}
     `,
     )
-    .addField(timefieldLabel, `${maxTimeInSeconds} seconds`)
+    .addFields({
+      name: timefieldLabel,
+      value: `${maxTimeInSeconds} seconds`,
+    })
     .setFooter({
       text: "Which one is a lie?",
     });
@@ -163,7 +164,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
 
   const interval2 = setInterval(() => {
     if (timeLeft >= 0) {
-      const field = embed.fields.find((f) => f.name === timefieldLabel);
+      const field = embed.data.fields?.find((f) => f.name === timefieldLabel);
 
       field && (field.value = `${timeLeft} seconds`);
 
@@ -272,7 +273,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
   }
 
   if (!lieReactions || !winners || winners?.length === 0) {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(flatColors.red)
       .setTitle("No Winner | Two Truths & A Lie")
       .setDescription(
@@ -297,7 +298,7 @@ const handleReactions = async (channel: TextChannel, ctx: CommandContext) => {
     // limiting to 30 winners at most
     const winnerIds = Array.from(new Set(winners)).slice(0, 30);
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(flatColors.green)
       .setTitle("Results | Two Truths & A Lie")
       .setDescription(

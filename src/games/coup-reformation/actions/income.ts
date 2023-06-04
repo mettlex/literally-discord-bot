@@ -1,6 +1,6 @@
 /* eslint-disable indent */
 import { oneLine } from "common-tags";
-import { MessageEmbed, TextChannel } from "discord.js";
+import { EmbedBuilder, TextChannel } from "discord.js";
 import { flatColors } from "../../../config";
 import sleep from "../../../utils/sleep";
 import { CoupPlayer } from "../types";
@@ -12,7 +12,7 @@ export const handleIncome = async ({
   player: CoupPlayer;
   channel: TextChannel;
 }) => {
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(flatColors.blue)
     .setAuthor({ name: player.name, iconURL: player.avatarURL })
     .setDescription(

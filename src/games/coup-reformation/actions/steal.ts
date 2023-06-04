@@ -1,8 +1,9 @@
 import { oneLine, oneLineTrim } from "common-tags";
 import {
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
   TextChannel,
 } from "discord.js";
 import { flatColors } from "../../../config";
@@ -76,7 +77,7 @@ export const handleSteal = async ({
 
       blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.yellow)
         .setAuthor({
           name: blockingPlayer.name,
@@ -108,18 +109,18 @@ export const handleSteal = async ({
       //   ],
       // },
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setCustomId("let_go_in_coup")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setLabel("Let it go"),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId(
             oneLineTrim`challenge_
             ${blockingPlayer.id}_${influences[0]}_${influences[1]}
             _coup`,
           )
-          .setStyle("DANGER")
+          .setStyle(ButtonStyle.Danger)
           .setLabel("Challenge"),
       );
 
@@ -167,7 +168,7 @@ export const handleSteal = async ({
             player,
           );
 
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.blue)
             .setAuthor({ name: player.name, iconURL: player.avatarURL })
             .setDescription(
@@ -211,7 +212,7 @@ export const handleSteal = async ({
         player,
       );
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.blue)
         .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(
@@ -260,7 +261,7 @@ export const handleSteal = async ({
         player,
       );
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.blue)
         .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(

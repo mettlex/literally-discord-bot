@@ -1,10 +1,11 @@
 import { oneLine } from "common-tags";
 import {
   ColorResolvable,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   TextChannel,
+  ButtonStyle,
 } from "discord.js";
 import { flatColors } from "../../../config";
 import sleep from "../../../utils/sleep";
@@ -87,7 +88,7 @@ export const handleAssassinate = async ({
     );
 
     if (activeInfluences.length === 2) {
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle("Assassination Succeeded")
         .setColor(flatColors.blue as ColorResolvable)
         .setDescription(
@@ -96,10 +97,10 @@ export const handleAssassinate = async ({
           `,
         );
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setCustomId("coup_show_influences")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setLabel("Dismiss One Influence"),
       );
 
@@ -134,7 +135,7 @@ export const handleAssassinate = async ({
     coupActionsInClassic.assassinate(channelId, game, player, targetPlayer);
 
     if (dismissedInfluence) {
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.blue as ColorResolvable)
         .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(
@@ -174,7 +175,7 @@ export const handleAssassinate = async ({
 
       blockingPlayer.votesRequiredForAction = activePlayers.length - 2;
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.yellow as ColorResolvable)
         .setAuthor({
           name: blockingPlayer.name,
@@ -187,15 +188,15 @@ export const handleAssassinate = async ({
         `,
         );
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setCustomId("let_go_in_coup")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setLabel("Let it go"),
 
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId(`challenge_${blockingPlayer.id}_${influence}_coup`)
-          .setStyle("DANGER")
+          .setStyle(ButtonStyle.Danger)
           .setLabel("Challenge"),
       );
 

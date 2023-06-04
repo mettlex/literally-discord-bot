@@ -3,10 +3,11 @@ import { oneLine, stripIndents } from "common-tags";
 import { differenceInSeconds } from "date-fns";
 import {
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   TextChannel,
+  ButtonStyle,
 } from "discord.js";
 import EventEmitter from "events";
 import { getLogger } from "../../app";
@@ -40,7 +41,7 @@ import {
 const logger = getLogger();
 
 export const askToJoinCoupGame = async (message: Message) => {
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle("Join Coup Board Game!")
     .setDescription(
       stripIndents`${oneLine`_You are head of influences
@@ -57,7 +58,11 @@ export const askToJoinCoupGame = async (message: Message) => {
     or by sending \`${prefixes[0]}join\``}
   `,
     )
-    .addField("Time left to join", `${timeToJoinInSeconds} seconds`, false)
+    .addFields({
+      name: "Time left to join",
+      value: `${timeToJoinInSeconds} seconds`,
+      inline: false,
+    })
     .setFooter({
       text: `${
         message.member?.nickname || message.author.username
@@ -70,10 +75,10 @@ export const askToJoinCoupGame = async (message: Message) => {
 
   const channel = message.channel as TextChannel;
 
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
       .setCustomId("join_coup")
-      .setStyle("PRIMARY")
+      .setStyle(ButtonStyle.Primary)
       .setLabel("Count me in!"),
   );
 
@@ -96,9 +101,13 @@ export const askToJoinCoupGame = async (message: Message) => {
     const timeLeft =
       timeToJoinInSeconds - differenceInSeconds(new Date(), startTime);
 
-    if (timeLeft <= 0 || game.gameStarted) {
-      embed.fields[0].name = `Time up!`;
-      embed.fields[0].value = `Let's see who joined below.`;
+    if (
+      (timeLeft <= 0 || game.gameStarted) &&
+      embed.data.fields &&
+      embed.data.fields[0]
+    ) {
+      embed.data.fields[0].name = `Time up!`;
+      embed.data.fields[0].value = `Let's see who joined below.`;
 
       initialMessage.edit({ embeds: [embed] });
 
@@ -109,7 +118,9 @@ export const askToJoinCoupGame = async (message: Message) => {
       return;
     }
 
-    embed.fields[0].value = `${timeLeft} seconds`;
+    if (embed.data.fields && embed.data.fields[0]) {
+      embed.data.fields[0].value = `${timeLeft} seconds`;
+    }
 
     initialMessage.edit({ embeds: [embed] });
   }, 3000);
@@ -158,28 +169,36 @@ export const startCoupGame = async (message: Message) => {
 
   setCurrentCoupGame(channel.id, game);
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle("Coup Game Started!")
     .setColor(flatColors.blue)
     .setImage(
       `https://cdn.discordapp.com/attachments/848495134874271764/858310160472211466/coupcards.jpg`,
     )
-    .addField(
-      "Turn Order",
-      game.players.map((p) => `${p.name}`).join(", "),
-      false,
-    )
-    .addField("Influences in Deck", `${game.deck.length}`, true)
-    .addField("Total Players", `${game.players.length}`, true)
+    .addFields({
+      name: "Turn Order",
+      value: game.players.map((p) => `${p.name}`).join(", "),
+      inline: false,
+    })
+    .addFields({
+      name: "Influences in Deck",
+      value: `${game.deck.length}`,
+      inline: true,
+    })
+    .addFields({
+      name: "Total Players",
+      value: `${game.players.length}`,
+      inline: true,
+    })
 
     .setFooter({
       text: `Check your influences by tapping the button below.`,
     });
 
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
       .setCustomId("coup_show_influences")
-      .setStyle("SECONDARY")
+      .setStyle(ButtonStyle.Secondary)
       .setLabel("My Influences 🤫"),
   );
 
@@ -257,12 +276,12 @@ export const changeCoupTurn = async (message: Message) => {
   }
 
   if (activePlayers.length === 1) {
-    const embed = new MessageEmbed();
+    const embed = new EmbedBuilder();
 
     embed
       .setTitle("Congratulations!")
       .setDescription(`Here is your winner, the successful leader of Coup!`)
-      .addField("Winner", `<@${player.id}>`)
+      .addFields({ name: "Winner", value: `<@${player.id}>` })
       .setColor(flatColors.green)
       .setThumbnail(player.avatarURL);
 
@@ -279,7 +298,7 @@ export const changeCoupTurn = async (message: Message) => {
   }
 
   if (game.turnCount > 0) {
-    const influencesEmbed = new MessageEmbed()
+    const influencesEmbed = new EmbedBuilder()
       .setTitle("Dismissed Influences")
       .setColor(flatColors.blue);
 
@@ -309,16 +328,20 @@ export const changeCoupTurn = async (message: Message) => {
     }
   }
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle(`Make your move!`)
-    .addField(`Coins 💰`, convertNumberToEmojis(player.coins), true)
-    .addField(
-      `Influences 👥`,
-      convertNumberToEmojis(
+    .addFields({
+      name: `Coins 💰`,
+      value: convertNumberToEmojis(player.coins),
+      inline: true,
+    })
+    .addFields({
+      name: `Influences 👥`,
+      value: convertNumberToEmojis(
         player.influences.filter((inf) => !inf.dismissed).length,
       ),
-      true,
-    )
+      inline: true,
+    })
     .setDescription(`${player.name}, it's your turn. Choose an action below.`)
     .setColor(flatColors.blue)
     .setFooter({
@@ -427,27 +450,29 @@ export const changeCoupTurn = async (message: Message) => {
   // },
 
   const rows = [
-    new MessageActionRow().addComponents(
-      new MessageButton()
-        .setStyle("SECONDARY")
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Secondary)
         .setLabel("Cheat Sheet")
         .setCustomId("coup_cs"),
-      new MessageButton()
-        .setStyle("LINK")
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
         .setLabel("How To Play")
         .setURL(
           "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",
         ),
-      new MessageButton()
-        .setStyle("SECONDARY")
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Secondary)
         .setLabel("My Influences 🤫")
         .setCustomId("coup_show_influences"),
     ),
-    new MessageActionRow().addComponents(
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...actions.slice(0, 3).map((a) =>
-        new MessageButton()
+        new ButtonBuilder()
           .setStyle(
-            a === "coup" || a === "assassinate" ? "DANGER" : "SECONDARY",
+            a === "coup" || a === "assassinate"
+              ? ButtonStyle.Danger
+              : ButtonStyle.Secondary,
           )
           .setLabel(
             `${getLabelForCoupAction(a)} ${
@@ -480,11 +505,13 @@ export const changeCoupTurn = async (message: Message) => {
           ),
       ),
     ),
-    new MessageActionRow().addComponents(
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...actions.slice(3).map((a) =>
-        new MessageButton()
+        new ButtonBuilder()
           .setStyle(
-            a === "coup" || a === "assassinate" ? "DANGER" : "SECONDARY",
+            a === "coup" || a === "assassinate"
+              ? ButtonStyle.Danger
+              : ButtonStyle.Secondary,
           )
           .setLabel(
             `${getLabelForCoupAction(a)} ${
@@ -566,7 +593,7 @@ export const changeCoupTurn = async (message: Message) => {
               return;
             }
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(flatColors.yellow)
               .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
@@ -579,17 +606,17 @@ export const changeCoupTurn = async (message: Message) => {
                 `}
               `);
 
-            const row = new MessageActionRow().addComponents(
-              new MessageButton()
-                .setStyle("PRIMARY")
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Primary)
                 .setLabel("Allow")
                 .setCustomId("allow_action_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Block Foreign Aid")
                 .setCustomId("block_foreign_aid_in_coup"),
-              new MessageButton()
-                .setStyle("SECONDARY")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Secondary)
                 .setLabel("My Influences 🤫")
                 .setCustomId("coup_show_influences"),
             );
@@ -624,7 +651,7 @@ export const changeCoupTurn = async (message: Message) => {
               return;
             }
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(flatColors.yellow)
               .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
@@ -639,13 +666,13 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "duke";
 
-            const row = new MessageActionRow().addComponents(
-              new MessageButton()
-                .setStyle("PRIMARY")
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Primary)
                 .setLabel("Allow")
                 .setCustomId("allow_action_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Challenge")
                 .setCustomId(`challenge_${player.id}_${influence}_coup`),
             );
@@ -735,7 +762,7 @@ export const changeCoupTurn = async (message: Message) => {
               return;
             }
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(flatColors.yellow)
               .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
@@ -754,17 +781,17 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "captain";
 
-            const row = new MessageActionRow().addComponents(
-              new MessageButton()
-                .setStyle("PRIMARY")
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Primary)
                 .setLabel("Allow")
                 .setCustomId("allow_action_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Block Stealing")
                 .setCustomId("block_stealing_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Challenge")
                 .setCustomId(`challenge_${player.id}_${influence}_coup`),
             );
@@ -855,7 +882,7 @@ export const changeCoupTurn = async (message: Message) => {
               return;
             }
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(flatColors.yellow)
               .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
@@ -874,17 +901,17 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "assassin";
 
-            const row = new MessageActionRow().addComponents(
-              new MessageButton()
-                .setStyle("PRIMARY")
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Primary)
                 .setLabel("Allow")
                 .setCustomId("allow_action_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Block Assassination")
                 .setCustomId("block_assassination_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Challenge")
                 .setCustomId(`challenge_${player.id}_${influence}_coup`),
             );
@@ -984,7 +1011,7 @@ export const changeCoupTurn = async (message: Message) => {
               return;
             }
 
-            const embed = new MessageEmbed()
+            const embed = new EmbedBuilder()
               .setColor(flatColors.yellow)
               .setAuthor({ name: player.name, iconURL: player.avatarURL })
               .setDescription(stripIndents`
@@ -999,13 +1026,13 @@ export const changeCoupTurn = async (message: Message) => {
 
             const influence: Influence["name"] = "ambassador";
 
-            const row = new MessageActionRow().addComponents(
-              new MessageButton()
-                .setStyle("PRIMARY")
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Primary)
                 .setLabel("Allow")
                 .setCustomId("allow_action_in_coup"),
-              new MessageButton()
-                .setStyle("DANGER")
+              new ButtonBuilder()
+                .setStyle(ButtonStyle.Danger)
                 .setLabel("Challenge")
                 .setCustomId(`challenge_${player.id}_${influence}_coup`),
             );
@@ -1111,7 +1138,7 @@ export const eliminatePlayer = async (
 
   setCurrentCoupGame(channel.id, game);
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setAuthor({
       name: `Player Eliminated`,
       iconURL: eliminatedPlayer.avatarURL,
@@ -1146,7 +1173,7 @@ export const handleChallenge = async ({
 }) => {
   let lostPlayer: CoupPlayer;
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(flatColors.yellow)
     .setAuthor({
       name: challengingPlayer.name,
@@ -1200,7 +1227,7 @@ export const handleChallenge = async ({
 
       setCurrentCoupGame(channel.id, game);
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle("Challenge Failed")
         .setColor(flatColors.blue)
         .setThumbnail(foundInfluence.imageURL)
@@ -1232,14 +1259,14 @@ export const handleChallenge = async ({
       //   ],
       // },
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setLabel("My Influences 🤫")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setCustomId("coup_show_influences"),
-        new MessageButton()
+        new ButtonBuilder()
           .setLabel("Dismiss One Influence")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setCustomId("coup_show_influences"),
       );
 
@@ -1260,7 +1287,7 @@ export const handleChallenge = async ({
         });
       });
     } else {
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle("Challenge Failed")
         .setColor(flatColors.blue)
         .setThumbnail(foundInfluence.imageURL)
@@ -1272,10 +1299,10 @@ export const handleChallenge = async ({
           `,
         );
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setLabel("My Influences 🤫")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setCustomId("coup_show_influences"),
       );
 
@@ -1299,7 +1326,7 @@ export const handleChallenge = async ({
 
       setCurrentCoupGame(channel.id, game);
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle("Challenge Succeeded")
         .setColor(flatColors.blue)
         .setDescription(
@@ -1311,10 +1338,10 @@ export const handleChallenge = async ({
           `,
         );
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setLabel("Dismiss One Influence")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setCustomId("coup_show_influences"),
       );
 

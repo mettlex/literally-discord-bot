@@ -2,17 +2,18 @@ import { oneLine } from "common-tags";
 import {
   Client,
   ColorResolvable,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   TextChannel,
+  ButtonStyle,
 } from "discord.js";
 import EventEmitter from "events";
 import {
   AnyComponentButton,
-  ButtonStyle,
   ComponentType,
   SlashCreator,
+  ButtonStyle as SlashCreateButtonStyle,
 } from "slash-create";
 import { flatColors } from "../../config";
 import { getLiterallyUserModel } from "../../database";
@@ -42,7 +43,7 @@ const removeButtonsFromMessage = async (
 
     const oldEmbed = message.embeds[0];
 
-    const embed = new MessageEmbed().setColor(color);
+    const embed = new EmbedBuilder().setColor(color);
 
     if (oldEmbed.author?.name) {
       embed.setAuthor({
@@ -112,22 +113,22 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
       const name = keys[i] as InfluenceCard["name"];
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle(name.toUpperCase())
         .setDescription(getDescriptionFromCardName(name))
         .setImage(influenceCardImagesClassic[name][0]);
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setLabel("Previous")
           .setCustomId(`previous_influence_card_${i - 1}`)
           .setDisabled(i === 0)
-          .setStyle("PRIMARY"),
-        new MessageButton()
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
           .setLabel("Next")
           .setCustomId(`next_influence_card_${i + 1}`)
           .setDisabled(i === keys.length - 1)
-          .setStyle("PRIMARY"),
+          .setStyle(ButtonStyle.Primary),
       );
 
       message.edit({
@@ -190,7 +191,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
 
       const description = `I dismissed my **${influence.name.toUpperCase()}**.`;
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.red)
         .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setThumbnail(influence.imageURL)
@@ -249,7 +250,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           returned 2 influences to the deck.
         `;
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
           .setColor(flatColors.blue)
           .setAuthor({ name: player.name, iconURL: player.avatarURL })
           .setDescription(description);
@@ -262,7 +263,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
       } else {
         const component: AnyComponentButton = {
           type: ComponentType.BUTTON,
-          style: ButtonStyle.PRIMARY,
+          style: SlashCreateButtonStyle.PRIMARY,
           label: "Return One Influence",
           custom_id: "coup_show_influences",
         };
@@ -311,7 +312,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           literallyUser.specialGamesPlayedAt &&
           literallyUser.specialGamesPlayedAt.length > 4
         ) {
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.green)
             .setTitle("Please upvote Literally")
             .setThumbnail(
@@ -348,7 +349,7 @@ export const handleInteractions = (client: Client, creator: SlashCreator) => {
           literallyUser.specialGamesPlayedAt &&
           literallyUser.specialGamesPlayedAt.length <= 4
         ) {
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.green)
             .setTitle("Please upvote Literally")
             .setImage(

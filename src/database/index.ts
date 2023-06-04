@@ -9,8 +9,8 @@ import {
   LiterallyUserModel,
   literallyUserSchema,
 } from "./models/User";
-const notInProduction = process.env.NODE_ENV !== "production";
-const logger = pino({ prettyPrint: notInProduction });
+
+const logger = pino();
 
 if (!process.env.MONGODB_CONNECTION_URI) {
   const envFilePath = path.resolve(getAppRootDir(), "..", ".env");
@@ -33,10 +33,7 @@ export const getLiterallyUserModel = () => LiterallyUser;
 
 if (process.env.MONGODB_CONNECTION_URI) {
   mongoose
-    .connect(process.env.MONGODB_CONNECTION_URI || "", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
+    .connect(process.env.MONGODB_CONNECTION_URI || "", {})
     .catch((error) => {
       // eslint-disable-next-line no-console
       console.error(error);

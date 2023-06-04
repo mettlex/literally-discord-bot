@@ -1,15 +1,20 @@
-import { Message, MessageActionRow, MessageButton } from "discord.js";
+import {
+  Message,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} from "discord.js";
 
 export const sendCoupHelpMessage = (message: Message) => {
   const channel = message.channel;
 
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
       .setCustomId("coup_cs")
-      .setStyle("SECONDARY")
+      .setStyle(ButtonStyle.Secondary)
       .setLabel("Show Cheat Sheet"),
-    new MessageButton()
-      .setStyle("LINK")
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
       .setLabel("How To Play")
       .setURL(
         "https://www.youtube.com/watch?v=a8bY3zI9FL4&list=PLDNi2Csm13eaUpcmveWPzVJ3fIlaFrvZn",

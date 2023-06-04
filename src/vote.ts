@@ -1,4 +1,9 @@
-import { Client, MessageActionRow, MessageButton } from "discord.js";
+import {
+  Client,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} from "discord.js";
 import { prefixes as lyPrefixes } from "./config";
 import { hasVoted } from "./top.gg/api";
 
@@ -39,10 +44,10 @@ export const setupVote = (client: Client) => {
       .send({
         content,
         components: [
-          new MessageActionRow().addComponents(
-            new MessageButton()
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
               .setLabel("Vote for Literally")
-              .setStyle("LINK")
+              .setStyle(ButtonStyle.Link)
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           ),
         ],

@@ -25,10 +25,10 @@ Example file: [.env.example](./.env.example)
 
 ## Install Packages
 ```sh
-npm i
+pnpm i
 ```
 
 ## Run Development Server
 ```sh
-npm run dev
+pnpm dev
 ```

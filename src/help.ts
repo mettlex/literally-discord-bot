@@ -1,12 +1,13 @@
 /* eslint-disable indent */
 import {
+  ChannelType,
   Client,
-  ColorResolvable,
   DMChannel,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
   TextChannel,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
 } from "discord.js";
 import {
   ApplicationCommandOption,
@@ -94,14 +95,14 @@ export const setupHelpMenu = async (client: Client, creator: SlashCreator) => {
 
     const channel = message.channel;
 
-    const row = new MessageActionRow();
+    const row = new ActionRowBuilder<ButtonBuilder>();
 
     helpButtons.forEach((h) =>
       row.addComponents(
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId(h.customId)
           .setLabel(h.label)
-          .setStyle("SUCCESS"),
+          .setStyle(ButtonStyle.Success),
       ),
     );
 
@@ -195,7 +196,7 @@ export const makeHelpSlashCommand = (guildIDs: string[]) =>
         return;
       }
 
-      const gameValue = game.value as typeof gameValues[number];
+      const gameValue = game.value as (typeof gameValues)[number];
 
       const client = getDiscordJSClient();
 
@@ -207,7 +208,7 @@ export const makeHelpSlashCommand = (guildIDs: string[]) =>
         cache: false,
       });
 
-      if (!channel || channel.type !== "GUILD_TEXT") {
+      if (!channel || channel.type !== ChannelType.GuildText) {
         return;
       }
 
@@ -232,10 +233,10 @@ export const makeHelpSlashCommand = (guildIDs: string[]) =>
 export const sendHelpMessage = (
   userId: string,
   channel: TextChannel | DMChannel,
-  gameValue: typeof gameValues[number],
+  gameValue: (typeof gameValues)[number],
   client: Client,
 ) => {
-  const embed = new MessageEmbed().setColor(flatColors.blue as ColorResolvable);
+  const embed = new EmbedBuilder().setColor(flatColors.blue);
 
   if (gameValue === "word_chain") {
     embed

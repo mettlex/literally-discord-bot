@@ -2,10 +2,12 @@ import { oneLine } from "common-tags";
 import {
   Client,
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   TextChannel,
+  ChannelType,
+  ButtonStyle,
 } from "discord.js";
 import { SlashCreator } from "slash-create";
 import { setupGame } from "../setup";
@@ -43,11 +45,14 @@ export const actions: Action[] = [
   {
     commands: ["fs", "force-start", "force start"],
     handler: async (message) => {
-      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
+      if (
+        message.author.bot ||
+        message.channel.type !== ChannelType.GuildText
+      ) {
         return;
       }
 
-      if (!message.member?.permissions.has("MANAGE_GUILD")) {
+      if (!message.member?.permissions.has("ManageGuild")) {
         return;
       }
 
@@ -57,8 +62,11 @@ export const actions: Action[] = [
         const { message: initialMessage, embed, interval } = initialData;
 
         embed.setColor(flatColors.blue);
-        embed.fields[0].name = `Time up!`;
-        embed.fields[0].value = `Let's see who joined below.`;
+
+        if (embed.data.fields && embed.data.fields[0]) {
+          embed.data.fields[0].name = `Time up!`;
+          embed.data.fields[0].value = `Let's see who joined below.`;
+        }
 
         try {
           await initialMessage.edit({ embeds: [embed] });
@@ -88,7 +96,10 @@ export const actions: Action[] = [
   {
     commands: ["c", "check"],
     handler: (message) => {
-      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
+      if (
+        message.author.bot ||
+        message.channel.type !== ChannelType.GuildText
+      ) {
         return;
       }
 
@@ -109,7 +120,10 @@ export const actions: Action[] = [
   {
     commands: ["allcards", "all cards"],
     handler: async (message) => {
-      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
+      if (
+        message.author.bot ||
+        message.channel.type !== ChannelType.GuildText
+      ) {
         return;
       }
 
@@ -117,24 +131,24 @@ export const actions: Action[] = [
 
       const name = keys[0] as InfluenceCard["name"];
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle(name.toUpperCase())
         .setDescription(getDescriptionFromCardName(name))
         .setImage(influenceCardImagesClassic[name][0]);
 
       const channel = message.channel as TextChannel;
 
-      const row = new MessageActionRow().addComponents(
-        new MessageButton()
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
           .setLabel("Previous")
           .setCustomId("previous_influence_card_1")
           .setDisabled(true)
-          .setStyle("PRIMARY"),
-        new MessageButton()
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
           .setLabel("Next")
           .setCustomId("next_influence_card_1")
           .setDisabled(false)
-          .setStyle("PRIMARY"),
+          .setStyle(ButtonStyle.Primary),
       );
 
       channel.send({
@@ -148,11 +162,14 @@ export const actions: Action[] = [
   {
     commands: ["stop"],
     handler: (message) => {
-      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
+      if (
+        message.author.bot ||
+        message.channel.type !== ChannelType.GuildText
+      ) {
         return;
       }
 
-      if (!message.member?.permissions.has("MANAGE_GUILD")) {
+      if (!message.member?.permissions.has("ManageGuild")) {
         message.reply(
           oneLine`Only a member with Manage Server permission
           can force-stop the game.`,
@@ -179,7 +196,10 @@ export const actions: Action[] = [
   {
     commands: ["s", "start", "begin"],
     handler: async (message) => {
-      if (message.author.bot || message.channel.type !== "GUILD_TEXT") {
+      if (
+        message.author.bot ||
+        message.channel.type !== ChannelType.GuildText
+      ) {
         return;
       }
 
@@ -197,7 +217,7 @@ export const actions: Action[] = [
           literallyUser.specialGamesPlayedAt &&
           literallyUser.specialGamesPlayedAt.length > 4
         ) {
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.green)
             .setTitle("Please upvote Literally")
             .setThumbnail(
@@ -207,10 +227,10 @@ export const actions: Action[] = [
 
           const channel = message.channel as TextChannel;
 
-          const row = new MessageActionRow().addComponents(
-            new MessageButton()
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
               .setLabel("Vote for Literally")
-              .setStyle("LINK")
+              .setStyle(ButtonStyle.Link)
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
 
@@ -232,7 +252,7 @@ export const actions: Action[] = [
           literallyUser.specialGamesPlayedAt &&
           literallyUser.specialGamesPlayedAt.length <= 4
         ) {
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.green)
             .setTitle("Please upvote Literally")
             .setImage(
@@ -242,10 +262,10 @@ export const actions: Action[] = [
 
           const channel = message.channel as TextChannel;
 
-          const row = new MessageActionRow().addComponents(
-            new MessageButton()
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
               .setLabel("Vote for Literally")
-              .setStyle("LINK")
+              .setStyle(ButtonStyle.Link)
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
 
@@ -297,9 +317,7 @@ export const actions: Action[] = [
             coins: 2,
             influences: [],
             avatarURL:
-              message.author.avatarURL({ dynamic: true }) ||
-              message.author.avatarURL() ||
-              message.author.defaultAvatarURL,
+              message.author.avatarURL() || message.author.defaultAvatarURL,
           },
         ],
         currentPlayer: message.author.id,
@@ -340,7 +358,7 @@ export const actions: Action[] = [
           literallyUser.specialGamesPlayedAt &&
           literallyUser.specialGamesPlayedAt.length > 4
         ) {
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.green)
             .setTitle("Please upvote Literally")
             .setThumbnail(
@@ -350,10 +368,10 @@ export const actions: Action[] = [
 
           const channel = message.channel as TextChannel;
 
-          const row = new MessageActionRow().addComponents(
-            new MessageButton()
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
               .setLabel("Vote for Literally")
-              .setStyle("LINK")
+              .setStyle(ButtonStyle.Link)
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
 
@@ -375,7 +393,7 @@ export const actions: Action[] = [
           literallyUser.specialGamesPlayedAt &&
           literallyUser.specialGamesPlayedAt.length <= 4
         ) {
-          const embed = new MessageEmbed()
+          const embed = new EmbedBuilder()
             .setColor(flatColors.green)
             .setTitle("Please upvote Literally")
             .setImage(
@@ -385,10 +403,10 @@ export const actions: Action[] = [
 
           const channel = message.channel as TextChannel;
 
-          const row = new MessageActionRow().addComponents(
-            new MessageButton()
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
               .setLabel("Vote for Literally")
-              .setStyle("LINK")
+              .setStyle(ButtonStyle.Link)
               .setURL("https://top.gg/bot/842397311916310539/vote"),
           );
 
@@ -436,7 +454,7 @@ export const actions: Action[] = [
         coins: 2,
         influences: [],
         avatarURL:
-          message.author.avatarURL({ dynamic: true }) ||
+          message.author.avatarURL() ||
           message.author.avatarURL() ||
           message.author.defaultAvatarURL,
       });

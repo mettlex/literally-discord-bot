@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { ChannelData, Client, Guild } from "discord.js";
+import { PartialChannelData, Client, Guild } from "discord.js";
 
 export const getServerCount = async (client: Client) => {
   if (!client.shard) {
@@ -89,7 +89,7 @@ export const getAllDmChannelsData = async (client: Client) => {
   }
 
   const promise = client.shard.fetchClientValues("channels.cache") as Promise<
-    ChannelData[][]
+    PartialChannelData[][]
   >;
 
   return await promise

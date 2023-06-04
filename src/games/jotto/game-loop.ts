@@ -1,6 +1,6 @@
 /* eslint-disable indent */
 import { oneLine, stripIndents } from "common-tags";
-import { Message, MessageEmbed, TextChannel } from "discord.js";
+import { Message, EmbedBuilder, TextChannel } from "discord.js";
 import pino from "pino";
 import { CommandContext } from "slash-create";
 import { getCurrentJottoGame, setCurrentJottoGame } from ".";
@@ -10,9 +10,7 @@ import { shuffleArray } from "../../utils/array";
 import { timeToJoinInSeconds, turnSeconds } from "./config";
 import { JottoData } from "./types";
 
-const notInProduction = process.env.NODE_ENV !== "production";
-
-const logger = pino({ prettyPrint: notInProduction });
+const logger = pino();
 
 export const getTurnInverval = (channelId: string) =>
   getCurrentJottoGame(channelId)?.turnInterval;
@@ -82,7 +80,7 @@ export const changeJottoTurn = async (
       return;
     }
 
-    const embed = new MessageEmbed();
+    const embed = new EmbedBuilder();
 
     if (winners.length === 1) {
       embed
@@ -90,14 +88,14 @@ export const changeJottoTurn = async (
         .setDescription(
           `Here is your winner, the mastermind of this Jotto game.`,
         )
-        .addField("Winner", `<@${currentPlayer.user.id}>`)
+        .addFields({ name: "Winner", value: `<@${currentPlayer.user.id}>` })
         .setColor(flatColors.green);
 
       let url = currentPlayer.user.defaultAvatarURL;
 
       if (typeof currentPlayer.user.avatarURL === "function") {
         url =
-          currentPlayer.user.avatarURL({ dynamic: true }) ||
+          currentPlayer.user.avatarURL() ||
           currentPlayer.user.avatar ||
           currentPlayer.user.defaultAvatarURL;
       } else if (typeof currentPlayer.user.avatarURL === "string") {
@@ -139,7 +137,7 @@ export const changeJottoTurn = async (
         .map((player) => `<@${player.user.id}>: **${player.score}**`)
         .join("\n");
 
-    embed.setDescription(embed.description + scoresText);
+    embed.setDescription(embed.data.description + scoresText);
 
     message.channel.send({ content: "​", embeds: [embed] });
 
@@ -231,7 +229,7 @@ export const changeJottoTurn = async (
   const getCriteriaMessageFooter = (timeRemainingInSeconds: number) =>
     `${timeRemainingInSeconds} seconds remaining`;
 
-  const embed = new MessageEmbed();
+  const embed = new EmbedBuilder();
 
   embed.setColor(flatColors.blue);
 
@@ -250,9 +248,9 @@ export const changeJottoTurn = async (
   `);
 
   // prettier-ignore
-  embed.addField(
-    "Letterboard",
-    `${targetPlayer.availableLetters
+  embed.addFields({
+    name: "Letterboard",
+    value: `${targetPlayer.availableLetters
       .map((x) =>
         targetPlayer.removedLetters.includes(x)
           ? ` ~~[${x}]~~ `
@@ -261,8 +259,8 @@ export const changeJottoTurn = async (
             : ` ${x} `,
       )
       .join(" ")}`,
-    false,
-  );
+    inline: false,
+  });
 
   let removedLetters = "None";
 
@@ -270,7 +268,11 @@ export const changeJottoTurn = async (
     removedLetters = targetPlayer.removedLetters.join(" ");
   }
 
-  embed.addField("Removed Letters", removedLetters, true);
+  embed.addFields({
+    name: "Removed Letters",
+    value: removedLetters,
+    inline: true,
+  });
 
   let revealedLetters = "None";
 
@@ -278,7 +280,11 @@ export const changeJottoTurn = async (
     revealedLetters = targetPlayer.revealedLetters.join(" ");
   }
 
-  embed.addField("Discovered Letters", revealedLetters, true);
+  embed.addFields({
+    name: "Discovered Letters",
+    value: revealedLetters,
+    inline: true,
+  });
 
   embed.setFooter({
     text: getCriteriaMessageFooter(timeRemainingInSeconds),
@@ -590,7 +596,7 @@ export const startJottoGame = async (message: Message) => {
 
 interface InitialData {
   message: Message;
-  embed: MessageEmbed;
+  embed: EmbedBuilder;
   interval: NodeJS.Timeout;
 }
 
@@ -613,7 +619,7 @@ export const askToJoinJottoGame = async (
 
   const channel = (await client.channels.fetch(ctx.channelID)) as TextChannel;
 
-  const embed = new MessageEmbed();
+  const embed = new EmbedBuilder();
 
   embed.setColor(flatColors.yellow);
 

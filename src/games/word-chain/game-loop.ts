@@ -1,6 +1,6 @@
 import { oneLine, stripIndents } from "common-tags";
 import { differenceInMilliseconds, differenceInSeconds } from "date-fns";
-import { Message, MessageEmbed } from "discord.js";
+import { Message, EmbedBuilder } from "discord.js";
 import pino from "pino";
 import { getAllActiveGames, getCurrentGame } from ".";
 import {
@@ -12,7 +12,7 @@ import {
 import { flatColors } from "../../config";
 import { checkSpell } from "./spell-checker";
 
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+const logger = pino();
 
 export const changeTurn = async (message: Message, timeLeft?: number) => {
   const channelId = message.channel.id;
@@ -48,27 +48,28 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       cache: false,
     });
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle("Congrats! We have a winner!")
       .setDescription(
         "All other players are eliminated so the last player wins!",
       )
-      .addField("Winner", `<@${winnerUserId}>`)
+      .addFields({
+        name: "Winner",
+        value: `<@${winnerUserId}>`,
+      })
       .setColor(flatColors.green);
 
     if (winner) {
       logger.info(winner);
 
-      embed.setThumbnail(
-        winner.avatarURL({ dynamic: true }) || winner.defaultAvatarURL,
-      );
+      embed.setThumbnail(winner.avatarURL() || winner.defaultAvatarURL);
     }
 
     if (currentGame.longestWord) {
-      embed.addField(
-        "Longest Word",
-        `${currentGame.longestWord} <@${currentGame.longestWordUserId}>`,
-      );
+      embed.addFields({
+        name: "Longest Word",
+        value: `${currentGame.longestWord} <@${currentGame.longestWordUserId}>`,
+      });
     }
 
     message.channel.send({ content: "​", embeds: [embed] }).catch((e) => {
@@ -85,33 +86,36 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
   let interval;
 
   if (!timeLeft) {
-    const embed1 = new MessageEmbed()
+    const embed1 = new EmbedBuilder()
       .setDescription(
         `Send a message with an English word following the criteria:`,
       )
-      .addField(
-        "Starting Letter",
-        `**${currentGame.currentStartingLetter.toUpperCase()}**`,
-        true,
-      )
-      .addField(
-        "Minimum Word Length",
-        `**${currentGame.currentWordMinLength}** characters`,
-        true,
-      );
+      .addFields({
+        name: "Starting Letter",
+        value: `**${currentGame.currentStartingLetter.toUpperCase()}**`,
+        inline: true,
+      })
+      .addFields({
+        name: "Minimum Word Length",
+        value: `**${currentGame.currentWordMinLength}** characters`,
+        inline: true,
+      });
 
     if (currentGame.mode === "Banned Letters") {
-      embed1.addField(
-        currentGame.mode,
-        activeGames[channelId]!.bannedLetters.map((l) => l.toUpperCase()).join(
-          ", ",
-        ),
-        true,
-      );
+      embed1.addFields({
+        name: currentGame.mode,
+        value: activeGames[channelId]!.bannedLetters.map((l) =>
+          l.toUpperCase(),
+        ).join(", "),
+        inline: true,
+      });
     }
 
     embed1
-      .addField("Time Left", `**${currentGameTurnSeconds}** seconds`)
+      .addFields({
+        name: "Time Left",
+        value: `**${currentGameTurnSeconds}** seconds`,
+      })
       .setColor(flatColors.blue);
 
     const currentPlayerLives = currentGame.playerLives[currentGame.currentUser];
@@ -232,13 +236,16 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       return;
     }
 
-    const embed2 = new MessageEmbed()
+    const embed2 = new EmbedBuilder()
       .setTitle("Time Out!")
       .setDescription(
         // eslint-disable-next-line max-len
         `<@${currentGame.currentUser}> couldn't send a correct word within ${currentGameTurnSeconds} seconds.`,
       )
-      .addField("Eliminated Player", `<@${currentGame.currentUser}>`)
+      .addFields({
+        name: "Eliminated Player",
+        value: `<@${currentGame.currentUser}>`,
+      })
       .setColor(flatColors.red);
 
     const eliminatedPlayerId = currentGame.currentUser;
@@ -255,7 +262,10 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       currentUser: currentGame.userIds[nextPlayerIndex],
     };
 
-    embed2.addField("Next Player", `<@${activeGames[channelId]!.currentUser}>`);
+    embed2.addFields({
+      name: "Next Player",
+      value: `<@${activeGames[channelId]!.currentUser}>`,
+    });
 
     // elimination
     activeGames[channelId]!.userIds.splice(
@@ -280,7 +290,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
       return;
     }
 
-    const embed2 = new MessageEmbed()
+    const embed2 = new EmbedBuilder()
       .setTitle("Time Out!")
       .setDescription(
         // eslint-disable-next-line max-len
@@ -306,7 +316,10 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
 
     logger.info(currentGame);
 
-    embed2.addField("Next Player", `<@${currentGame.currentUser}>`);
+    embed2.addFields({
+      name: "Next Player",
+      value: `<@${currentGame.currentUser}>`,
+    });
 
     message.channel.send({ content: "​", embeds: [embed2] }).catch((e) => {
       // eslint-disable-next-line no-console
@@ -367,7 +380,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
     const newTimeLeft = time - elapsedTime;
     const turnSecondsLeft = Math.floor(newTimeLeft / 1000);
 
-    const embed3 = new MessageEmbed()
+    const embed3 = new EmbedBuilder()
       .setDescription(
         stripIndents`**__${currentPlayerMessage.content
           .split(" ")[0]
@@ -375,27 +388,30 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         ${reason}
         Send a message with a word following the criteria:`,
       )
-      .addField(
-        "Starting Letter",
-        `**${currentGame.currentStartingLetter.toUpperCase()}**`,
-      )
-      .addField(
-        "Minimum Word Length",
-        `**${currentGame.currentWordMinLength}** characters`,
-      );
+      .addFields({
+        name: "Starting Letter",
+        value: `**${currentGame.currentStartingLetter.toUpperCase()}**`,
+      })
+      .addFields({
+        name: "Minimum Word Length",
+        value: `**${currentGame.currentWordMinLength}** characters`,
+      });
 
     if (currentGame.mode === "Banned Letters") {
-      embed3.addField(
-        currentGame.mode,
-        activeGames[channelId]!.bannedLetters.map((l) => l.toUpperCase()).join(
-          ", ",
-        ),
-        true,
-      );
+      embed3.addFields({
+        name: currentGame.mode,
+        value: activeGames[channelId]!.bannedLetters.map((l) =>
+          l.toUpperCase(),
+        ).join(", "),
+        inline: true,
+      });
     }
 
     embed3
-      .addField("Time Left", `**${turnSecondsLeft}** seconds`)
+      .addFields({
+        name: "Time Left",
+        value: `**${turnSecondsLeft}** seconds`,
+      })
       .setColor(flatColors.red);
 
     let criteriaMessageWithError = await message.channel
@@ -556,7 +572,7 @@ export const changeTurn = async (message: Message, timeLeft?: number) => {
         message.channel.send({
           content: "​",
           embeds: [
-            new MessageEmbed()
+            new EmbedBuilder()
               .setColor(flatColors.yellow)
               .setTitle(`New Banned Letter: ${leastUsedLetter.toUpperCase()}`)
               .setDescription(

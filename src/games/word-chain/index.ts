@@ -1,4 +1,4 @@
-import { Client, TextChannel } from "discord.js";
+import { ChannelType, Client, TextChannel } from "discord.js";
 import { setupGame } from "../setup";
 import { ActiveWordChainGames } from "./types";
 import { prefixes } from "./config";
@@ -92,11 +92,11 @@ export const setupWordChainGame = (client: Client, creator: SlashCreator) => {
         cache: false,
       })) as TextChannel | undefined;
 
-      if (!channel || channel.type !== "GUILD_TEXT") {
+      if (!channel || channel.type !== ChannelType.GuildText) {
         return;
       }
 
-      const message = await channel.messages.fetch(messageId, { cache: false });
+      const message = await channel.messages.fetch(messageId);
 
       if (!message || message.author.id !== ctx.user.id) {
         return;

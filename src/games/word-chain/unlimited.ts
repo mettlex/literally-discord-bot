@@ -1,5 +1,5 @@
 import { stripIndents } from "common-tags";
-import { Message, MessageEmbed } from "discord.js";
+import { Message, EmbedBuilder, ChannelType } from "discord.js";
 import pino from "pino";
 import { actions } from ".";
 import { prefixes } from "./config";
@@ -7,7 +7,7 @@ import { flatColors } from "../../config";
 import { checkSpell } from "./spell-checker";
 import { ActiveUnlimitedWordChains, UnlimitedWordChainGame } from "./types";
 
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+const logger = pino();
 
 const activeWordChains: ActiveUnlimitedWordChains = {};
 
@@ -274,7 +274,7 @@ const setDataInThePinnedMessage = async (
       value:
         (
           await message.channel.messages
-            .fetch(lastCorrectMessageId, { cache: false })
+            .fetch(lastCorrectMessageId)
             .catch((_e) => undefined)
         )?.content || lastCorrectMessageId,
       inline: true,
@@ -300,7 +300,7 @@ const setDataInThePinnedMessage = async (
 };
 
 export const startUnlimitedMode = async (message: Message) => {
-  const canStart = message.member?.permissions.has("MANAGE_GUILD");
+  const canStart = message.member?.permissions.has("ManageGuild");
 
   if (!canStart) {
     message.reply(
@@ -330,7 +330,7 @@ export const startUnlimitedMode = async (message: Message) => {
     a.commands.includes("stop unlimited"),
   )!;
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(flatColors.green)
     .setTitle(`Unlimited Word-Chain Mode Started For This Channel!`)
     .setDescription(
@@ -342,11 +342,19 @@ export const startUnlimitedMode = async (message: Message) => {
     .setFooter({
       text: "[keep this message pinned to persist]",
     })
-    .addField(fieldNameForTotalWords, "0", true)
-    .addField(fieldNameForConnectedWords, "0", true)
-    .addField(fieldNameForLastCorrectMessageId, "N/A", true)
-    .addField(fieldNameForLongestWord, "N/A", true)
-    .addField(fieldNameForLongestWordAuthor, "N/A", true);
+    .addFields({ name: fieldNameForTotalWords, value: "0", inline: true })
+    .addFields({ name: fieldNameForConnectedWords, value: "0", inline: true })
+    .addFields({
+      name: fieldNameForLastCorrectMessageId,
+      value: "N/A",
+      inline: true,
+    })
+    .addFields({ name: fieldNameForLongestWord, value: "N/A", inline: true })
+    .addFields({
+      name: fieldNameForLongestWordAuthor,
+      value: "N/A",
+      inline: true,
+    });
 
   const sentMessage = await message.channel
     .send({ content: "​", embeds: [embed] })
@@ -366,7 +374,7 @@ export const startUnlimitedMode = async (message: Message) => {
 };
 
 export const stopUnlimitedMode = async (message: Message) => {
-  const canStop = message.member?.permissions.has("MANAGE_GUILD");
+  const canStop = message.member?.permissions.has("ManageGuild");
 
   if (!canStop) {
     message.reply(
@@ -398,7 +406,7 @@ export const stopUnlimitedMode = async (message: Message) => {
 export const handleMessageForUnlimitedMode = async (message: Message) => {
   if (
     message.author.bot ||
-    message.channel.type !== "GUILD_TEXT" ||
+    message.channel.type !== ChannelType.GuildText ||
     message.mentions.everyone
   ) {
     return;
@@ -455,7 +463,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       message
         .reply({
           embeds: [
-            new MessageEmbed()
+            new EmbedBuilder()
               .setColor(flatColors.red)
               .setTitle("One by One Rule")
               .setDescription(
@@ -489,7 +497,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
       message
         .reply({
           embeds: [
-            new MessageEmbed()
+            new EmbedBuilder()
               .setColor(flatColors.red)
               .setTitle("Not that word again!")
               .setDescription(`This **"${word}"** word has been used before.`)
@@ -519,7 +527,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
 
   const reasonsOfRejection = <const>["spell", "first_letter"];
 
-  let reason: typeof reasonsOfRejection[number] = "spell";
+  let reason: (typeof reasonsOfRejection)[number] = "spell";
 
   let lastLetter = "";
 
@@ -627,7 +635,7 @@ export const handleMessageForUnlimitedMode = async (message: Message) => {
     message
       .reply({
         embeds: [
-          new MessageEmbed()
+          new EmbedBuilder()
             .setColor(flatColors.red)
             .setTitle("Incorrect Word!")
             .setDescription(reasonText),

@@ -1,8 +1,8 @@
-import { Client, Message } from "discord.js";
+import { ChannelType, Client, Message } from "discord.js";
 import pino from "pino";
 import { Action } from "./types";
 
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+const logger = pino();
 
 export const setupGame = (
   client: Client,
@@ -15,7 +15,7 @@ export const setupGame = (
       return;
     }
 
-    if (message.channel.type !== "GUILD_TEXT") {
+    if (message.channel.type !== ChannelType.GuildText) {
       return;
     }
 

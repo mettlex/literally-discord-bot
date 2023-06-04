@@ -1,8 +1,9 @@
 import { oneLine } from "common-tags";
 import {
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
   TextChannel,
 } from "discord.js";
 import { flatColors } from "../../../config";
@@ -44,7 +45,7 @@ export const handleCoup = async ({
   );
 
   if (activeInfluences.length === 2) {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle(`**${player.name}** couped against ${targetPlayer.name}.`)
       .setColor(flatColors.blue)
       .setDescription(
@@ -53,10 +54,10 @@ export const handleCoup = async ({
         `,
       );
 
-    const row = new MessageActionRow().addComponents(
-      new MessageButton()
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
         .setCustomId("coup_show_influences")
-        .setStyle("PRIMARY")
+        .setStyle(ButtonStyle.Primary)
         .setLabel("Dismiss One Influence"),
     );
 
@@ -89,7 +90,7 @@ export const handleCoup = async ({
   coupActionsInClassic.coup(channelId, game, player, targetPlayer);
 
   if (dismissedInfluence) {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(flatColors.blue)
       .setAuthor({ name: player.name, iconURL: player.avatarURL })
       .setDescription(

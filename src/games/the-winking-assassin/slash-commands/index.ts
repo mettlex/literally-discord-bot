@@ -1,5 +1,5 @@
 import { oneLine, stripIndents } from "common-tags";
-import { TextChannel } from "discord.js";
+import { ChannelType, TextChannel } from "discord.js";
 import {
   ApplicationCommandOption,
   CommandContext,
@@ -111,7 +111,7 @@ const processStartCommand = async (ctx: CommandContext) => {
     cache: false,
   })) as TextChannel | undefined;
 
-  if (!channel || channel.type !== "GUILD_TEXT") {
+  if (!channel || channel.type !== ChannelType.GuildText) {
     // eslint-disable-next-line max-len
     return "There is an error getting the channel. Please report it to the developer.";
   }

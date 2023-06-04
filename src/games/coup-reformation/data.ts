@@ -13,7 +13,7 @@ import {
 } from "./types";
 import { shuffleArray } from "../../utils/array";
 import { oneLine } from "common-tags";
-import glob from "glob";
+import { glob } from "glob";
 
 export const numberEmojis = [
   "0️⃣",

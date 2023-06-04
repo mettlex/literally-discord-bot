@@ -2,10 +2,11 @@
 import { oneLine, stripIndents } from "common-tags";
 import {
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   TextChannel,
+  ButtonStyle,
 } from "discord.js";
 import pino from "pino";
 import { CommandContext, ComponentContext } from "slash-create";
@@ -13,7 +14,7 @@ import { getCurrentTWAGame, setCurrentTWAGame } from ".";
 import { getDiscordJSClient } from "../../app";
 import { flatColors } from "../../config";
 
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+const logger = pino();
 
 // const padTimeToString = (time: number) =>
 //   time > 9 ? time.toString() : `0${time}`;
@@ -56,7 +57,7 @@ export const askToJoinTheWinkingAssassinGame = async (
 
   const maxTimeInSecondsToJoin = 45;
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(flatColors.blue)
     .setTitle("The Winking Assassin")
     .setDescription(
@@ -88,10 +89,10 @@ export const askToJoinTheWinkingAssassinGame = async (
       text: `${maxTimeInSecondsToJoin} seconds left to join`,
     });
 
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
       .setCustomId("join_twa")
-      .setStyle("PRIMARY")
+      .setStyle(ButtonStyle.Primary)
       .setLabel("okies, i'm up for it."),
   );
 

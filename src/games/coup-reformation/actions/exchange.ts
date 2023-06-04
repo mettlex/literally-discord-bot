@@ -1,8 +1,9 @@
 import { oneLine } from "common-tags";
 import {
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
   TextChannel,
 } from "discord.js";
 import { flatColors } from "../../../config";
@@ -48,7 +49,7 @@ export const handleExchange = async ({
     player.influences.push({ ...game.deck.pop()!, dismissed: false });
     player.influences.push({ ...game.deck.pop()!, dismissed: false });
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle("Exchange Influences")
       .setColor(flatColors.blue)
       .setDescription(
@@ -58,10 +59,10 @@ export const handleExchange = async ({
         `,
       );
 
-    const row = new MessageActionRow().addComponents(
-      new MessageButton()
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
         .setCustomId("coup_show_influences")
-        .setStyle("PRIMARY")
+        .setStyle(ButtonStyle.Primary)
         .setLabel("Return Two Influences"),
     );
 

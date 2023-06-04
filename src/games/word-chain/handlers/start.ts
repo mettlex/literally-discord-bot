@@ -2,9 +2,10 @@ import { stripIndents } from "common-tags";
 import {
   ColorResolvable,
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  ButtonStyle,
 } from "discord.js";
 import { actions, getAllActiveGames } from "..";
 import { shuffleArray } from "../../../utils/array";
@@ -49,8 +50,8 @@ const startHandler = (message: Message) => {
       .map(
         (b) =>
           b &&
-          new MessageButton()
-            .setStyle("PRIMARY")
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Primary)
             .setCustomId(
               `wc_start_${
                 Object.entries(args).find(([_key, value]) => value === b)![0]
@@ -58,9 +59,9 @@ const startHandler = (message: Message) => {
             )
             .setLabel(b),
       )
-      .filter((b) => b) as MessageButton[];
+      .filter((b) => b) as ButtonBuilder[];
 
-    const row = new MessageActionRow().addComponents(buttons);
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
 
     channel
       .send({
@@ -139,7 +140,7 @@ const startHandler = (message: Message) => {
       const currentGame = activeGames[channelId]!;
 
       if (currentGame.userIds.length < 2) {
-        const embed1 = new MessageEmbed()
+        const embed1 = new EmbedBuilder()
           .setTitle("Word-Chain Game Ended!")
           .setDescription(
             "No one else joined the game within the time limit. :(",
@@ -158,15 +159,15 @@ const startHandler = (message: Message) => {
         return;
       }
 
-      const embed1 = new MessageEmbed()
+      const embed1 = new EmbedBuilder()
         .setTitle("Word-Chain Game Started!")
         .setDescription(
           "The players will take turn according to the turn-order below.",
         )
-        .addField(
-          "Turn Order",
-          `${currentGame.userIds.map((uid) => `<@${uid}>`).join(", ")}`,
-        )
+        .addFields({
+          name: "Turn Order",
+          value: `${currentGame.userIds.map((uid) => `<@${uid}>`).join(", ")}`,
+        })
         .setColor(flatColors.green as ColorResolvable);
 
       message.channel.send({ content: "​", embeds: [embed1] }).catch((e) => {
@@ -180,42 +181,55 @@ const startHandler = (message: Message) => {
     clearTimeout(tid);
   }, secondsToJoin * 1000);
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle("Join Word-Chain Game!")
     .setDescription(
       stripIndents`${message.author} is starting a word-chain game.
       You may join to start playing together.`,
     )
-    .addField("Mode", activeGames[channelId]!.mode, true);
+    .addFields({
+      name: "Mode",
+      value: activeGames[channelId]!.mode,
+      inline: true,
+    });
 
   if (mode === "Banned Letters") {
-    embed.addField(
-      mode,
-      activeGames[channelId]!.bannedLetters.map(
+    embed.addFields({
+      name: mode,
+      value: activeGames[channelId]!.bannedLetters.map(
         (l) => `${l.toUpperCase()} / ${l.toLowerCase()}`,
       ).join(", "),
-      true,
-    );
+      inline: true,
+    });
   }
 
   embed
-    .addField("Max Lives", `${activeGames[channelId]!.maxLives}`, true)
-    .addField(
-      "How to join",
-      `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${prefixes[0]}${
+    .addFields({
+      name: "Max Lives",
+      value: `${activeGames[channelId]!.maxLives}`,
+      inline: true,
+    })
+    .addFields({
+      name: "How to join",
+      value: `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${
+        prefixes[0]
+      }${
         joinAction.commands[joinAction.commands.length - 1]
       }\` here in this channel or tap on the button below to join.`,
-    )
-    .addField("Time Left", `${secondsToJoin} seconds`)
+    })
+    .addFields({
+      name: "Time Left",
+      value: `${secondsToJoin} seconds`,
+    })
     .setColor(flatColors.yellow as ColorResolvable);
 
   const channel = message.channel;
 
-  const row = new MessageActionRow();
+  const row = new ActionRowBuilder<ButtonBuilder>();
 
   row.addComponents(
-    new MessageButton()
-      .setStyle("PRIMARY")
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Primary)
       .setLabel("Yes! Join Game!")
       .setCustomId("join_word_chain"),
   );

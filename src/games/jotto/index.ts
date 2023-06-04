@@ -31,7 +31,7 @@ export const actions: Action[] = [
   {
     commands: ["fs", "force-start", "force start"],
     handler: async (message) => {
-      if (!message.member?.permissions.has("MANAGE_GUILD")) {
+      if (!message.member?.permissions.has("ManageGuild")) {
         return;
       }
 

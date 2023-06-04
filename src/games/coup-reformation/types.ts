@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, User } from "discord.js";
+import { Message, EmbedBuilder, User } from "discord.js";
 import EventEmitter from "events";
 
 export type CoupActionNameInClassic =
@@ -38,7 +38,7 @@ export interface CoupGame {
   gameStarted: boolean;
   gameStartedAt: Date;
   startMessageId: string;
-  mode: typeof gameModes[number];
+  mode: (typeof gameModes)[number];
   players: CoupPlayer[];
   currentPlayer: string;
   deck: Deck;
@@ -52,7 +52,7 @@ export interface CurrentCoupGames {
 
 export interface InitialData {
   message: Message;
-  embed: MessageEmbed;
+  embed: EmbedBuilder;
   interval: NodeJS.Timeout;
 }
 
@@ -71,8 +71,8 @@ export const influenceCardNamesInReformation = [
 
 export interface InfluenceCard {
   name:
-    | typeof influenceCardNamesInClassic[number]
-    | typeof influenceCardNamesInReformation[number];
+    | (typeof influenceCardNamesInClassic)[number]
+    | (typeof influenceCardNamesInReformation)[number];
   imageURL: string;
   description: string;
 }

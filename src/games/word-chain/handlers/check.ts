@@ -2,7 +2,7 @@ import { Message } from "discord.js";
 import pino from "pino";
 import { checkSpell } from "../spell-checker";
 
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+const logger = pino();
 
 export const args: {
   [word: string]: string;

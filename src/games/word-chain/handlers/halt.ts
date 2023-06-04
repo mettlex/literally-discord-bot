@@ -1,10 +1,10 @@
-import { ColorResolvable, Message, MessageEmbed } from "discord.js";
+import { ColorResolvable, Message, EmbedBuilder } from "discord.js";
 import { getAllActiveGames, getCurrentGame } from "..";
 import { flatColors } from "../../../config";
 
 const haltHanlder = (message: Message) => {
-  if (!message.member?.permissions.has("MANAGE_GUILD")) {
-    const embed = new MessageEmbed();
+  if (!message.member?.permissions.has("ManageGuild")) {
+    const embed = new EmbedBuilder();
 
     embed
       .setDescription("Only server managers can halt a running game.")
@@ -20,7 +20,7 @@ const haltHanlder = (message: Message) => {
   const currentGame = getCurrentGame(channelId);
 
   if (!currentGame) {
-    const embed = new MessageEmbed();
+    const embed = new EmbedBuilder();
 
     embed
       .setDescription("There is no running game.")
@@ -35,7 +35,7 @@ const haltHanlder = (message: Message) => {
 
   activeGames[channelId] = undefined;
 
-  const embed = new MessageEmbed();
+  const embed = new EmbedBuilder();
 
   embed
     .setTitle("Word-Chain Game Stopped!")

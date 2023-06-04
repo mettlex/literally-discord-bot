@@ -2,7 +2,7 @@ import { Message } from "discord.js";
 import { setGuildConfig } from "../config";
 
 export const autoAppendMessage = (message: Message) => {
-  if (!message.guild || !message.member?.permissions.has("MANAGE_GUILD")) {
+  if (!message.guild || !message.member?.permissions.has("ManageGuild")) {
     return;
   }
 

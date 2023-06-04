@@ -2,9 +2,15 @@ require("source-map-support").install();
 export const getAppRootDir = () => __dirname;
 import pino from "pino";
 const notInProduction = process.env.NODE_ENV !== "production";
-const logger = pino({ prettyPrint: notInProduction });
+const logger = pino();
 export const getLogger = () => logger;
-import { Client, ClientOptions, Intents } from "discord.js";
+import {
+  ActivityType,
+  Client,
+  ClientOptions,
+  GatewayDispatchEvents,
+  GatewayIntentBits,
+} from "discord.js";
 import { setupWordChainGame } from "./games/word-chain";
 import checkEnv from "./utils/check-env";
 import { setupTwoTruthsAndALieGame } from "./games/two-truths-and-a-lie";
@@ -32,7 +38,7 @@ if (!checkEnv()) {
 }
 
 const options: ClientOptions = {
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 };
 
 const client = new Client(options);
@@ -47,7 +53,9 @@ client.once("ready", async () => {
   });
 
   creator.withServer(
-    new GatewayServer((handler) => client.ws.on("INTERACTION_CREATE", handler)),
+    new GatewayServer((handler) =>
+      client.ws.on(GatewayDispatchEvents.InteractionCreate, handler),
+    ),
   );
 
   if (notInProduction) {
@@ -72,14 +80,14 @@ client.once("ready", async () => {
 
   creator.syncCommands({
     syncGuilds: true,
-    deleteCommands: false,
+    deleteCommands: true,
     skipGuildErrors: true,
   });
 
   try {
     client.user?.setActivity({
       name: `${(earlyAccessMode() && "_") || ""}ly.help or /help`,
-      type: "PLAYING",
+      type: ActivityType.Playing,
     });
   } catch (error) {
     logger.error(error as object);

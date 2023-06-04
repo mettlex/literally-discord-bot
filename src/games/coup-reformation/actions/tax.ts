@@ -1,5 +1,5 @@
 import { oneLine } from "common-tags";
-import { MessageEmbed, TextChannel } from "discord.js";
+import { EmbedBuilder, TextChannel } from "discord.js";
 import { flatColors } from "../../../config";
 import sleep from "../../../utils/sleep";
 import { coupActionsInClassic } from "../data";
@@ -41,7 +41,7 @@ export const handleTax = async ({
   if (challenging === false) {
     coupActionsInClassic.tax(channelId, game, player);
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(flatColors.blue)
       .setAuthor({ name: player.name, iconURL: player.avatarURL })
       .setDescription(
@@ -84,7 +84,7 @@ export const handleTax = async ({
     if (lostPlayer.id === challengingPlayer.id) {
       coupActionsInClassic.tax(channelId, game, player);
 
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setColor(flatColors.blue)
         .setAuthor({ name: player.name, iconURL: player.avatarURL })
         .setDescription(

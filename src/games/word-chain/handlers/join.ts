@@ -3,10 +3,11 @@ import {
   Client,
   ColorResolvable,
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   TextChannel,
+  ButtonStyle,
 } from "discord.js";
 import { prefixes, secondsToJoin } from "../config";
 import { flatColors } from "../../../config";
@@ -21,7 +22,7 @@ export const join = (message: Message) => {
   const activeGames = getAllActiveGames();
 
   if (!activeGames[channelId]?.joinable) {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setDescription(`The game is not joinable. ${message.author}`)
       .setColor(flatColors.red as ColorResolvable);
 
@@ -47,29 +48,31 @@ export const join = (message: Message) => {
       },
     };
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setDescription(`${message.author} joined the game.`)
-      .addField(
-        "How to join",
-        `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${prefixes[0]}${
+      .addFields({
+        name: "How to join",
+        value: `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${
+          prefixes[0]
+        }${
           joinAction.commands[joinAction.commands.length - 1]
         }\` here in this channel to join`,
-      )
-      .addField(
-        "Time left to join",
-        `${differenceInSeconds(
+      })
+      .addFields({
+        name: "Time left to join",
+        value: `${differenceInSeconds(
           addSeconds(activeGames[channelId]!.gameStartedAt, secondsToJoin),
           new Date(),
         )} seconds`,
-      )
+      })
       .setColor(flatColors.green as ColorResolvable);
 
     const channel = message.channel;
 
-    const row = new MessageActionRow().addComponents(
-      new MessageButton()
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
         .setCustomId("join_word_chain")
-        .setStyle("PRIMARY")
+        .setStyle(ButtonStyle.Primary)
         .setLabel("Lemme join too!"),
     );
 
@@ -105,7 +108,7 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
   if (!activeGames[channelId]?.joinable) {
     ctx.acknowledge();
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setDescription(`The game is not joinable. ${player.mention}`)
       .setColor(flatColors.red as ColorResolvable);
 
@@ -136,27 +139,29 @@ export const joinUsingButton = (ctx: ComponentContext, client: Client) => {
       },
     };
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setDescription(`${player.mention} joined the game.`)
-      .addField(
-        "How to join",
-        `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${prefixes[0]}${
+      .addFields({
+        name: "How to join",
+        value: `Send \`${prefixes[0]}${joinAction.commands[0]}\` or \`${
+          prefixes[0]
+        }${
           joinAction.commands[joinAction.commands.length - 1]
         }\` here in this channel to join or tap on the button below.`,
-      )
-      .addField(
-        "Time left to join",
-        `${differenceInSeconds(
+      })
+      .addFields({
+        name: "Time left to join",
+        value: `${differenceInSeconds(
           addSeconds(activeGames[channelId]!.gameStartedAt, secondsToJoin),
           new Date(),
         )} seconds`,
-      )
+      })
       .setColor(flatColors.green as ColorResolvable);
 
-    const row = new MessageActionRow().addComponents(
-      new MessageButton()
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
         .setCustomId("join_word_chain")
-        .setStyle("PRIMARY")
+        .setStyle(ButtonStyle.Primary)
         .setLabel("Lemme join too!"),
     );
 

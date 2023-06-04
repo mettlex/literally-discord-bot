@@ -6,7 +6,7 @@ import { WiktionaryAPIResponse } from "./types";
 
 const FILE_PATH = "/tmp/spell-checked-words.json";
 
-const logger = pino({ prettyPrint: process.env.NODE_ENV !== "production" });
+const logger = pino();
 
 interface SpellCheckedWordCache {
   [word: string]: boolean | undefined;

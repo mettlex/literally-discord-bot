@@ -20,9 +20,7 @@ import {
 import { JottoData } from "../types";
 import { attemptsLeft } from "../config";
 
-const notInProduction = process.env.NODE_ENV !== "production";
-
-const logger = pino({ prettyPrint: notInProduction });
+const logger = pino();
 
 const alphabet = new Array(26)
   .fill("")
@@ -190,7 +188,7 @@ export const makeJottoCommands = (guildIDs: string[]) => {
         return "Server/Member not found.";
       }
 
-      if (!member.permissions.has("MANAGE_GUILD")) {
+      if (!member.permissions.has("ManageGuild")) {
         return "Manage Server permission is needed to stop the game.";
       }
 
