@@ -18,6 +18,7 @@ if (!process.env.TOKEN) {
 const manager = new ShardingManager(`${__dirname}/app.js`, {
   totalShards: parseInt(process.env.SHARD_COUNT || "2"),
   token: process.env.TOKEN,
+  respawn: true,
 });
 
 manager.on("shardCreate", async (shard) => {
