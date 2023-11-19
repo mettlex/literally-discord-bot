@@ -22,6 +22,26 @@ const manager = new ShardingManager(`${__dirname}/app.js`, {
 
 manager.on("shardCreate", async (shard) => {
   console.log(`Launched shard ${shard.id}`);
+
+  shard.on("disconnect", () => {
+    console.log(`Shard ${shard.id} disconnected`);
+    // Implement reconnection strategy here
+    manager.spawn();
+  });
+
+  shard.on("reconnecting", () => {
+    console.log(`Shard ${shard.id} reconnecting`);
+  });
+
+  shard.on("ready", () => {
+    console.log(`Shard ${shard.id} is ready`);
+  });
+
+  shard.on("error", (error) => {
+    console.log(`Shard ${shard.id} encountered an error: ${error.message}`);
+    // Handle the error here
+    console.error(error);
+  });
 });
 
 manager.spawn();
