@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
+import { ShardingManager } from "discord.js";
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
-import { ShardingManager } from "discord.js";
 
 const envFilePath = path.resolve(__dirname, "..", ".env");
 
@@ -16,7 +16,7 @@ if (!process.env.TOKEN) {
 }
 
 const manager = new ShardingManager(`${__dirname}/app.js`, {
-  totalShards: parseInt(process.env.SHARD_COUNT || "1"),
+  totalShards: parseInt(process.env.SHARD_COUNT || "2"),
   token: process.env.TOKEN,
 });
 
